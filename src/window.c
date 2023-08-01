@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "core.h"
 #include "window.h"
 #include "glad.h"
@@ -14,12 +17,12 @@
 #endif
 
 #ifdef OS_WINDOWS
-static HWND s_Hwnd;
-static HDC s_Hdc;
-//static HGLRC s_Hrc;
+static void* s_pxWindow;
+static void* s_pxDeviceContext;
+static void* s_pWglContext;
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	switch (message) {
+static int64_t __stdcall WndProc(HWND pxWindow, uint32_t nMessage, uint64_t mWParam, int64_t mLParam) {
+	switch (nMessage) {
 		case WM_CLOSE: {
 			PostQuitMessage(0);
 		}
@@ -29,7 +32,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 		}
 		break;
 		default: {
-			return DefWindowProc(hwnd, message, wParam, lParam);
+			return DefWindowProc(pxWindow, nMessage, mWParam, mLParam);
 		}
 	}
 	return 0;
@@ -70,56 +73,68 @@ static const struct wl_registry_listener s_xRgistryListener = {
 };
 #endif
 
-int32_t Window_Alloc(const char* pcWindowTitle) {
-	UNUSED(pcWindowTitle); // TODO
-
+int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
 #ifdef OS_WINDOWS
-	const char className[] = "OpenGLWin32Class";
+	const char acClassName[] = "OpenGLWin32Class";
 
-	HINSTANCE hinstance = GetModuleHandle(0);
-	WNDCLASSEX wcex;
-	PIXELFORMATDESCRIPTOR pfd;
+	WNDCLASSEX xWindowClassEx;
+	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
 
-	ZeroMemory(&wcex, sizeof(WNDCLASSEX));
-	wcex.cbSize = sizeof(wcex);
-	wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wcex.lpfnWndProc = WndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = hinstance;
-	wcex.hIcon = 0;
-	wcex.hCursor = LoadCursor(0, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.lpszMenuName = 0;
-	wcex.lpszClassName = className;
-	wcex.hIconSm = 0;
+	memset(&xWindowClassEx, 0, sizeof(xWindowClassEx));
+	xWindowClassEx.cbSize = sizeof(xWindowClassEx);
+	xWindowClassEx.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	xWindowClassEx.lpfnWndProc = WndProc;
+	xWindowClassEx.cbClsExtra = 0;
+	xWindowClassEx.cbWndExtra = 0;
+	xWindowClassEx.hInstance = GetModuleHandle(0);
+	xWindowClassEx.hIcon = LoadIcon(0, IDI_APPLICATION);
+	xWindowClassEx.hCursor = LoadCursor(0, IDC_ARROW);
+	xWindowClassEx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	xWindowClassEx.lpszMenuName = 0;
+	xWindowClassEx.lpszClassName = acClassName;
+	xWindowClassEx.hIconSm = LoadIcon(0, IDI_APPLICATION);
 
-	RegisterClassEx(&wcex);
+	RegisterClassEx(&xWindowClassEx);
 
-	s_Hwnd = CreateWindowEx(
-		0, className, pcWindowTitle,
-		WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-		0, 0, 800, 600,
-		0, 0, hinstance, 0);
+	s_pxWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, GetModuleHandle(0), 0);
+	if (s_pxWindow == 0) {
+		printf("Failed creating window\n");
+		return -1;
+	}
 
-	s_Hdc = GetDC(s_Hwnd);
+	s_pxDeviceContext = GetDC(s_pxWindow);
+	if (s_pxDeviceContext == 0) {
+		printf("Failed creating device context\n");
+		return -1;
+	}
 
-	ZeroMemory(&pfd, sizeof(pfd));
-	pfd.nSize = sizeof(pfd);
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 24;
-	pfd.iLayerType = PFD_MAIN_PLANE;
+	memset(&xPixelFormatDesc, 0, sizeof(xPixelFormatDesc));
+	xPixelFormatDesc.nSize = sizeof(xPixelFormatDesc);
+	xPixelFormatDesc.nVersion = 1;
+	xPixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	xPixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
+	xPixelFormatDesc.cColorBits = 32;
+	xPixelFormatDesc.cDepthBits = 24;
+	xPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
 
-	SetPixelFormat(s_Hdc, ChoosePixelFormat(s_Hdc, &pfd), &pfd);
+	int32_t nPixelFormat = ChoosePixelFormat(s_pxDeviceContext, &xPixelFormatDesc);
+	SetPixelFormat(s_pxDeviceContext, nPixelFormat, &xPixelFormatDesc);
 
-	//s_Hrc = wglCreateContext(s_Hdc);
-	//wglMakeCurrent(s_Hdc, s_Hrc);
+	s_pWglContext = wglCreateContext(s_pxDeviceContext);
+	if (s_pWglContext == 0) {
+		printf("Failed creating WGL context\n");
+		return -1;
+	}
 
-	ShowWindow(s_Hwnd, SW_SHOW);
-	UpdateWindow(s_Hwnd);
+	if (wglMakeCurrent(s_pxDeviceContext, s_pWglContext) == 0) {
+		printf("Failed making context current\n");
+		return -1;
+	}
+
+	ShowWindow(s_pxWindow, SW_SHOW);
+	UpdateWindow(s_pxWindow);
+
+	gladLoadGL();
 #endif
 
 #ifdef OS_LINUX
@@ -211,19 +226,19 @@ int32_t Window_Alloc(const char* pcWindowTitle) {
 		printf("Failed making context current\n");
 		return -1;
 	}
-#endif
 
 	gladLoadGL();
+#endif
 
 	return 0;
 }
 
 void Window_PollEvents(void) {
 #ifdef OS_WINDOWS
-	MSG msg;
-	while (GetMessage(&msg, 0, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+	MSG xMsg;
+	while (GetMessage(&xMsg, 0, 0, 0)) {
+		TranslateMessage(&xMsg);
+		DispatchMessage(&xMsg);
 	}
 #endif
 
@@ -240,7 +255,7 @@ void Window_PollEvents(void) {
 
 void Window_SwapBuffers(void) {
 #ifdef OS_WINDOWS
-	SwapBuffers(s_Hdc);
+	SwapBuffers(s_pxDeviceContext);
 #endif
 
 #ifdef OS_LINUX
@@ -250,11 +265,11 @@ void Window_SwapBuffers(void) {
 
 void Window_Free(void) {
 #ifdef OS_WINDOWS
-	//wglMakeCurrent(0, 0); // TODO
-	//wglDeleteContext(s_Hrc);
+	wglMakeCurrent(0, 0);
+	wglDeleteContext(s_pWglContext);
 
-	ReleaseDC(s_Hwnd, s_Hdc);
-	DestroyWindow(s_Hwnd);
+	ReleaseDC(s_pxWindow, s_pxDeviceContext);
+	DestroyWindow(s_pxWindow);
 #endif
 
 #ifdef OS_LINUX

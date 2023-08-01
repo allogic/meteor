@@ -1,7 +1,7 @@
 SRC := src
 
-CC := clang
-LD := clang
+CC = clang
+LD = clang
 
 CFLAGS += -std=c99
 CFLAGS += -pedantic
@@ -27,9 +27,11 @@ OBJECTS += $(SOURCES:.c=.o)
 ifeq ($(PLATFORM), WINDOWS)
 CFLAGS += -DOS_WINDOWS
 
-LFLAGS += -lopengl32
-LFLAGS += -lgdi32
 LFLAGS += -lglu32
+LFLAGS += -lgdi32
+LFLAGS += -lopengl32
+
+LFLAGS += -v -Wl,--trace
 endif
 
 ifeq ($(PLATFORM), LINUX)
@@ -48,6 +50,8 @@ $(SRC)/%.o: $(SRC)/%.c
 
 %.elf: $(OBJECTS)
 	$(LD) $(LFLAGS) -m64 -o $@ $(OBJECTS)
+
+all:
 
 clean:
 	rm -f $(SRC)/*.o *.exe *.elf *.map
