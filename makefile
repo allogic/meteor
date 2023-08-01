@@ -1,4 +1,10 @@
-SRC := src
+VER_MAJOR = 0
+VER_MINOR = 1
+VER_PATCH = 0
+
+GIT_COMMIT_HASH = $(shell git rev-parse HEAD)
+
+SRC = src
 
 CC = clang
 LD = clang
@@ -10,7 +16,13 @@ CFLAGS += -c
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
+
 CFLAGS += -Wno-visibility
+
+CFLAGS += -DVER_MAJOR="$(VER_MAJOR)"
+CFLAGS += -DVER_MINOR="$(VER_MINOR)"
+CFLAGS += -DVER_PATCH="$(VER_PATCH)"
+CFLAGS += -DGIT_COMMIT_HASH="$(GIT_COMMIT_HASH)"
 
 LFLAGS += -Wl,-Map=$@.map
 
@@ -27,11 +39,7 @@ OBJECTS += $(SOURCES:.c=.o)
 ifeq ($(PLATFORM), WINDOWS)
 CFLAGS += -DOS_WINDOWS
 
-LFLAGS += -lglu32
-LFLAGS += -lgdi32
-LFLAGS += -lopengl32
-
-LFLAGS += -v -Wl,--trace
+LFLAGS += -mwindows
 endif
 
 ifeq ($(PLATFORM), LINUX)

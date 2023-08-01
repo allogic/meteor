@@ -16,7 +16,18 @@
 #	include <EGL/eglext.h>
 #endif
 
+static bool s_bWindowShouldClose;
+
 #ifdef OS_WINDOWS
+typedef void*(*PFNWGLCREATECONTEXTPROC)(void*);
+typedef int32_t(*PFNWGLMAKECURRENTPROC)(void*, void*);
+typedef int32_t(*PFNWGLDELETECONTEXTPROC)(void*);
+
+static PFNWGLCREATECONTEXTPROC s_pWglCreateContext;
+static PFNWGLMAKECURRENTPROC s_pWglMakeCurrent;
+static PFNWGLDELETECONTEXTPROC s_pWglDeleteContext;
+
+static void* s_pxOpenGl32;
 static void* s_pxWindow;
 static void* s_pxDeviceContext;
 static void* s_pWglContext;
@@ -24,11 +35,14 @@ static void* s_pWglContext;
 static int64_t __stdcall WndProc(HWND pxWindow, uint32_t nMessage, uint64_t mWParam, int64_t mLParam) {
 	switch (nMessage) {
 		case WM_CLOSE: {
-			PostQuitMessage(0);
+			s_bWindowShouldClose = true;
 		}
 		break;
-		case WM_DESTROY: {
-			PostQuitMessage(0);
+		case WM_MOUSEMOVE: {
+            uint32_t nMouseX = LOWORD(mLParam);
+            uint32_t nMouseY = HIWORD(mLParam);
+			UNUSED(nMouseX);
+			UNUSED(nMouseY);
 		}
 		break;
 		default: {
@@ -120,21 +134,26 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	int32_t nPixelFormat = ChoosePixelFormat(s_pxDeviceContext, &xPixelFormatDesc);
 	SetPixelFormat(s_pxDeviceContext, nPixelFormat, &xPixelFormatDesc);
 
-	s_pWglContext = wglCreateContext(s_pxDeviceContext);
+	s_pxOpenGl32 = LoadLibrary("opengl32.dll");
+	s_pWglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(s_pxOpenGl32, "wglCreateContext");
+	s_pWglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(s_pxOpenGl32, "wglMakeCurrent");
+	s_pWglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(s_pxOpenGl32, "wglDeleteContext");
+
+	s_pWglContext = s_pWglCreateContext(s_pxDeviceContext);
 	if (s_pWglContext == 0) {
 		printf("Failed creating WGL context\n");
 		return -1;
 	}
 
-	if (wglMakeCurrent(s_pxDeviceContext, s_pWglContext) == 0) {
+	if (s_pWglMakeCurrent(s_pxDeviceContext, s_pWglContext) == 0) {
 		printf("Failed making context current\n");
 		return -1;
 	}
 
+	gladLoadGL();
+
 	ShowWindow(s_pxWindow, SW_SHOW);
 	UpdateWindow(s_pxWindow);
-
-	gladLoadGL();
 #endif
 
 #ifdef OS_LINUX
@@ -233,10 +252,14 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	return 0;
 }
 
+bool Window_ShouldClose(void) {
+	return s_bWindowShouldClose;
+}
+
 void Window_PollEvents(void) {
 #ifdef OS_WINDOWS
 	MSG xMsg;
-	while (GetMessage(&xMsg, 0, 0, 0)) {
+	if (PeekMessage(&xMsg, 0, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&xMsg);
 		DispatchMessage(&xMsg);
 	}
@@ -265,11 +288,14 @@ void Window_SwapBuffers(void) {
 
 void Window_Free(void) {
 #ifdef OS_WINDOWS
-	wglMakeCurrent(0, 0);
-	wglDeleteContext(s_pWglContext);
+	s_pWglMakeCurrent(0, 0);
+	s_pWglDeleteContext(s_pWglContext);
 
 	ReleaseDC(s_pxWindow, s_pxDeviceContext);
+
 	DestroyWindow(s_pxWindow);
+
+	FreeLibrary(s_pxOpenGl32);
 #endif
 
 #ifdef OS_LINUX
