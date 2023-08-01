@@ -1,22 +1,53 @@
 SRC := src
-OBJ := obj
 
 CC := clang
 LD := clang
 
-SOURCES := $(wildcard $(SRC)/*.c)
-OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
+CFLAGS += -std=c99
+CFLAGS += -pedantic
+CFLAGS += -g
+CFLAGS += -c
 
-CFLAGS := -std=c99 -pedantic -Wall -Wextra -g -c
-LDFLAGS = -mwindows -lopengl32 -lgdi32 -lglu32
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -Wno-visibility
 
-$(OBJ)/%.o: $(SRC)/%.c
+LFLAGS += -Wl,-Map=$@.map
+
+SOURCES += $(SRC)/main.c
+SOURCES += $(SRC)/window.c
+SOURCES += $(SRC)/glad.c
+SOURCES += $(SRC)/list.c
+SOURCES += $(SRC)/fs.c
+
+OBJECTS += $(SOURCES:.c=.o)
+
+.PRECIOUS: $(OBJECTS)
+
+ifeq ($(PLATFORM), WINDOWS)
+CFLAGS += -DOS_WINDOWS
+
+LFLAGS += -lopengl32
+LFLAGS += -lgdi32
+LFLAGS += -lglu32
+endif
+
+ifeq ($(PLATFORM), LINUX)
+CFLAGS += -DOS_LINUX
+
+LFLAGS += -lwayland-client
+LFLAGS += -lwayland-egl
+LFLAGS += -lEGL
+endif
+
+$(SRC)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 %.exe: $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(LD) $(LFLAGS) -m64 -o $@ $(OBJECTS)
 
-all: main.exe
+%.elf: $(OBJECTS)
+	$(LD) $(LFLAGS) -m64 -o $@ $(OBJECTS)
 
 clean:
-	rm -f $(OBJ)/*.o *.exe
+	rm -f $(SRC)/*.o *.exe *.elf *.map
