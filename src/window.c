@@ -32,7 +32,7 @@ static void* s_pxWindow;
 static void* s_pxDeviceContext;
 static void* s_pWglContext;
 
-static int64_t __stdcall WndProc(HWND pxWindow, uint32_t nMessage, uint64_t mWParam, int64_t mLParam) {
+static int64_t WndProc(HWND pxWindow, uint32_t nMessage, uint64_t mWParam, int64_t mLParam) {
 	switch (nMessage) {
 		case WM_CLOSE: {
 			s_bWindowShouldClose = true;
