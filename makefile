@@ -32,11 +32,6 @@ SOURCES += $(SRC)/list.c
 SOURCES += $(SRC)/fs.c
 
 SOURCES += $(SRC)/glad.c
-SOURCES += $(SRC)/xdgshell.c
-
-OBJECTS += $(SOURCES:.c=.o)
-
-.PRECIOUS: $(OBJECTS)
 
 ifeq ($(PLATFORM), WINDOWS)
 CFLAGS += -DOS_WINDOWS
@@ -45,12 +40,18 @@ LFLAGS += -mwindows
 endif
 
 ifeq ($(PLATFORM), LINUX)
+SOURCES += $(SRC)/xdgshell.c
+
 CFLAGS += -DOS_LINUX
 
 LFLAGS += -lwayland-client
 LFLAGS += -lwayland-egl
 LFLAGS += -lEGL
 endif
+
+.PRECIOUS: $(OBJECTS)
+
+OBJECTS += $(SOURCES:.c=.o)
 
 $(SRC)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
