@@ -28,9 +28,11 @@ LFLAGS += -Wl,-Map=$@.map
 
 SOURCES += $(SRC)/main.c
 SOURCES += $(SRC)/window.c
-SOURCES += $(SRC)/glad.c
 SOURCES += $(SRC)/list.c
 SOURCES += $(SRC)/fs.c
+
+SOURCES += $(SRC)/glad.c
+SOURCES += $(SRC)/xdgshell.c
 
 OBJECTS += $(SOURCES:.c=.o)
 

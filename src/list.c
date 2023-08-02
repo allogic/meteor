@@ -26,12 +26,7 @@ struct xList_t* List_Alloc(void) {
 }
 
 void List_Free(struct xList_t* pxList) {
-	if (pxList->pxHead == 0 || pxList->pxTail == 0) {
-
-	} else if (pxList->pxHead == pxList->pxTail) {
-		free(pxList->pxHead->pData);
-		free(pxList->pxHead);
-	} else {
+	if (pxList->pxHead) {
 		pxList->pxCurr = pxList->pxHead;
 		struct xNode_t* next;
 		while (pxList->pxCurr != pxList->pxTail) {
@@ -65,25 +60,12 @@ uint32_t List_Count(struct xList_t* pxList) {
 	return pxList->nCount;
 }
 
-void List_Dump(struct xList_t* pxList, void(*pPrint)(void* pData)) {
-	if (pxList->pxHead == 0 || pxList->pxTail == 0) {
-
-	} else if (pxList->pxHead == pxList->pxTail) {
-		pPrint(pxList->pxHead->pData);
-	} else {
-		pxList->pxCurr = pxList->pxHead;
-		while (pxList->pxCurr != pxList->pxTail) {
-			pPrint(pxList->pxCurr->pData);
-			pxList->pxCurr = pxList->pxCurr->pxNext;
-		}
-		pPrint(pxList->pxTail->pData);
-	}
+void* List_Begin(struct xList_t* pxList) {
+	pxList->pxCurr = pxList->pxHead;
+	return (pxList->pxCurr) ? pxList->pxCurr->pData : 0;
 }
 
-void List_PrintInt(void* pData) {
-	printf("%d\n", *(int32_t*)pData);
-}
-
-void List_PrintString(void* pData) {
-	printf("%s\n", (const char*)pData);
+void* List_Next(struct xList_t* pxList) {
+	pxList->pxCurr = pxList->pxCurr->pxNext;
+	return (pxList->pxCurr) ? pxList->pxCurr->pData : 0;
 }

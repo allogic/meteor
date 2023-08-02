@@ -11,42 +11,44 @@
 
 #ifdef OS_LINUX
 #	include <wayland-client.h>
+#	include <wayland-client-protocol.h>
 #	include <wayland-egl.h>
 #	include <EGL/egl.h>
 #	include <EGL/eglext.h>
+#	include "xdgshell.h"
 #endif
 
-static bool s_bWindowShouldClose;
+static bool s_bShouldClose;
 
 #ifdef OS_WINDOWS
-typedef void*(*PFNWGLCREATECONTEXTPROC)(void*);
-typedef int32_t(*PFNWGLMAKECURRENTPROC)(void*, void*);
-typedef int32_t(*PFNWGLDELETECONTEXTPROC)(void*);
+typedef HGLRC(*PFNWGLCREATECONTEXTPROC)(HDC);
+typedef BOOL(*PFNWGLMAKECURRENTPROC)(HDC, HGLRC);
+typedef BOOL(*PFNWGLDELETECONTEXTPROC)(HGLRC);
 
 static PFNWGLCREATECONTEXTPROC s_pWglCreateContext;
 static PFNWGLMAKECURRENTPROC s_pWglMakeCurrent;
 static PFNWGLDELETECONTEXTPROC s_pWglDeleteContext;
 
-static void* s_pxOpenGl32;
-static void* s_pxWindow;
-static void* s_pxDeviceContext;
-static void* s_pWglContext;
+static HMODULE s_hOpenGl32;
+static HWND s_hWindow;
+static HDC s_hDeviceContext;
+static HGLRC s_hWglContext;
 
-static int64_t WndProc(HWND pxWindow, uint32_t nMessage, uint64_t mWParam, int64_t mLParam) {
+static LRESULT WndProc(HWND hWnd, UINT nMessage, WPARAM wParam, LPARAM lParam) {
 	switch (nMessage) {
 		case WM_CLOSE: {
-			s_bWindowShouldClose = true;
+			s_bShouldClose = true;
 		}
 		break;
 		case WM_MOUSEMOVE: {
-            uint32_t nMouseX = LOWORD(mLParam);
-            uint32_t nMouseY = HIWORD(mLParam);
+			UINT nMouseX = LOWORD(lParam);
+			UINT nMouseY = HIWORD(lParam);
 			UNUSED(nMouseX);
 			UNUSED(nMouseY);
 		}
 		break;
 		default: {
-			return DefWindowProc(pxWindow, nMessage, mWParam, mLParam);
+			return DefWindowProc(hWnd, nMessage, wParam, lParam);
 		}
 	}
 	return 0;
@@ -59,6 +61,9 @@ static struct wl_registry* s_pxRegistry;
 static struct wl_compositor* s_pxCompositor;
 static struct wl_region* s_pxRegion;
 static struct wl_surface* s_pxSurface;
+static struct xdg_wm_base* s_pxXdgWmBase;
+static struct xdg_surface* s_pxXdgSurface;
+static struct xdg_toplevel* s_pxXdgTopLevel;
 static struct wl_egl_window* s_pxEglWindow;
 
 static EGLDisplay s_pxEglDisplay;
@@ -67,11 +72,12 @@ static EGLSurface s_pxEglSurface;
 
 static void RegistryGlobal(void* pData, struct wl_registry* pxRegistry, uint32_t nId, const char* pcInterface, uint32_t nVersion) {
 	UNUSED(pData);
-	UNUSED(nId);
 	UNUSED(nVersion);
 
 	if (strcmp(pcInterface, "wl_compositor") == 0) {
 		s_pxCompositor = wl_registry_bind(pxRegistry, nId, &wl_compositor_interface, 1);
+	} else if (strcmp(pcInterface, "xdg_wm_base") == 0) {
+		s_pxXdgWmBase = wl_registry_bind(pxRegistry, nId, &xdg_wm_base_interface, 1);
 	}
 }
 
@@ -81,15 +87,42 @@ static void RegistryGlobalRemove(void* pData, struct wl_registry* pxRegistry, ui
 	UNUSED(nId);
 }
 
+//void ShellSurfacePing(void* pData, struct wl_shell_surface* pxShellSurface, uint32_t nSerial) {
+//	UNUSED(pData);
+//
+//	wl_shell_surface_pong(pxShellSurface, nSerial);
+//}
+
+//void ShellSurfaceConfigure(void* pData, struct wl_shell_surface* pxShellSurface, uint32_t nEdges, int32_t nWidth, int32_t nHeight) {
+//	UNUSED(pxShellSurface);
+//	UNUSED(nEdges);
+//
+//	struct window* pxWindow = pData;
+//	wl_egl_window_resize(s_pxEglWindow, nWidth, nHeight, 0, 0);
+//}
+
+//void ShellSurfacePopupDone(void* pData, struct wl_shell_surface* pxShellSurface) {
+//	UNUSED(pData);
+//	UNUSED(pxShellSurface);
+//}
+
 static const struct wl_registry_listener s_xRgistryListener = {
 	.global = RegistryGlobal,
 	.global_remove = RegistryGlobalRemove,
 };
+
+//static struct wl_shell_surface_listener s_xShellSurfaceListener = {
+//	.ping = ShellSurfacePing,
+//	.configure = ShellSurfaceConfigure,
+//	.popup_done = ShellSurfacePopupDone,
+//};
 #endif
 
 int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
 #ifdef OS_WINDOWS
 	const char acClassName[] = "OpenGLWin32Class";
+
+	HMODULE hInstance = GetModuleHandle(0);
 
 	WNDCLASSEX xWindowClassEx;
 	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
@@ -100,7 +133,7 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	xWindowClassEx.lpfnWndProc = WndProc;
 	xWindowClassEx.cbClsExtra = 0;
 	xWindowClassEx.cbWndExtra = 0;
-	xWindowClassEx.hInstance = GetModuleHandle(0);
+	xWindowClassEx.hInstance = hInstance;
 	xWindowClassEx.hIcon = LoadIcon(0, IDI_APPLICATION);
 	xWindowClassEx.hCursor = LoadCursor(0, IDC_ARROW);
 	xWindowClassEx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -110,14 +143,14 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 
 	RegisterClassEx(&xWindowClassEx);
 
-	s_pxWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, GetModuleHandle(0), 0);
-	if (s_pxWindow == 0) {
+	s_hWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, hInstance, 0);
+	if (s_hWindow == 0) {
 		printf("Failed creating window\n");
 		return -1;
 	}
 
-	s_pxDeviceContext = GetDC(s_pxWindow);
-	if (s_pxDeviceContext == 0) {
+	s_hDeviceContext = GetDC(s_hWindow);
+	if (s_hDeviceContext == 0) {
 		printf("Failed creating device context\n");
 		return -1;
 	}
@@ -131,29 +164,29 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	xPixelFormatDesc.cDepthBits = 24;
 	xPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
 
-	int32_t nPixelFormat = ChoosePixelFormat(s_pxDeviceContext, &xPixelFormatDesc);
-	SetPixelFormat(s_pxDeviceContext, nPixelFormat, &xPixelFormatDesc);
+	INT nPixelFormat = ChoosePixelFormat(s_hDeviceContext, &xPixelFormatDesc);
+	SetPixelFormat(s_hDeviceContext, nPixelFormat, &xPixelFormatDesc);
 
-	s_pxOpenGl32 = LoadLibrary("opengl32.dll");
-	s_pWglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(s_pxOpenGl32, "wglCreateContext");
-	s_pWglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(s_pxOpenGl32, "wglMakeCurrent");
-	s_pWglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(s_pxOpenGl32, "wglDeleteContext");
+	s_hOpenGl32 = LoadLibrary("opengl32.dll");
+	s_pWglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglCreateContext");
+	s_pWglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(s_hOpenGl32, "wglMakeCurrent");
+	s_pWglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglDeleteContext");
 
-	s_pWglContext = s_pWglCreateContext(s_pxDeviceContext);
-	if (s_pWglContext == 0) {
+	s_hWglContext = s_pWglCreateContext(s_hDeviceContext);
+	if (s_hWglContext == 0) {
 		printf("Failed creating WGL context\n");
 		return -1;
 	}
 
-	if (s_pWglMakeCurrent(s_pxDeviceContext, s_pWglContext) == 0) {
+	if (s_pWglMakeCurrent(s_hDeviceContext, s_hWglContext) == 0) {
 		printf("Failed making context current\n");
 		return -1;
 	}
 
 	gladLoadGL();
 
-	ShowWindow(s_pxWindow, SW_SHOW);
-	UpdateWindow(s_pxWindow);
+	ShowWindow(s_hWindow, SW_SHOW);
+	UpdateWindow(s_hWindow);
 #endif
 
 #ifdef OS_LINUX
@@ -171,12 +204,45 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 
 	wl_registry_add_listener(s_pxRegistry, &s_xRgistryListener, 0);
 
-	wl_display_dispatch(s_pxDisplay);
 	wl_display_roundtrip(s_pxDisplay);
+
+	if ((s_pxCompositor == 0) || (s_pxXdgWmBase == 0)) {
+		if (s_pxCompositor == 0) {
+			printf("Failed creating compositor\n");
+		}
+		if (s_pxXdgWmBase == 0) {
+			printf("Failed creating XDG base\n");
+		}
+		return -1;
+	}
 
 	s_pxSurface = wl_compositor_create_surface(s_pxCompositor);
 	if (s_pxSurface == 0) {
 		printf("Failed creating wayland surface\n");
+		return -1;
+	}
+
+	s_pxXdgSurface = xdg_wm_base_get_xdg_surface(s_pxXdgWmBase, s_pxSurface);
+	if (s_pxXdgSurface == 0) {
+		printf("Failed creating XDG surface\n");
+		return -1;
+	}
+
+	s_pxXdgTopLevel = xdg_surface_get_toplevel(s_pxXdgSurface);
+
+	xdg_toplevel_set_title(s_pxXdgTopLevel, pcWindowTitle);
+
+	wl_surface_commit(s_pxSurface);
+
+	s_pxRegion = wl_compositor_create_region(s_pxCompositor); // TODO
+
+	wl_region_add(s_pxRegion, 0, 0, nWidth, nHeight);
+	
+	wl_surface_set_opaque_region(s_pxSurface, s_pxRegion);
+
+	s_pxEglWindow = wl_egl_window_create(s_pxSurface, nWidth, nHeight);
+	if (s_pxEglWindow == 0) {
+		printf("Failed creating EGL window\n");
 		return -1;
 	}
 
@@ -201,8 +267,8 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 		EGL_GREEN_SIZE, 8,
 		EGL_BLUE_SIZE, 8,
 		EGL_ALPHA_SIZE, 8,
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
 		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
 		EGL_NONE
 	};
 
@@ -210,6 +276,12 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 
 	if (eglChooseConfig(s_pxEglDisplay, anConfigAttribs, &xConfig, 1, &nNumConfigs) == 0) {
 		printf("Failed choosing EGL config\n");
+		return -1;
+	}
+
+	s_pxEglSurface = eglCreateWindowSurface(s_pxEglDisplay, xConfig, s_pxEglWindow, 0);
+	if (s_pxEglSurface == EGL_NO_SURFACE) {
+		printf("Failed creating EGL surface\n");
 		return -1;
 	}
 
@@ -221,23 +293,6 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_pxEglContext = eglCreateContext(s_pxEglDisplay, xConfig, EGL_NO_CONTEXT, anContextAttribs);
 	if (s_pxEglContext == EGL_NO_CONTEXT) {
 		printf("Failed creating EGL context\n");
-		return -1;
-	}
-
-	s_pxRegion = wl_compositor_create_region(s_pxCompositor);
-
-	wl_region_add(s_pxRegion, 0, 0, 800, 600);
-	wl_surface_set_opaque_region(s_pxSurface, s_pxRegion);
-
-	s_pxEglWindow = wl_egl_window_create(s_pxSurface, 800, 600);
-	if (s_pxEglWindow == 0) {
-		printf("Failed creating EGL window\n");
-		return -1;
-	}
-
-	s_pxEglSurface = eglCreateWindowSurface(s_pxEglDisplay, xConfig, s_pxEglWindow, 0);
-	if (s_pxEglSurface == EGL_NO_SURFACE) {
-		printf("Failed creating EGL surface\n");
 		return -1;
 	}
 
@@ -253,7 +308,7 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 }
 
 bool Window_ShouldClose(void) {
-	return s_bWindowShouldClose;
+	return s_bShouldClose;
 }
 
 void Window_PollEvents(void) {
@@ -266,19 +321,14 @@ void Window_PollEvents(void) {
 #endif
 
 #ifdef OS_LINUX
-	wl_display_dispatch_pending(s_pxDisplay);
-	//while (wl_display_prepare_read(s_pxDisplay) != 0) {
-	//	wl_display_dispatch_pending(s_pxDisplay);
-	//}
-	//wl_display_flush(s_pxDisplay);
-	//wl_display_read_events(s_pxDisplay);
+	wl_display_dispatch(s_pxDisplay);
 	//wl_display_dispatch_pending(s_pxDisplay);
 #endif
 }
 
 void Window_SwapBuffers(void) {
 #ifdef OS_WINDOWS
-	SwapBuffers(s_pxDeviceContext);
+	SwapBuffers(s_hDeviceContext);
 #endif
 
 #ifdef OS_LINUX
@@ -289,13 +339,13 @@ void Window_SwapBuffers(void) {
 void Window_Free(void) {
 #ifdef OS_WINDOWS
 	s_pWglMakeCurrent(0, 0);
-	s_pWglDeleteContext(s_pWglContext);
+	s_pWglDeleteContext(s_hWglContext);
 
-	ReleaseDC(s_pxWindow, s_pxDeviceContext);
+	ReleaseDC(s_hWindow, s_hDeviceContext);
 
-	DestroyWindow(s_pxWindow);
+	DestroyWindow(s_hWindow);
 
-	FreeLibrary(s_pxOpenGl32);
+	FreeLibrary(s_hOpenGl32);
 #endif
 
 #ifdef OS_LINUX
@@ -303,6 +353,9 @@ void Window_Free(void) {
 	eglDestroySurface(s_pxEglDisplay, s_pxEglSurface);
 
 	wl_egl_window_destroy(s_pxEglWindow);
+
+	xdg_toplevel_destroy(s_pxXdgTopLevel);
+	xdg_surface_destroy(s_pxXdgSurface);
 
 	eglDestroyContext(s_pxEglDisplay, s_pxEglContext);
 
