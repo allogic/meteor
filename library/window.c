@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "core.h"
+#include "macros.h"
 #include "window.h"
 #include "glad.h"
 
@@ -18,7 +18,15 @@
 #	include "xdgshell.h"
 #endif
 
-static bool s_bShouldClose;
+struct xWindow_t {
+	bool bShouldClose;
+	uint32_t nWindowWidth;
+	uint32_t nWindowHeight;
+	uint32_t nMouseX;
+	uint32_t nMouseY;
+};
+
+static struct xWindow_t s_xWindow;
 
 #ifdef OS_WINDOWS
 typedef HGLRC(*PFNWGLCREATECONTEXTPROC)(HDC);
@@ -37,14 +45,12 @@ static HGLRC s_hWglContext;
 static LRESULT WndProc(HWND hWnd, UINT nMessage, WPARAM wParam, LPARAM lParam) {
 	switch (nMessage) {
 		case WM_CLOSE: {
-			s_bShouldClose = true;
+			s_xWindow.bShouldClose = true;
 		}
 		break;
 		case WM_MOUSEMOVE: {
-			UINT nMouseX = LOWORD(lParam);
-			UINT nMouseY = HIWORD(lParam);
-			UNUSED(nMouseX);
-			UNUSED(nMouseY);
+			s_xWindow.nMouseX = LOWORD(lParam);
+			s_xWindow.nMouseY = HIWORD(lParam);
 		}
 		break;
 		default: {
@@ -118,7 +124,7 @@ static const struct wl_registry_listener s_xRgistryListener = {
 //};
 #endif
 
-int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
+struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
 #ifdef OS_WINDOWS
 	const char acClassName[] = "OpenGLWin32Class";
 
@@ -146,13 +152,13 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_hWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, hInstance, 0);
 	if (s_hWindow == 0) {
 		printf("Failed creating window\n");
-		return -1;
+		return 0;
 	}
 
 	s_hDeviceContext = GetDC(s_hWindow);
 	if (s_hDeviceContext == 0) {
 		printf("Failed creating device context\n");
-		return -1;
+		return 0;
 	}
 
 	memset(&xPixelFormatDesc, 0, sizeof(xPixelFormatDesc));
@@ -175,15 +181,13 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_hWglContext = s_pWglCreateContext(s_hDeviceContext);
 	if (s_hWglContext == 0) {
 		printf("Failed creating WGL context\n");
-		return -1;
+		return 0;
 	}
 
 	if (s_pWglMakeCurrent(s_hDeviceContext, s_hWglContext) == 0) {
 		printf("Failed making context current\n");
-		return -1;
+		return 0;
 	}
-
-	gladLoadGL();
 
 	ShowWindow(s_hWindow, SW_SHOW);
 	UpdateWindow(s_hWindow);
@@ -193,13 +197,13 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_pxDisplay = wl_display_connect(0);
 	if (s_pxDisplay == 0) {
 		printf("Failed creating wayland display\n");
-		return -1;
+		return 0;
 	}
 
 	s_pxRegistry = wl_display_get_registry(s_pxDisplay);
 	if (s_pxRegistry == 0) {
 		printf("Failed creating wayland registry\n");
-		return -1;
+		return 0;
 	}
 
 	wl_registry_add_listener(s_pxRegistry, &s_xRgistryListener, 0);
@@ -213,19 +217,19 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 		if (s_pxXdgWmBase == 0) {
 			printf("Failed creating XDG base\n");
 		}
-		return -1;
+		return 0;
 	}
 
 	s_pxSurface = wl_compositor_create_surface(s_pxCompositor);
 	if (s_pxSurface == 0) {
 		printf("Failed creating wayland surface\n");
-		return -1;
+		return 0;
 	}
 
 	s_pxXdgSurface = xdg_wm_base_get_xdg_surface(s_pxXdgWmBase, s_pxSurface);
 	if (s_pxXdgSurface == 0) {
 		printf("Failed creating XDG surface\n");
-		return -1;
+		return 0;
 	}
 
 	s_pxXdgTopLevel = xdg_surface_get_toplevel(s_pxXdgSurface);
@@ -243,19 +247,19 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_pxEglWindow = wl_egl_window_create(s_pxSurface, nWidth, nHeight);
 	if (s_pxEglWindow == 0) {
 		printf("Failed creating EGL window\n");
-		return -1;
+		return 0;
 	}
 
 	s_pxEglDisplay = eglGetDisplay(s_pxDisplay);
 	if (s_pxEglDisplay == 0) {
 		printf("Failed creating EGL display\n");
-		return -1;
+		return 0;
 	}
 
 	int32_t nMajor, nMinor;
 	if (eglInitialize(s_pxEglDisplay, &nMajor, &nMinor) == 0) {
 		printf("Failed initializing EGL\n");
-		return -1;
+		return 0;
 	}
 
 	printf("Found GL version %d.%d\n", nMajor, nMinor);
@@ -276,13 +280,13 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 
 	if (eglChooseConfig(s_pxEglDisplay, anConfigAttribs, &xConfig, 1, &nNumConfigs) == 0) {
 		printf("Failed choosing EGL config\n");
-		return -1;
+		return 0;
 	}
 
 	s_pxEglSurface = eglCreateWindowSurface(s_pxEglDisplay, xConfig, s_pxEglWindow, 0);
 	if (s_pxEglSurface == EGL_NO_SURFACE) {
 		printf("Failed creating EGL surface\n");
-		return -1;
+		return 0;
 	}
 
 	int32_t anContextAttribs[] = {
@@ -293,25 +297,23 @@ int32_t Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeigh
 	s_pxEglContext = eglCreateContext(s_pxEglDisplay, xConfig, EGL_NO_CONTEXT, anContextAttribs);
 	if (s_pxEglContext == EGL_NO_CONTEXT) {
 		printf("Failed creating EGL context\n");
-		return -1;
+		return 0;
 	}
 
 	if (eglMakeCurrent(s_pxEglDisplay, s_pxEglSurface, s_pxEglSurface, s_pxEglContext) == 0) {
 		printf("Failed making context current\n");
 		return -1;
 	}
-
-	gladLoadGL();
 #endif
 
-	return 0;
+	return &s_xWindow;
 }
 
-bool Window_ShouldClose(void) {
-	return s_bShouldClose;
+bool Window_ShouldNotClose(struct xWindow_t* pxWindow) {
+	return pxWindow->bShouldClose == 0;
 }
 
-void Window_PollEvents(void) {
+void Window_PollEvents(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
 	MSG xMsg;
 	if (PeekMessage(&xMsg, 0, 0, 0, PM_REMOVE)) {
@@ -326,7 +328,7 @@ void Window_PollEvents(void) {
 #endif
 }
 
-void Window_SwapBuffers(void) {
+void Window_SwapBuffers(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
 	SwapBuffers(s_hDeviceContext);
 #endif
@@ -336,7 +338,7 @@ void Window_SwapBuffers(void) {
 #endif
 }
 
-void Window_Free(void) {
+void Window_Free(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
 	s_pWglMakeCurrent(0, 0);
 	s_pWglDeleteContext(s_hWglContext);
