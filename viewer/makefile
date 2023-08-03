@@ -36,6 +36,7 @@ SOURCES += main.c
 SOURCES += $(LIBRARY_PATH)/window.c
 SOURCES += $(LIBRARY_PATH)/list.c
 SOURCES += $(LIBRARY_PATH)/fs.c
+SOURCES += $(LIBRARY_PATH)/strutil.c
 
 SOURCES += $(PLATFORM_PATH)/glad.c
 
