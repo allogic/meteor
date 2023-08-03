@@ -19,7 +19,7 @@ apt-get update
 apt-get install build-essential cmake
 ```
 
-# Clang & Lld
+# Clang & LLD
 
 ```sh
 build-llvm.sh
