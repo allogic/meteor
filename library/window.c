@@ -29,13 +29,13 @@ struct xWindow_t {
 static struct xWindow_t s_xWindow;
 
 #ifdef OS_WINDOWS
-typedef HGLRC(*PFNWGLCREATECONTEXTPROC)(HDC);
-typedef BOOL(*PFNWGLMAKECURRENTPROC)(HDC, HGLRC);
-typedef BOOL(*PFNWGLDELETECONTEXTPROC)(HGLRC);
+typedef HGLRC(*WGLCREATECONTEXTPROC)(HDC);
+typedef BOOL(*WGLMAKECURRENTPROC)(HDC, HGLRC);
+typedef BOOL(*WGLDELETECONTEXTPROC)(HGLRC);
 
-static PFNWGLCREATECONTEXTPROC s_pWglCreateContext;
-static PFNWGLMAKECURRENTPROC s_pWglMakeCurrent;
-static PFNWGLDELETECONTEXTPROC s_pWglDeleteContext;
+static WGLCREATECONTEXTPROC s_pWglCreateContext;
+static WGLMAKECURRENTPROC s_pWglMakeCurrent;
+static WGLDELETECONTEXTPROC s_pWglDeleteContext;
 
 static HMODULE s_hOpenGl32;
 static HWND s_hWindow;
@@ -174,9 +174,9 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	SetPixelFormat(s_hDeviceContext, nPixelFormat, &xPixelFormatDesc);
 
 	s_hOpenGl32 = LoadLibrary("opengl32.dll");
-	s_pWglCreateContext = (PFNWGLCREATECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglCreateContext");
-	s_pWglMakeCurrent = (PFNWGLMAKECURRENTPROC)GetProcAddress(s_hOpenGl32, "wglMakeCurrent");
-	s_pWglDeleteContext = (PFNWGLDELETECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglDeleteContext");
+	s_pWglCreateContext = (WGLCREATECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglCreateContext");
+	s_pWglMakeCurrent = (WGLMAKECURRENTPROC)GetProcAddress(s_hOpenGl32, "wglMakeCurrent");
+	s_pWglDeleteContext = (WGLDELETECONTEXTPROC)GetProcAddress(s_hOpenGl32, "wglDeleteContext");
 
 	s_hWglContext = s_pWglCreateContext(s_hDeviceContext);
 	if (s_hWglContext == 0) {
@@ -302,7 +302,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 
 	if (eglMakeCurrent(s_pxEglDisplay, s_pxEglSurface, s_pxEglSurface, s_pxEglContext) == 0) {
 		printf("Failed making context current\n");
-		return -1;
+		return 0;
 	}
 #endif
 

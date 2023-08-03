@@ -4,4 +4,6 @@
 *.exe
 *.json
 
+llvm-project
+
 token.txt

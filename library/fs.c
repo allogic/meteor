@@ -1,16 +1,20 @@
+#define PATH_SIZE 0x400
+
 #include <stdint.h>
 #include <string.h>
 
 #include "fs.h"
 #include "macros.h"
 #include "list.h"
-#include "strutil.h"
+#include "strutl.h"
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
 #endif
 
-#define PATH_SIZE 0x400
+#ifdef OS_LINUX
+#	include <dirent.h>
+#endif
 
 struct xFile_t {
 	char acFilePath[PATH_SIZE];
@@ -35,7 +39,7 @@ struct xList_t* Fs_Alloc(const char* pcFilePath) {
 
 			GetFullPathName(xFindData.cFileName, sizeof(xFile.acFilePath), xFile.acFilePath, 0);
 
-			StrUtil_Replace(xFile.acFilePath, '\\', '/');
+			StrUtl_Replace(xFile.acFilePath, '\\', '/');
 
 			memcpy(xFile.acFileName, xFindData.cFileName, MIN(MAX_PATH, PATH_SIZE));
 
@@ -43,6 +47,33 @@ struct xList_t* Fs_Alloc(const char* pcFilePath) {
 		}
 	} while (FindNextFile(hFile, &xFindData) != 0);
 	FindClose(hFile);
+#endif
+
+#ifdef OS_LINUX
+	DIR* pxDir = opendir(pcFilePath);
+	struct dirent* pxEntry;
+	if (pxDir) {
+		pxEntry = readdir(pxDir);
+		while (pxEntry) {
+			if (strcmp(pxEntry->d_name, ".") == 0) {
+
+			} else if (strcmp(pxEntry->d_name, "..") == 0) {
+				
+			} else {
+				struct xFile_t xFile;
+
+				memset(&xFile, 0, sizeof(xFile));
+
+				uint32_t nFileNameLength = strlen(pxEntry->d_name);
+
+				memcpy(xFile.acFileName, pxEntry->d_name, MIN(nFileNameLength, PATH_SIZE));
+
+				List_Push(pxList, &xFile, sizeof(xFile));
+			}
+			pxEntry = readdir(pxDir);
+		}
+		closedir(pxDir);
+	}
 #endif
 
 	return pxList;

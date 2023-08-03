@@ -33,14 +33,18 @@ LFLAGS += -Wl,-Map=$(TARGET).map
 
 SOURCES += main.c
 
+SOURCES += $(LIBRARY_PATH)/debug.c
 SOURCES += $(LIBRARY_PATH)/window.c
 SOURCES += $(LIBRARY_PATH)/list.c
 SOURCES += $(LIBRARY_PATH)/fs.c
-SOURCES += $(LIBRARY_PATH)/strutil.c
+SOURCES += $(LIBRARY_PATH)/strutl.c
 
 SOURCES += $(PLATFORM_PATH)/glad.c
 
 ifneq (, $(filter windows, $(MAKECMDGOALS)))
+#CFLAGS += -gcodeview
+#CFLAGS += --target=x86_64-windows
+
 CFLAGS += -DOS_WINDOWS
 
 LFLAGS += -mwindows
@@ -48,6 +52,9 @@ endif
 
 ifneq (, $(filter linux, $(MAKECMDGOALS)))
 SOURCES += $(PLATFORM_PATH)/xdgshell.c
+
+#CFLAGS += -gcodeview
+#CFLAGS += --target=x86_64-linux
 
 CFLAGS += -DOS_LINUX
 
@@ -63,14 +70,14 @@ OBJECTS += $(SOURCES:.c=.o)
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-%.lnk: $(OBJECTS)
+%.bin: $(OBJECTS)
 	$(LD) $(LFLAGS) -m64 -o $@ $(OBJECTS)
 
-windows: $(TARGET).lnk
-	mv $(TARGET).lnk $(TARGET).exe
+windows: $(TARGET).bin
+	mv $(TARGET).bin $(TARGET).exe
 
-linux: $(TARGET).lnk
-	mv $(TARGET).lnk $(TARGET).elf
+linux: $(TARGET).bin
+	mv $(TARGET).bin $(TARGET).elf
 
 clean:
-	rm -f $(OBJECTS) *.lnk *.exe *.elf *.map
+	rm -f $(OBJECTS) *.bin *.exe *.elf *.map *.pdb

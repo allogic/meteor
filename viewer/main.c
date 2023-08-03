@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "debug.h"
 #include "macros.h"
 #include "window.h"
 #include "glad.h"
@@ -42,6 +43,8 @@ static void Fs_Test(void) {
 }
 
 int32_t main(void) {
+	Debug_Alloc();
+
 	List_Test();
 	Fs_Test();
 
@@ -62,6 +65,8 @@ int32_t main(void) {
 
 		Window_Free(pxWindow);
 	}
+
+	Debug_Free();
 
 	return 0;
 }
