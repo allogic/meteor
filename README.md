@@ -21,8 +21,8 @@ apt-get install make cmake
 # Clang
 
 ```sh
-build-llvm.sh
-build-llvm.ps1
+build_llvm.sh
+build_llvm.ps1
 ```
 
 # Wayland
@@ -35,5 +35,6 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 # Compile
 
 ```sh
-cmake -D"CMAKE_BUILD_TYPE=Release" -G "Unix Makefiles" ..
+build_project.sh <project> <type>
+build_project.ps1 <project> <type>
 ```
