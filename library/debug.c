@@ -1,4 +1,4 @@
-#define BACKTRACE_BUFFER_SIZE 32
+#define BACKTRACE_BUFFER_SIZE 4 // TODO
 
 #ifdef OS_LINUX
 #	define _XOPEN_SOURCE 700
@@ -60,10 +60,12 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 	xStackFrame.AddrStack.Mode = AddrModeFlat;
 
 	printf("\n");
-	printf("<<<< <<<< <<<< STACK TRACE >>>> >>>> >>>>\n");
+	printf("<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>\n");
 	printf("\n");
 
-	while (s_pStackWalk64(nMachineType, hProcess, hThread, &xStackFrame, pContext, 0, s_pSymFunctionTableAccess64, s_pSymGetModuleBase64, 0)) {
+	UINT nBacktraceCount = 0;
+
+	while ((s_pStackWalk64(nMachineType, hProcess, hThread, &xStackFrame, pContext, 0, s_pSymFunctionTableAccess64, s_pSymGetModuleBase64, 0)) && (nBacktraceCount < BACKTRACE_BUFFER_SIZE)) {
 		DWORD64 lAddress = xStackFrame.AddrPC.Offset;
 		DWORD64 lDisplacement;
 
@@ -88,6 +90,8 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
                 printf("Unknown function + 0x%I64X\n", lAddress);
             }
 		}
+
+		nBacktraceCount++;
 	}
 
 	s_pSymCleanup(hProcess);
@@ -105,14 +109,18 @@ static struct sigaction s_xOldAction;
 static void ExceptionHandler(int32_t nSignal) {
 	void* apBacktraceBuffer[BACKTRACE_BUFFER_SIZE];
 	int32_t nBacktraceSize;
+	char** ppSymbols;
 
 	nBacktraceSize = backtrace(apBacktraceBuffer, BACKTRACE_BUFFER_SIZE);
+	ppSymbols = backtrace_symbols(apBacktraceBuffer, nBacktraceSize);
 
 	printf("\n");
-	printf("<<<< <<<< <<<< STACK TRACE >>>> >>>> >>>>\n");
+	printf("<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>\n");
 	printf("\n");
 
-	backtrace_symbols_fd(apBacktraceBuffer, nBacktraceSize, fileno(stdout));
+	for (uint32_t i = 0; i < nBacktraceSize; ++i) {
+		printf("%s", ppSymbols[i]);
+	}
 
 	exit(EXIT_FAILURE);
 }

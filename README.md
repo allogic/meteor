@@ -3,23 +3,22 @@
 ```sh
 git clone -b main https://github.com/allogic/yami
 git submodule init
+git submodule update
 ```
 
-# Windows MinGw
+# Windows
 
 ```sh
-pacman -Syu
-pacman -Sy base-devel cmake
+choco install make cmake
 ```
 
-# Linux Debian
+# Debian
 
 ```sh
-apt-get update
-apt-get install build-essential cmake
+apt-get install make cmake
 ```
 
-# Clang & LLD
+# Clang
 
 ```sh
 build-llvm.sh
@@ -31,4 +30,10 @@ build-llvm.ps1
 ```sh
 wayland-scanner client-header /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml xdgshell.h
 wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml xdgshell.c
+```
+
+# Compile
+
+```sh
+cmake -D"CMAKE_BUILD_TYPE=Release" -G "Unix Makefiles" ..
 ```
