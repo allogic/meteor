@@ -6,10 +6,13 @@
 #include "debug.h"
 #include "macros.h"
 #include "window.h"
-#include "glad.h"
 #include "list.h"
 #include "filelist.h"
 #include "fileutl.h"
+
+#include "shader.h"
+
+#include "glad.h"
 
 static void List_Test(void) {
 	struct xList_t* pxList = List_Alloc();
@@ -44,6 +47,14 @@ static void FileList_Test(void) {
 	FileList_Free(pxList);
 }
 
+static void Shader_Test(void) {
+	uint32_t nDisplayShader = Shader_AllocDisplay("../shaders/test.vert", "../shaders/test.frag");
+	uint32_t nComputeShader = Shader_AllocCompute("../shaders/test.comp");
+
+	Shader_Free(nComputeShader);
+	Shader_Free(nDisplayShader);
+}
+
 int32_t main(void) {
 
 #ifdef DEBUG
@@ -60,9 +71,9 @@ int32_t main(void) {
 	invoke_main + 0x39
 	__scrt_common_main_seh + 0x12E
 	__scrt_common_main + 0xE
-*/
 
 	*(uint32_t*)0 = 42;
+*/
 
 	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
 
@@ -70,8 +81,10 @@ int32_t main(void) {
 
 		gladLoadGL();
 
+		Shader_Test();
+
 		while (Window_ShouldNotClose(pxWindow)) {
-			
+
 			Window_PollEvents(pxWindow);
 
 			glClearColor(0.1F, 0.0F, 0.0F, 1.0F);

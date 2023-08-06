@@ -15,4 +15,6 @@ list(APPEND SOURCES "${LIBRARY_DIR}/filelist.c")
 list(APPEND SOURCES "${LIBRARY_DIR}/fileutl.c")
 list(APPEND SOURCES "${LIBRARY_DIR}/strutl.c")
 
+list(APPEND SOURCES "${OPENGL_DIR}/shader.c")
+
 add_executable(${PROJECT_NAME} ${SOURCES})
