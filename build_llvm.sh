@@ -5,6 +5,7 @@ pushd llvm
 	mkdir build
 	pushd build
 		cmake -D"LLVM_ENABLE_PROJECTS=clang;lld;lldb" -D"CMAKE_BUILD_TYPE=Release" -G "Unix Makefiles" ../llvm
-		make
+		cmake --build .
+		cp -R "bin" "../../clang"
 	popd
 popd
