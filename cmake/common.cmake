@@ -6,12 +6,12 @@ add_compile_options("-Wextra")
 
 add_compile_options("-Wno-visibility")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "debug")
 	add_compile_options("-g")
 	add_compile_options("-O0")
 
 	add_compile_definitions("DEBUG")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif(CMAKE_BUILD_TYPE STREQUAL "release")
 	add_compile_options("-O2")
 	add_compile_options("-flto")
 endif()
