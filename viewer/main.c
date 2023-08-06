@@ -27,7 +27,7 @@ static void List_Test(void) {
 }
 
 static void Fs_Test(void) {
-	struct xList_t* pxList = Fs_Alloc("../*"); // TODO
+	struct xList_t* pxList = Fs_Alloc("./");
 
 	struct xFile_t* pxFile = Fs_Begin(pxList);
 	while (pxFile) {

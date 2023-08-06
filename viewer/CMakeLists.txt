@@ -1,12 +1,10 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12)
+
+project(viewer VERSION 0.0.1 LANGUAGES C)
 
 include("../cmake/common.cmake")
 include("../cmake/version.cmake")
 include("../cmake/opengl.cmake")
-
-project(viewer VERSION 0.0.1 LANGUAGES C)
-
-add_compile_definitions("WINDOW_NAME=\"${PROJECT_NAME} ${PROJECT_VERSION} HEAD ${GIT_HASH}\"")
 
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 

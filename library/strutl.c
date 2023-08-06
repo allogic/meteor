@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "strutl.h"
 
 void StrUtl_Replace(char* acSubject, char cFrom, char cTo) {
@@ -6,4 +8,12 @@ void StrUtl_Replace(char* acSubject, char cFrom, char cTo) {
 			*acSubject = cTo;
 		}
 	}
+}
+
+char* StrUtl_NormalizePath(const char* acFilePath) {
+	char* pFilePath = 0;
+
+
+
+	return pFilePath;
 }

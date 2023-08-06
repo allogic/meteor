@@ -9,13 +9,13 @@ git submodule update
 # Windows
 
 ```sh
-choco install make cmake
+choco install git cmake
 ```
 
 # Debian
 
 ```sh
-apt-get install make cmake
+apt-get install git cmake build-essential
 ```
 
 # Clang

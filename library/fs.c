@@ -1,5 +1,6 @@
 #define PATH_SIZE 0x400
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -27,8 +28,14 @@ struct xList_t* Fs_Alloc(const char* pcFilePath) {
 	struct xList_t* pxList = List_Alloc();
 
 #ifdef OS_WINDOWS
+	char acFilePath[PATH_SIZE];
+	uint32_t nFilePathLength = strlen(pcFilePath);
+	memset(acFilePath, 0, PATH_SIZE);
+	memcpy(acFilePath, pcFilePath, nFilePathLength);
+	acFilePath[nFilePathLength] = '*';
+
 	WIN32_FIND_DATA xFindData;
-	HANDLE hFile = FindFirstFile(pcFilePath, &xFindData);
+	HANDLE hFile = FindFirstFile(acFilePath, &xFindData);
 	do {
 		if (xFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 

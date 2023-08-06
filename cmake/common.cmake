@@ -15,9 +15,9 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	add_compile_definitions("-DOS_WINDOWS")
+	add_compile_definitions("OS_WINDOWS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	add_compile_definitions("-DOS_LINUX")
+	add_compile_definitions("OS_LINUX")
 endif()
 
 set(PROJECT_DIR .)

@@ -6,5 +6,6 @@
 
 llvm
 build
+clang
 
 token.txt
