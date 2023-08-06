@@ -309,35 +309,6 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	return &s_xWindow;
 }
 
-bool Window_ShouldNotClose(struct xWindow_t* pxWindow) {
-	return pxWindow->bShouldClose == 0;
-}
-
-void Window_PollEvents(struct xWindow_t* pxWindow) {
-#ifdef OS_WINDOWS
-	MSG xMsg;
-	if (PeekMessage(&xMsg, 0, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&xMsg);
-		DispatchMessage(&xMsg);
-	}
-#endif
-
-#ifdef OS_LINUX
-	wl_display_dispatch(s_pxDisplay);
-	//wl_display_dispatch_pending(s_pxDisplay);
-#endif
-}
-
-void Window_SwapBuffers(struct xWindow_t* pxWindow) {
-#ifdef OS_WINDOWS
-	SwapBuffers(s_hDeviceContext);
-#endif
-
-#ifdef OS_LINUX
-	eglSwapBuffers(s_pxEglDisplay, s_pxEglSurface);
-#endif
-}
-
 void Window_Free(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
 	s_pWglMakeCurrent(0, 0);
@@ -365,5 +336,34 @@ void Window_Free(struct xWindow_t* pxWindow) {
 	wl_compositor_destroy(s_pxCompositor);
 	wl_registry_destroy(s_pxRegistry);
 	wl_display_disconnect(s_pxDisplay);
+#endif
+}
+
+bool Window_ShouldNotClose(struct xWindow_t* pxWindow) {
+	return pxWindow->bShouldClose == 0;
+}
+
+void Window_PollEvents(struct xWindow_t* pxWindow) {
+#ifdef OS_WINDOWS
+	MSG xMsg;
+	if (PeekMessage(&xMsg, 0, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&xMsg);
+		DispatchMessage(&xMsg);
+	}
+#endif
+
+#ifdef OS_LINUX
+	wl_display_dispatch(s_pxDisplay);
+	//wl_display_dispatch_pending(s_pxDisplay);
+#endif
+}
+
+void Window_SwapBuffers(struct xWindow_t* pxWindow) {
+#ifdef OS_WINDOWS
+	SwapBuffers(s_hDeviceContext);
+#endif
+
+#ifdef OS_LINUX
+	eglSwapBuffers(s_pxEglDisplay, s_pxEglSurface);
 #endif
 }

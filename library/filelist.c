@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "fs.h"
+#include "filelist.h"
 #include "macros.h"
 #include "list.h"
 #include "strutl.h"
@@ -24,7 +24,7 @@ struct xFile_t {
 	char acExt[32];
 };
 
-struct xList_t* Fs_Alloc(const char* pcFilePath) {
+struct xList_t* FileList_Alloc(const char* pcFilePath) {
 	struct xList_t* pxList = List_Alloc();
 
 #ifdef OS_WINDOWS
@@ -86,30 +86,30 @@ struct xList_t* Fs_Alloc(const char* pcFilePath) {
 	return pxList;
 }
 
-void Fs_Free(struct xList_t* pxList) {
+void FileList_Free(struct xList_t* pxList) {
 	List_Free(pxList);
 }
 
-struct xFile_t* Fs_Begin(struct xList_t* pxList) {
+struct xFile_t* FileList_Begin(struct xList_t* pxList) {
 	return List_Begin(pxList);
 }
 
-struct xFile_t* Fs_Next(struct xList_t* pxList) {
+struct xFile_t* FileList_Next(struct xList_t* pxList) {
 	return List_Next(pxList);
 }
 
-const char* Fs_FilePath(struct xFile_t* pxFile) {
+const char* FileList_FilePath(struct xFile_t* pxFile) {
 	return pxFile->acFilePath;
 }
 
-const char* Fs_FileName(struct xFile_t* pxFile) {
+const char* FileList_FileName(struct xFile_t* pxFile) {
 	return pxFile->acFileName;
 }
 
-const char* Fs_FileStem(struct xFile_t* pxFile) {
+const char* FileList_FileStem(struct xFile_t* pxFile) {
 	return pxFile->acStem;
 }
 
-const char* Fs_FileExt(struct xFile_t* pxFile) {
+const char* FileList_FileExt(struct xFile_t* pxFile) {
 	return pxFile->acExt;
 }
