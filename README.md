@@ -1,7 +1,7 @@
 # Setup
 
 ```sh
-git clone -b main https://github.com/allogic/yami
+git clone -b main https://github.com/allogic/meteor
 git submodule init
 git submodule update
 ```
