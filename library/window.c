@@ -3,7 +3,6 @@
 
 #include "macros.h"
 #include "window.h"
-#include "glad.h"
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
@@ -37,6 +36,7 @@ static WGLCREATECONTEXTPROC s_pWglCreateContext;
 static WGLMAKECURRENTPROC s_pWglMakeCurrent;
 static WGLDELETECONTEXTPROC s_pWglDeleteContext;
 
+static HMODULE s_hInstance;
 static HMODULE s_hOpenGl32;
 static HWND s_hWindow;
 static HDC s_hDeviceContext;
@@ -128,7 +128,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 #ifdef OS_WINDOWS
 	const char acClassName[] = "OpenGLWin32Class";
 
-	HMODULE hInstance = GetModuleHandle(0);
+	s_hInstance = GetModuleHandle(0);
 
 	WNDCLASSEX xWindowClassEx;
 	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
@@ -139,7 +139,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	xWindowClassEx.lpfnWndProc = WndProc;
 	xWindowClassEx.cbClsExtra = 0;
 	xWindowClassEx.cbWndExtra = 0;
-	xWindowClassEx.hInstance = hInstance;
+	xWindowClassEx.hInstance = s_hInstance;
 	xWindowClassEx.hIcon = LoadIcon(0, IDI_APPLICATION);
 	xWindowClassEx.hCursor = LoadCursor(0, IDC_ARROW);
 	xWindowClassEx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -149,7 +149,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 
 	RegisterClassEx(&xWindowClassEx);
 
-	s_hWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, hInstance, 0);
+	s_hWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, s_hInstance, 0);
 	if (s_hWindow == 0) {
 		printf("Failed creating window\n");
 		return 0;
@@ -367,3 +367,13 @@ void Window_SwapBuffers(struct xWindow_t* pxWindow) {
 	eglSwapBuffers(s_pxEglDisplay, s_pxEglSurface);
 #endif
 }
+
+#ifdef OS_WINDOWS
+void* Window_GetWindowHandle(struct xWindow_t* pxWindow) {
+	return s_hWindow;
+}
+
+void* Window_GetModuleHandle(struct xWindow_t* pxWindow) {
+	return s_hInstance;
+}
+#endif

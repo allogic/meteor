@@ -8,7 +8,7 @@ void FileUtl_ReadBinary(char** ppcData, uint32_t* pnSize, const char* pcFilePath
 
     fseek(pxFile, 0, SEEK_END);
     *pnSize = (uint32_t)ftell(pxFile);
-    *ppcData = calloc(1, (*pnSize) + 1);
+    *ppcData = calloc(1, *pnSize);
     fseek(pxFile, 0, SEEK_SET);
 
     fread(*ppcData, 1, *pnSize, pxFile);

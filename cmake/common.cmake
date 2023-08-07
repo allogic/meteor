@@ -26,10 +26,9 @@ set(PROJECT_DIR .)
 set(LIBRARY_DIR ../library)
 set(PLATFORM_DIR ../library/platform)
 set(OPENGL_DIR ../library/opengl)
+set(VULKAN_DIR ../library/vulkan)
 
 include_directories(${PROJECT_DIR})
 include_directories(${LIBRARY_DIR})
-include_directories(${PLATFORM_DIR})
-include_directories(${OPENGL_DIR})
 
 add_compile_definitions("_CRT_SECURE_NO_WARNINGS")

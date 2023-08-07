@@ -9,10 +9,7 @@
 #include "list.h"
 #include "filelist.h"
 #include "fileutl.h"
-
-#include "shader.h"
-
-#include "glad.h"
+#include "vulkan.h"
 
 static void List_Test(void) {
 	struct xList_t* pxList = List_Alloc();
@@ -47,6 +44,7 @@ static void FileList_Test(void) {
 	FileList_Free(pxList);
 }
 
+/*
 static void Shader_Test(void) {
 	uint32_t nDisplayShader = Shader_AllocDisplay("../shaders/test.vert", "../shaders/test.frag");
 	uint32_t nComputeShader = Shader_AllocCompute("../shaders/test.comp");
@@ -54,6 +52,7 @@ static void Shader_Test(void) {
 	Shader_Free(nComputeShader);
 	Shader_Free(nDisplayShader);
 }
+*/
 
 int32_t main(void) {
 
@@ -64,34 +63,19 @@ int32_t main(void) {
 	List_Test();
 	FileList_Test();
 
-/*
-	<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>
-
-	main + 0x1D
-	invoke_main + 0x39
-	__scrt_common_main_seh + 0x12E
-	__scrt_common_main + 0xE
-
-	*(uint32_t*)0 = 42;
-*/
-
 	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
 
 	if (pxWindow) {
 
-		gladLoadGL();
+		if (Vulkan_Alloc(pxWindow)) {
 
-		Shader_Test();
+			while (Window_ShouldNotClose(pxWindow)) {
+				Window_PollEvents(pxWindow);
+				Window_SwapBuffers(pxWindow);
+			}
 
-		while (Window_ShouldNotClose(pxWindow)) {
+			Vulkan_Free();
 
-			Window_PollEvents(pxWindow);
-
-			glClearColor(0.1F, 0.0F, 0.0F, 1.0F);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glFlush();
-
-			Window_SwapBuffers(pxWindow);
 		}
 
 		Window_Free(pxWindow);
