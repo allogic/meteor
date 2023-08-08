@@ -5,11 +5,10 @@
 
 #include "hardfault.h"
 #include "macros.h"
-#include "window.h"
 #include "list.h"
 #include "filelist.h"
 #include "fileutl.h"
-#include "vulkan.h"
+#include "strutl.h"
 
 static void List_Test(void) {
 	struct xList_t* pxList = List_Alloc();
@@ -25,6 +24,8 @@ static void List_Test(void) {
 		pData = List_Next(pxList);
 	}
 
+	printf("\n");
+
 	List_Free(pxList);
 }
 
@@ -37,6 +38,8 @@ static void FileList_Test(void) {
 		printf("FileName:%s\n", FileList_FileName(pxFile));
 		printf("FileStem:%s\n", FileList_FileStem(pxFile));
 		printf("FileExt:%s\n", FileList_FileExt(pxFile));
+		printf("FileExt:%u\n", FileList_IsDirectory(pxFile));
+		printf("\n");
 
 		pxFile = FileList_Next(pxList);
 	}
@@ -44,15 +47,37 @@ static void FileList_Test(void) {
 	FileList_Free(pxList);
 }
 
-/*
-static void Shader_Test(void) {
-	uint32_t nDisplayShader = Shader_AllocDisplay("../shaders/test.vert", "../shaders/test.frag");
-	uint32_t nComputeShader = Shader_AllocCompute("../shaders/test.comp");
+static void StrUtl_Test(void) {
+	uint32_t nLength;
 
-	Shader_Free(nComputeShader);
-	Shader_Free(nDisplayShader);
+	char* pcPath0 = StrUtl_NormalizePath(".", 0, 0);
+	char* pcPath1 = StrUtl_NormalizePath("..", 0, 0);
+	char* pcPath2 = StrUtl_NormalizePath("./", 0, 0);
+	char* pcPath3 = StrUtl_NormalizePath("../", 0, 0);
+	char* pcPath4 = StrUtl_NormalizePath(".\\test", 0, 0);
+	char* pcPath5 = StrUtl_NormalizePath("..\\\\test.exe", 0, 0);
+	char* pcPath6 = StrUtl_NormalizePath("..\\", &nLength, 1);
+
+	pcPath6[nLength - 1] = '*';
+
+	printf("%s\n", pcPath0);
+	printf("%s\n", pcPath1);
+	printf("%s\n", pcPath2);
+	printf("%s\n", pcPath3);
+	printf("%s\n", pcPath4);
+	printf("%s\n", pcPath5);
+	printf("%s\n", pcPath6);
+
+	printf("\n");
+
+	free(pcPath0);
+	free(pcPath1);
+	free(pcPath2);
+	free(pcPath3);
+	free(pcPath4);
+	free(pcPath5);
+	free(pcPath6);
 }
-*/
 
 int32_t main(void) {
 
@@ -62,25 +87,8 @@ int32_t main(void) {
 
 	List_Test();
 	FileList_Test();
-
-	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
-
-	if (pxWindow) {
-
-		if (Vulkan_Alloc(pxWindow)) {
-
-			while (Window_ShouldNotClose(pxWindow)) {
-				Window_PollEvents(pxWindow);
-				Window_SwapBuffers(pxWindow);
-			}
-
-			Vulkan_Free();
-
-		}
-
-		Window_Free(pxWindow);
-	}
-
+	StrUtl_Test();
+	
 #ifdef DEBUG
 	Hardfault_Free();
 #endif

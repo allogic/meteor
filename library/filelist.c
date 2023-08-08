@@ -1,9 +1,10 @@
-#define PATH_SIZE 0x400
+#define _DEFAULT_SOURCE
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
+#include "fs.h"
 #include "filelist.h"
 #include "macros.h"
 #include "list.h"
@@ -18,69 +19,70 @@
 #endif
 
 struct xFile_t {
-	char acFilePath[PATH_SIZE];
-	char acFileName[PATH_SIZE];
-	char acStem[PATH_SIZE];
+	char acFilePath[MAX_PATH_SIZE];
+	char acFileName[MAX_PATH_SIZE];
+	char acStem[MAX_PATH_SIZE];
 	char acExt[32];
+	bool bIsDirectory;
 };
 
 struct xList_t* FileList_Alloc(const char* pcFilePath) {
 	struct xList_t* pxList = List_Alloc();
 
 #ifdef OS_WINDOWS
-	char acFilePath[PATH_SIZE];
-	uint32_t nFilePathLength = strlen(pcFilePath);
-	memset(acFilePath, 0, PATH_SIZE);
-	memcpy(acFilePath, pcFilePath, nFilePathLength);
-	acFilePath[nFilePathLength] = '*';
+	uint32_t nNormFilePathLength;
+	char* pcNormFilePath = StrUtl_NormalizePath(pcFilePath, &nNormFilePathLength, 1);
+	pcNormFilePath[nNormFilePathLength - 1] = '*';
 
 	WIN32_FIND_DATA xFindData;
-	HANDLE hFile = FindFirstFile(acFilePath, &xFindData);
+	HANDLE hFile = FindFirstFile(pcNormFilePath, &xFindData);
+
 	do {
-		if (xFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		struct xFile_t xFile;
 
-		} else {
-			struct xFile_t xFile;
+		memset(&xFile, 0, sizeof(xFile));
 
-			memset(&xFile, 0, sizeof(xFile));
+		GetFullPathName(xFindData.cFileName, sizeof(xFile.acFilePath), xFile.acFilePath, 0);
 
-			GetFullPathName(xFindData.cFileName, sizeof(xFile.acFilePath), xFile.acFilePath, 0);
+		StrUtl_ReplaceChar(xFile.acFilePath, '\\', '/');
 
-			StrUtl_Replace(xFile.acFilePath, '\\', '/');
+		memcpy(xFile.acFileName, xFindData.cFileName, MIN(MAX_PATH, MAX_PATH_SIZE));
 
-			memcpy(xFile.acFileName, xFindData.cFileName, MIN(MAX_PATH, PATH_SIZE));
+		xFile.bIsDirectory = xFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 
-			List_Push(pxList, &xFile, sizeof(xFile));
-		}
+		List_Push(pxList, &xFile, sizeof(xFile));
 	} while (FindNextFile(hFile, &xFindData) != 0);
+
 	FindClose(hFile);
+
+	free(pcNormFilePath);
 #endif
 
 #ifdef OS_LINUX
-	DIR* pxDir = opendir(pcFilePath);
-	struct dirent* pxEntry;
-	if (pxDir) {
+	char* pcNormFilePath = StrUtl_NormalizePath(pcFilePath, 0, 0);
+
+	DIR* pxDir = opendir(pcNormFilePath);
+	struct dirent* pxEntry = readdir(pxDir);
+
+	while (pxEntry) {
+		struct xFile_t xFile;
+
+		memset(&xFile, 0, sizeof(xFile));
+
+		uint32_t nFileNameLength = strlen(pxEntry->d_name);
+
+		memcpy(xFile.acFileName, pxEntry->d_name, MIN(nFileNameLength, MAX_PATH_SIZE));
+
+		xFile.bIsDirectory = pxEntry->d_type == DT_DIR;
+
+		List_Push(pxList, &xFile, sizeof(xFile));
+
 		pxEntry = readdir(pxDir);
-		while (pxEntry) {
-			if (strcmp(pxEntry->d_name, ".") == 0) {
-
-			} else if (strcmp(pxEntry->d_name, "..") == 0) {
-				
-			} else {
-				struct xFile_t xFile;
-
-				memset(&xFile, 0, sizeof(xFile));
-
-				uint32_t nFileNameLength = strlen(pxEntry->d_name);
-
-				memcpy(xFile.acFileName, pxEntry->d_name, MIN(nFileNameLength, PATH_SIZE));
-
-				List_Push(pxList, &xFile, sizeof(xFile));
-			}
-			pxEntry = readdir(pxDir);
-		}
-		closedir(pxDir);
 	}
+
+	closedir(pxDir);
+
+	free(pcNormFilePath);
 #endif
 
 	return pxList;
@@ -112,4 +114,8 @@ const char* FileList_FileStem(struct xFile_t* pxFile) {
 
 const char* FileList_FileExt(struct xFile_t* pxFile) {
 	return pxFile->acExt;
+}
+
+bool FileList_IsDirectory(struct xFile_t* pxFile) {
+	return pxFile->bIsDirectory;
 }

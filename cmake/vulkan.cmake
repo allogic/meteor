@@ -1,5 +1,4 @@
-set(VULKAN_INCLUDE_DIR "C:/VulkanSDK/1.3.250.1/Include")
-set(VULKAN_LIBRARY_DIR "C:/VulkanSDK/1.3.250.1/Lib")
+find_package(Vulkan REQUIRED FATAL_ERROR)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_link_options("-lUser32")
@@ -10,6 +9,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	list(APPEND SOURCES "${PLATFORM_DIR}/xdgshell.c")
 endif()
 
-add_link_options("-l${VULKAN_LIBRARY_DIR}/vulkan-1.lib")
+message("FUUUUUUUUUUU ${Vulkan_LIBRARIES}")
+message("FUUUUUUUUUUU ${Vulkan_LIBRARY}")
+message("FUUUUUUUUUUU ${Vulkan_INCLUDE_DIRS}")
 
-include_directories(${VULKAN_INCLUDE_DIR})
+include_directories(${Vulkan_INCLUDE_DIRS})

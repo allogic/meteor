@@ -1,6 +1,8 @@
 #ifndef FILELIST_H
 #define FILELIST_H
 
+#include <stdbool.h>
+
 struct xList_t;
 struct xFile_t;
 
@@ -14,5 +16,6 @@ const char* FileList_FilePath(struct xFile_t* pxFile);
 const char* FileList_FileName(struct xFile_t* pxFile);
 const char* FileList_FileStem(struct xFile_t* pxFile);
 const char* FileList_FileExt(struct xFile_t* pxFile);
+bool FileList_IsDirectory(struct xFile_t* pxFile);
 
 #endif
