@@ -7,7 +7,7 @@ Push-Location $project
 	}
 	New-Item -ItemType "directory" -Path "build" *> $null
 	Push-Location build
-		cmake -D"CMAKE_C_COMPILER=clang" -D"CMAKE_BUILD_TYPE=$type" -G "Unix Makefiles" "..\llvm"
+		cmake -D"CMAKE_C_COMPILER=clang" -D"CMAKE_BUILD_TYPE=$type" -G "Unix Makefiles" ".."
 		cmake --build "." --parallel 8
 	Pop-Location
 Pop-Location

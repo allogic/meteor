@@ -17,9 +17,9 @@
 
 struct xWindow_t {
 #ifdef OS_WINDOWS
-	HMODULE hInstance;
-	HWND hWindow;
-	HDC hDeviceContext;
+	HMODULE xInstance;
+	HWND xWindow;
+	HDC xDeviceContext;
 	MSG xMsg;
 #endif
 #ifdef OS_LINUX
@@ -42,7 +42,7 @@ struct xWindow_t {
 static struct xWindow_t s_xWindow;
 
 #ifdef OS_WINDOWS
-static LRESULT WndProc(HWND hWnd, UINT nMessage, WPARAM wParam, LPARAM lParam) {
+static LRESULT WndProc(HWND xWindow, UINT nMessage, WPARAM wParam, LPARAM lParam) {
 	switch (nMessage) {
 		case WM_CLOSE: {
 			s_xWindow.bShouldClose = true;
@@ -54,7 +54,7 @@ static LRESULT WndProc(HWND hWnd, UINT nMessage, WPARAM wParam, LPARAM lParam) {
 		}
 		break;
 		default: {
-			return DefWindowProc(hWnd, nMessage, wParam, lParam);
+			return DefWindowProc(xWindow, nMessage, wParam, lParam);
 		}
 	}
 	return 0;
@@ -87,7 +87,7 @@ static const struct wl_registry_listener s_xRegistryListener = {
 
 struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
 #ifdef OS_WINDOWS
-	s_xWindow.hInstance = GetModuleHandle(0);
+	s_xWindow.xInstance = GetModuleHandle(0);
 
 	WNDCLASSEX xWindowClassEx;
 	memset(&xWindowClassEx, 0, sizeof(xWindowClassEx));
@@ -96,7 +96,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	xWindowClassEx.lpfnWndProc = WndProc;
 	xWindowClassEx.cbClsExtra = 0;
 	xWindowClassEx.cbWndExtra = 0;
-	xWindowClassEx.hInstance = s_xWindow.hInstance;
+	xWindowClassEx.hInstance = s_xWindow.xInstance;
 	xWindowClassEx.hIcon = LoadIcon(0, IDI_APPLICATION);
 	xWindowClassEx.hCursor = LoadCursor(0, IDC_ARROW);
 	xWindowClassEx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -106,14 +106,14 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 
 	RegisterClassEx(&xWindowClassEx);
 
-	s_xWindow.hWindow = CreateWindowEx(0, WIN32_CLASS_NAME, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, s_xWindow.hInstance, 0);
-	if (s_xWindow.hWindow == 0) {
+	s_xWindow.xWindow = CreateWindowEx(0, WIN32_CLASS_NAME, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, s_xWindow.xInstance, 0);
+	if (s_xWindow.xWindow == 0) {
 		printf("Failed creating window\n");
 		return 0;
 	}
 
-	s_xWindow.hDeviceContext = GetDC(s_xWindow.hWindow);
-	if (s_xWindow.hDeviceContext == 0) {
+	s_xWindow.xDeviceContext = GetDC(s_xWindow.xWindow);
+	if (s_xWindow.xDeviceContext == 0) {
 		printf("Failed creating device context\n");
 		return 0;
 	}
@@ -128,11 +128,11 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	xPixelFormatDesc.cDepthBits = 24;
 	xPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
 
-	INT nPixelFormat = ChoosePixelFormat(s_xWindow.hDeviceContext, &xPixelFormatDesc);
-	SetPixelFormat(s_xWindow.hDeviceContext, nPixelFormat, &xPixelFormatDesc);
+	INT nPixelFormat = ChoosePixelFormat(s_xWindow.xDeviceContext, &xPixelFormatDesc);
+	SetPixelFormat(s_xWindow.xDeviceContext, nPixelFormat, &xPixelFormatDesc);
 
-	ShowWindow(s_xWindow.hWindow, SW_SHOW);
-	UpdateWindow(s_xWindow.hWindow);
+	ShowWindow(s_xWindow.xWindow, SW_SHOW);
+	UpdateWindow(s_xWindow.xWindow);
 #endif
 
 #ifdef OS_LINUX
@@ -187,14 +187,17 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	wl_surface_set_opaque_region(s_xWindow.pxSurface, s_xWindow.pxRegion);
 #endif
 
+	s_xWindow.nWindowWidth = nWidth;
+	s_xWindow.nWindowHeight = nHeight;
+
 	return &s_xWindow;
 }
 
 void Window_Free(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
-	ReleaseDC(pxWindow->hWindow, pxWindow->hDeviceContext);
+	ReleaseDC(pxWindow->xWindow, pxWindow->xDeviceContext);
 
-	DestroyWindow(pxWindow->hWindow);
+	DestroyWindow(pxWindow->xWindow);
 #endif
 
 #ifdef OS_LINUX
@@ -232,10 +235,18 @@ void Window_SwapBuffers(struct xWindow_t* pxWindow) {
 
 #ifdef OS_WINDOWS
 void* Window_GetWindowHandle(struct xWindow_t* pxWindow) {
-	return pxWindow->hWindow;
+	return pxWindow->xWindow;
 }
 
 void* Window_GetModuleHandle(struct xWindow_t* pxWindow) {
-	return pxWindow->hInstance;
+	return pxWindow->xInstance;
 }
 #endif
+
+uint32_t Window_GetWidth(struct xWindow_t* pxWindow) {
+	return pxWindow->nWindowWidth;
+}
+
+uint32_t Window_GetHeight(struct xWindow_t* pxWindow) {
+	return pxWindow->nWindowHeight;
+}

@@ -88,7 +88,7 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
             if (s_pSymGetModuleInfo64(hProcess, lAddress, &xModuleInfo)) {
                 printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, lDisplacement, lAddress);
             } else {
-                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0x0, lAddress);
+                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0ULL, lAddress);
             }
 		}
 

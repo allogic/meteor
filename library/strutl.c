@@ -39,7 +39,7 @@ char* StrUtl_NormalizePath(const char* pcFilePath, uint32_t* pnFilePathLength, u
 		*pnFilePathLength = nNormFilePathLength + nScratch;
 	}
 
-	char* pcNormFilePath = (char*)calloc(1, nNormFilePathLength + nScratch);
+	char* pcNormFilePath = (char*)calloc(1, nNormFilePathLength + nScratch + 1);
 	memcpy(pcNormFilePath, acBuffer, nNormFilePathLength);
 
 	return pcNormFilePath;
