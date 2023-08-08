@@ -1,4 +1,4 @@
-find_package(Vulkan REQUIRED FATAL_ERROR)
+find_package(Vulkan REQUIRED)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_link_options("-lUser32")
@@ -9,8 +9,12 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	list(APPEND SOURCES "${PLATFORM_DIR}/xdgshell.c")
 endif()
 
-message("FUUUUUUUUUUU ${Vulkan_LIBRARIES}")
-message("FUUUUUUUUUUU ${Vulkan_LIBRARY}")
-message("FUUUUUUUUUUU ${Vulkan_INCLUDE_DIRS}")
-
 include_directories(${Vulkan_INCLUDE_DIRS})
+
+add_link_options("-l${Vulkan_LIBRARIES}")
+
+add_compile_definitions("WIN32_CLASS_NAME=\"${PROJECT_NAME}_win32_class\"")
+add_compile_definitions("WINDOW_NAME=\"${PROJECT_NAME} ${PROJECT_VERSION}\"")
+
+add_compile_definitions("APPLICATION_NAME=\"${PROJECT_NAME}\"")
+add_compile_definitions("ENGINE_NAME=\"${PROJECT_NAME}\"")

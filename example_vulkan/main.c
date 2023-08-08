@@ -5,9 +5,10 @@
 
 #include "hardfault.h"
 #include "macros.h"
-#include "window.h"
-#include "vulkan.h"
 #include "strutl.h"
+
+#include "platform/window.h"
+#include "platform/vulkan.h"
 
 int32_t main(void) {
 
