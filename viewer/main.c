@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "debug.h"
+#include "hardfault.h"
 #include "macros.h"
 #include "window.h"
 #include "list.h"
@@ -57,7 +57,7 @@ static void Shader_Test(void) {
 int32_t main(void) {
 
 #ifdef DEBUG
-	Debug_Alloc();
+	Hardfault_Alloc();
 #endif
 
 	List_Test();
@@ -82,7 +82,7 @@ int32_t main(void) {
 	}
 
 #ifdef DEBUG
-	Debug_Free();
+	Hardfault_Free();
 #endif
 
 	return 0;

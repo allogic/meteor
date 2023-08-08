@@ -14,7 +14,7 @@
 #	include <wayland-egl.h>
 #	include <EGL/egl.h>
 #	include <EGL/eglext.h>
-#	include "xdgshell.h"
+#	include "platform/xdgshell.h"
 #endif
 
 struct xWindow_t {
@@ -126,13 +126,9 @@ static const struct wl_registry_listener s_xRgistryListener = {
 
 struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint32_t nHeight) {
 #ifdef OS_WINDOWS
-	const char acClassName[] = "OpenGLWin32Class";
-
 	s_hInstance = GetModuleHandle(0);
 
 	WNDCLASSEX xWindowClassEx;
-	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
-
 	memset(&xWindowClassEx, 0, sizeof(xWindowClassEx));
 	xWindowClassEx.cbSize = sizeof(xWindowClassEx);
 	xWindowClassEx.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -144,12 +140,12 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 	xWindowClassEx.hCursor = LoadCursor(0, IDC_ARROW);
 	xWindowClassEx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	xWindowClassEx.lpszMenuName = 0;
-	xWindowClassEx.lpszClassName = acClassName;
+	xWindowClassEx.lpszClassName = WIN32_CLASS_NAME;
 	xWindowClassEx.hIconSm = LoadIcon(0, IDI_APPLICATION);
 
 	RegisterClassEx(&xWindowClassEx);
 
-	s_hWindow = CreateWindowEx(0, acClassName, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, s_hInstance, 0);
+	s_hWindow = CreateWindowEx(0, WIN32_CLASS_NAME, pcWindowTitle, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, nWidth, nHeight, 0, 0, s_hInstance, 0);
 	if (s_hWindow == 0) {
 		printf("Failed creating window\n");
 		return 0;
@@ -161,6 +157,7 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 		return 0;
 	}
 
+	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
 	memset(&xPixelFormatDesc, 0, sizeof(xPixelFormatDesc));
 	xPixelFormatDesc.nSize = sizeof(xPixelFormatDesc);
 	xPixelFormatDesc.nVersion = 1;

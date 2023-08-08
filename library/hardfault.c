@@ -10,7 +10,8 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "debug.h"
+#include "macros.h"
+#include "hardfault.h"
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
@@ -77,7 +78,7 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 		pxSymbol->MaxNameLen = MAX_SYM_NAME;
 
 		if (s_pSymFromAddr(hProcess, lAddress, &lDisplacement, pxSymbol)) {
-			printf("%s + 0x%I64X\n", pxSymbol->Name, lDisplacement);
+			printf("%s(+0x%I64x) [0x%I64x]\n", pxSymbol->Name, lDisplacement, lAddress);
 		} else {
 			IMAGEHLP_MODULE64 xModuleInfo;
 
@@ -85,14 +86,16 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
             xModuleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
 
             if (s_pSymGetModuleInfo64(hProcess, lAddress, &xModuleInfo)) {
-                printf("%s + 0x%I64X\n", xModuleInfo.ModuleName, lDisplacement);
+                printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, lDisplacement, lAddress);
             } else {
-                printf("Unknown function + 0x%I64X\n", lAddress);
+                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0x0, lAddress);
             }
 		}
 
 		nBacktraceCount++;
 	}
+
+	printf("\n");
 
 	s_pSymCleanup(hProcess);
 	
@@ -107,6 +110,8 @@ static struct sigaction s_xNewAction;
 static struct sigaction s_xOldAction;
 
 static void ExceptionHandler(int32_t nSignal) {
+	UNUSED(nSignal);
+
 	void* apBacktraceBuffer[BACKTRACE_BUFFER_SIZE];
 	int32_t nBacktraceSize;
 	char** ppSymbols;
@@ -118,15 +123,17 @@ static void ExceptionHandler(int32_t nSignal) {
 	printf("<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>\n");
 	printf("\n");
 
-	for (uint32_t i = 0; i < nBacktraceSize; ++i) {
-		printf("%s", ppSymbols[i]);
+	for (int32_t i = 0; i < nBacktraceSize; ++i) {
+		printf("%s\n", ppSymbols[i]);
 	}
+
+	printf("\n");
 
 	exit(EXIT_FAILURE);
 }
 #endif
 
-void Debug_Alloc(void) {
+void Hardfault_Alloc(void) {
 #ifdef OS_WINDOWS
 	s_hDbgHelp = LoadLibrary("dbghelp.dll");
 
@@ -155,7 +162,7 @@ void Debug_Alloc(void) {
 #endif
 }
 
-void Debug_Free(void) {
+void Hardfault_Free(void) {
 #ifdef OS_WINDOWS
 	RemoveVectoredExceptionHandler(s_pGlobalExceptionHandler);
 

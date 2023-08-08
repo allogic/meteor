@@ -6,6 +6,6 @@
 
 llvm
 build
-clang
+bin
 
 token.txt
