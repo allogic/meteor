@@ -1,3 +1,1 @@
-$clang = "$(Get-Location)\bin"
-
-$env:PATH += ";$clang"
+$env:PATH += ";C:\llvm"

@@ -38,3 +38,9 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 build_project.sh <project> <type>
 build_project.ps1 <project> <type>
 ```
+
+# Misc
+
+```sh
+clang -print-resource-dir
+```
