@@ -1,3 +1,3 @@
  #!/bin/bash
 
-export PATH="$PATH:/opt/llvm"
+export PATH="$PATH:/opt/llvm/bin"

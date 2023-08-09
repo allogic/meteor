@@ -9,13 +9,13 @@ git submodule update
 # Windows
 
 ```sh
-choco install git cmake
+choco install git cmake python3
 ```
 
 # Debian
 
 ```sh
-apt-get install git cmake build-essential
+apt-get install git cmake python3 build-essential
 ```
 
 # Clang

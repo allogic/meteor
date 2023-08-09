@@ -1,1 +1,1 @@
-$env:PATH += ";C:\llvm"
+$env:PATH += ";C:\llvm\bin"

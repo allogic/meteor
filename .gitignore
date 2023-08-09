@@ -4,8 +4,6 @@
 *.exe
 *.json
 
-llvm
 build
-bin
 
 token.txt
