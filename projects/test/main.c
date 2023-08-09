@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "hardfault.h"
-#include "macros.h"
-#include "list.h"
-#include "filelist.h"
-#include "fileutl.h"
-#include "strutl.h"
+#include <hardfault.h>
+#include <macros.h>
+#include <list.h>
+#include <filelist.h>
+#include <fileutl.h>
+#include <strutl.h>
 
 static void List_Test(void) {
 	struct xList_t* pxList = List_Alloc();

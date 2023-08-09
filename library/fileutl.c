@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "fileutl.h"
+#include <fileutl.h>
 
 void FileUtl_ReadBinary(char** ppcData, uint32_t* pnSize, const char* pcFilePath) {
     FILE* pxFile = fopen(pcFilePath, "rb");

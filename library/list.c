@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "list.h"
+#include <list.h>
 
 struct xNode_t {
 	struct xNode_t* pxNext;

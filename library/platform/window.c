@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "macros.h"
-#include "window.h"
+#include <macros.h>
+
+#include <platform/window.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>

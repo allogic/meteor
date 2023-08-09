@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "hardfault.h"
-#include "macros.h"
-#include "strutl.h"
+#include <hardfault.h>
+#include <macros.h>
+#include <strutl.h>
 
-#include "platform/window.h"
-#include "platform/vulkan.h"
+#include <platform/window.h>
+
+#include <graphics/vulkan.h>
 
 int32_t main(void) {
 

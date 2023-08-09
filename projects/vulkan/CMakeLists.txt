@@ -10,6 +10,7 @@ list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 list(APPEND SOURCES "${LIBRARY_DIR}/hardfault.c")
 
 list(APPEND SOURCES "${PLATFORM_DIR}/window.c")
-list(APPEND SOURCES "${PLATFORM_DIR}/vulkan.c")
+
+list(APPEND SOURCES "${GRAPHICS_DIR}/vulkan.c")
 
 add_executable(${PROJECT_NAME} ${SOURCES})

@@ -2,9 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "fs.h"
-#include "macros.h"
-#include "strutl.h"
+#include <fs.h>
+#include <macros.h>
+#include <strutl.h>
 
 void StrUtl_ReplaceChar(char* pcSubject, char cFrom, char cTo) {
 	while (*pcSubject++) {

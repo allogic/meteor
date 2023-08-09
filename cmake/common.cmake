@@ -28,6 +28,7 @@ endif()
 set(PROJECT_DIR ".")
 set(LIBRARY_DIR "../../library")
 set(PLATFORM_DIR "../../library/platform")
+set(GRAPHICS_DIR "../../library/graphics")
 
 include_directories(${PROJECT_DIR})
 include_directories(${LIBRARY_DIR})

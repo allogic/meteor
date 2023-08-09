@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "macros.h"
-#include "vulkan.h"
-#include "window.h"
+#include <macros.h>
+
+#include <graphics/vulkan.h>
+
+#include <platform/window.h>
 
 #include <vulkan/vulkan.h>
 

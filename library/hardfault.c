@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "macros.h"
-#include "hardfault.h"
+#include <macros.h>
+#include <hardfault.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>

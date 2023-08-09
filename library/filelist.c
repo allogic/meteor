@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "fs.h"
-#include "filelist.h"
-#include "macros.h"
-#include "list.h"
-#include "strutl.h"
+#include <fs.h>
+#include <filelist.h>
+#include <macros.h>
+#include <list.h>
+#include <strutl.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
