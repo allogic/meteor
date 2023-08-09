@@ -1,5 +1,7 @@
 add_compile_options("-std=c99")
 
+add_compile_options("-nobuiltininc")
+
 add_compile_options("-Wpedantic")
 add_compile_options("-Wall")
 add_compile_options("-Wextra")
@@ -23,10 +25,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_definitions("OS_LINUX")
 endif()
 
-set(PROJECT_DIR .)
-set(LIBRARY_DIR ../library)
-set(PLATFORM_DIR ../library/platform)
-set(CLANG_DIR ../llvm/clang/lib/Headers)
+set(PROJECT_DIR ".")
+set(LIBRARY_DIR "../library")
+set(PLATFORM_DIR "../library/platform")
+set(CLANG_DIR "../llvm/clang/lib/Headers")
 
 include_directories(${PROJECT_DIR})
 include_directories(${LIBRARY_DIR})
