@@ -379,10 +379,10 @@ static bool Vulkan_CreateSwapChain(struct xWindow_t* pxWindow) {
 	return true;
 }
 
-static bool Vulkan_CreateLogicalDevice(int32_t* pnGraphicsQueueIndex, int32_t* pnPresentQueueIndex) {
+static bool Vulkan_CreateLogicalDevice(int32_t nGraphicsQueueIndex, int32_t nPresentQueueIndex) {
 #ifdef DEBUG
-	printf("GraphicsQueueIndex %d\n", *pnGraphicsQueueIndex);
-	printf("PresentQueueIndex %d\n", *pnPresentQueueIndex);
+	printf("GraphicsQueueIndex %d\n", nGraphicsQueueIndex);
+	printf("PresentQueueIndex %d\n", nPresentQueueIndex);
 #endif
 
 	float fQueuePriority = 1.0f;
@@ -391,12 +391,12 @@ static bool Vulkan_CreateLogicalDevice(int32_t* pnGraphicsQueueIndex, int32_t* p
 	memset(&xQueueCreateInfos, 0, sizeof(xQueueCreateInfos));
 
 	xQueueCreateInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[0].queueFamilyIndex = *pnGraphicsQueueIndex;
+	xQueueCreateInfos[0].queueFamilyIndex = nGraphicsQueueIndex;
 	xQueueCreateInfos[0].queueCount = 1;
 	xQueueCreateInfos[0].pQueuePriorities = &fQueuePriority;
 
 	xQueueCreateInfos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[1].queueFamilyIndex = *pnPresentQueueIndex;
+	xQueueCreateInfos[1].queueFamilyIndex = nPresentQueueIndex;
 	xQueueCreateInfos[1].queueCount = 1;
 	xQueueCreateInfos[1].pQueuePriorities = &fQueuePriority;
 
@@ -421,8 +421,8 @@ static bool Vulkan_CreateLogicalDevice(int32_t* pnGraphicsQueueIndex, int32_t* p
 		return false;
 	}
 
-	vkGetDeviceQueue(s_xVulkan.xDevice, *pnGraphicsQueueIndex, 0, &s_xVulkan.xGraphicsQueue);
-	vkGetDeviceQueue(s_xVulkan.xDevice, *pnPresentQueueIndex, 0, &s_xVulkan.xPresentQueue);
+	vkGetDeviceQueue(s_xVulkan.xDevice, nGraphicsQueueIndex, 0, &s_xVulkan.xGraphicsQueue);
+	vkGetDeviceQueue(s_xVulkan.xDevice, nPresentQueueIndex, 0, &s_xVulkan.xPresentQueue);
 
 	return true;
 }
@@ -466,7 +466,7 @@ struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
 		return 0;
 	}
 
-	if (!Vulkan_CreateLogicalDevice(&nGraphicsQueueIndex, &nPresentQueueIndex)) {
+	if (!Vulkan_CreateLogicalDevice(nGraphicsQueueIndex, nPresentQueueIndex)) {
 		Vulkan_Cleanup();
 		return 0;
 	}
