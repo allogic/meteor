@@ -1,11 +1,10 @@
 #ifndef VULKAN_H
 #define VULKAN_H
 
-#include <stdbool.h>
-
 struct xWindow_t;
+struct xVulkan_t;
 
-bool Vulkan_Alloc(struct xWindow_t* pxWindow);
-void Vulkan_Free(void);
+struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow);
+void Vulkan_Free(struct xVulkan_t* pxVulkan);
 
 #endif

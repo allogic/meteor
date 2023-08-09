@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <macros.h>
@@ -20,17 +21,21 @@
 #	include <vulkan/vulkan_wayland.h>
 #endif
 
-static VkInstance s_xInstance;
-
+struct xVulkan_t {
+	VkInstance xInstance;
 #ifdef DEBUG
-static VkDebugUtilsMessengerEXT s_xDebugMessenger;
+	VkDebugUtilsMessengerEXT xDebugMessenger;
 #endif
+	VkSurfaceKHR xSurface;
+	VkPhysicalDevice xPhysicalDevice;
+	VkSurfaceFormatKHR xPreferedSurfaceFormat;
+	VkPresentModeKHR xPreferedPresentMode;
+	VkDevice xDevice;
+	VkQueue xGraphicsQueue;
+	VkQueue xPresentQueue;
+};
 
-static VkSurfaceKHR s_xSurface;
-static VkPhysicalDevice s_xPhysicalDevice;
-static VkDevice s_xDevice;
-static VkQueue s_xGraphicsQueue;
-static VkQueue s_xPresentQueue;
+static struct xVulkan_t s_xVulkan;
 
 static const char* s_apInstanceExtensions[] = {
 	"VK_KHR_surface",
@@ -80,12 +85,27 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 }
 #endif
 
-bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
+static void Vulkan_Cleanup(void) {
+	if (s_xVulkan.xDevice) {
+		vkDestroyDevice(s_xVulkan.xDevice, 0);
+	}
 
-///////////////////////////////////////////////////////////////////////////////
-// Create Instance And Setup Debug Messenger
-///////////////////////////////////////////////////////////////////////////////
+	if (s_xVulkan.xInstance && s_xVulkan.xSurface) {
+		vkDestroySurfaceKHR(s_xVulkan.xInstance, s_xVulkan.xSurface, 0);
+	}
 
+#ifdef DEBUG
+	if (s_xVulkan.xInstance && s_xVulkan.xDebugMessenger) {
+		DestroyDebugUtilsMessengerEXT(s_xVulkan.xInstance, s_xVulkan.xDebugMessenger, 0);
+	}
+#endif
+
+	if (s_xVulkan.xInstance) {
+		vkDestroyInstance(s_xVulkan.xInstance, 0);
+	}
+}
+
+static bool Vulkan_CreateInstance(void) {
 	VkApplicationInfo xAppInfo;
 	memset(&xAppInfo, 0, sizeof(xAppInfo));
 	xAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -101,6 +121,7 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	xInstanceCreateInfo.pApplicationInfo = &xAppInfo;
 	xInstanceCreateInfo.enabledExtensionCount = ARRAY_LENGTH(s_apInstanceExtensions);
 	xInstanceCreateInfo.ppEnabledExtensionNames = s_apInstanceExtensions;
+
 #ifdef DEBUG
 	VkDebugUtilsMessengerCreateInfoEXT xDebugCreateInfo;
 	memset(&xDebugCreateInfo, 0, sizeof(xDebugCreateInfo));
@@ -114,22 +135,22 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	xInstanceCreateInfo.ppEnabledLayerNames = s_apValidationLayers;
 #endif
 
-	if (vkCreateInstance(&xInstanceCreateInfo, 0, &s_xInstance) != VK_SUCCESS) {
+	if (vkCreateInstance(&xInstanceCreateInfo, 0, &s_xVulkan.xInstance) != VK_SUCCESS) {
 		printf("Failed creating vulkan instance\n");
 		return false;
 	}
 
 #ifdef DEBUG
-	if (CreateDebugUtilsMessengerEXT(s_xInstance, &xDebugCreateInfo, 0, &s_xDebugMessenger) != VK_SUCCESS) {
+	if (CreateDebugUtilsMessengerEXT(s_xVulkan.xInstance, &xDebugCreateInfo, 0, &s_xVulkan.xDebugMessenger) != VK_SUCCESS) {
 		printf("Failed setting up vulkan debug messenger\n");
 		return false;
 	}
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// Create Surface
-///////////////////////////////////////////////////////////////////////////////
+	return true;
+}
 
+static bool Vulkan_CreateSurface(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
 	VkWin32SurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
@@ -137,25 +158,25 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	xSurfaceCreateInfo.hwnd = Window_GetWindowHandle(pxWindow);
 	xSurfaceCreateInfo.hinstance = Window_GetModuleHandle(pxWindow);
 
-	if (vkCreateWin32SurfaceKHR(s_xInstance, &xSurfaceCreateInfo, 0, &s_xSurface) != VK_SUCCESS) {
+	if (vkCreateWin32SurfaceKHR(s_xVulkan.xInstance, &xSurfaceCreateInfo, 0, &s_xVulkan.xSurface) != VK_SUCCESS) {
 		printf("failed to create window surface\n");
 		return false;
 	}
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// Find Suitable Physical Device
-///////////////////////////////////////////////////////////////////////////////
+	return true;
+}
 
+static bool Vulkan_FindPhysicalDevice(void) {
 	uint32_t nPhysicalDeviceCount;
-	vkEnumeratePhysicalDevices(s_xInstance, &nPhysicalDeviceCount, 0);
+	vkEnumeratePhysicalDevices(s_xVulkan.xInstance, &nPhysicalDeviceCount, 0);
 	if (nPhysicalDeviceCount == 0) {
 		printf("Failed finding physical devices\n");
 		return false;
 	}
 
 	VkPhysicalDevice* pxPhysicalDevices = (VkPhysicalDevice*)malloc(sizeof(VkPhysicalDevice) * nPhysicalDeviceCount);
-	vkEnumeratePhysicalDevices(s_xInstance, &nPhysicalDeviceCount, pxPhysicalDevices);
+	vkEnumeratePhysicalDevices(s_xVulkan.xInstance, &nPhysicalDeviceCount, pxPhysicalDevices);
 
 	for (uint32_t i = 0; i < nPhysicalDeviceCount; ++i) {
 		VkPhysicalDeviceProperties xPhysicalDeviceProperties;
@@ -166,7 +187,7 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 
 		if (xPhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 			if (xPhysicalDeviceFeatures.geometryShader) {
-				memcpy(&s_xPhysicalDevice, &pxPhysicalDevices[i], sizeof(s_xPhysicalDevice));
+				memcpy(&s_xVulkan.xPhysicalDevice, &pxPhysicalDevices[i], sizeof(s_xVulkan.xPhysicalDevice));
 				break;
 			}
 		}
@@ -174,27 +195,25 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 
 	free(pxPhysicalDevices);
 
-	if (s_xPhysicalDevice == 0) {
-		printf("Failed finding suitable physical device\n");
+	if (s_xVulkan.xPhysicalDevice == 0) {
+		printf("Failed finding physical device\n");
 		return false;
 	}
 
-///////////////////////////////////////////////////////////////////////////////
-// Find Suitable Queue Families
-///////////////////////////////////////////////////////////////////////////////
+	return true;
+}
 
+static bool Vulkan_FindQueueFamilies(int32_t* pnGraphicsQueueIndex, int32_t* pnPresentQueueIndex) {
 	uint32_t nQueueFamilyCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(s_xPhysicalDevice, &nQueueFamilyCount, 0);
+	vkGetPhysicalDeviceQueueFamilyProperties(s_xVulkan.xPhysicalDevice, &nQueueFamilyCount, 0);
+
 	if (nQueueFamilyCount == 0) {
 		printf("Failed finding queue family properties\n");
 		return false;
 	}
 
 	VkQueueFamilyProperties* pxQueueFamilyProperties = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * nQueueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(s_xPhysicalDevice, &nQueueFamilyCount, pxQueueFamilyProperties);
-
-	int32_t nGraphicsQueueIndex = -1;
-	int32_t nPresentQueueIndex = -1;
+	vkGetPhysicalDeviceQueueFamilyProperties(s_xVulkan.xPhysicalDevice, &nQueueFamilyCount, pxQueueFamilyProperties);
 
 	for (uint32_t i = 0; i < nQueueFamilyCount; ++i) {
 		uint32_t nGraphicsSupport = 0;
@@ -202,40 +221,40 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 
 		nGraphicsSupport = pxQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT;
 
-		vkGetPhysicalDeviceSurfaceSupportKHR(s_xPhysicalDevice, i, s_xSurface, &nPresentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(s_xVulkan.xPhysicalDevice, i, s_xVulkan.xSurface, &nPresentSupport);
 
-		if (nGraphicsSupport && (nGraphicsQueueIndex == -1)) {
-			nGraphicsQueueIndex = i;
-		} else if (nPresentSupport && (nPresentQueueIndex == -1)) {
-			nPresentQueueIndex = i;
+		if (nGraphicsSupport && (*pnGraphicsQueueIndex == -1)) {
+			*pnGraphicsQueueIndex = i;
+		} else if (nPresentSupport && (*pnPresentQueueIndex == -1)) {
+			*pnPresentQueueIndex = i;
 		}
 
-		if ((nGraphicsQueueIndex != -1) && (nPresentQueueIndex != -1)) {
+		if ((*pnGraphicsQueueIndex != -1) && (*pnPresentQueueIndex != -1)) {
 			break;
 		}
 	}
 
-	if (nGraphicsQueueIndex == -1) {
+	free(pxQueueFamilyProperties);
+
+	if (*pnGraphicsQueueIndex == -1) {
 		printf("Failed to find graphics family\n");
 		return false;
 	}
 
-	if (nPresentQueueIndex == -1) {
+	if (*pnPresentQueueIndex == -1) {
 		printf("Failed to find present support\n");
 		return false;
 	}
 
-	free(pxQueueFamilyProperties);
+	return true;
+}
 
-///////////////////////////////////////////////////////////////////////////////
-// Check Physical Device Extensions
-///////////////////////////////////////////////////////////////////////////////
-
+static bool Vulkan_CheckPhysicalDeviceExtensions(void) {
 	uint32_t nAvailableDeviceExtensionCount;
-	vkEnumerateDeviceExtensionProperties(s_xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, 0);
+	vkEnumerateDeviceExtensionProperties(s_xVulkan.xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, 0);
 
 	VkExtensionProperties* pxAvailableDeviceExtensions = (VkExtensionProperties*)malloc(sizeof(VkExtensionProperties) * nAvailableDeviceExtensionCount);
-	vkEnumerateDeviceExtensionProperties(s_xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, pxAvailableDeviceExtensions);
+	vkEnumerateDeviceExtensionProperties(s_xVulkan.xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, pxAvailableDeviceExtensions);
 
 	bool nRequiredDeviceExtensionsAvailable = true;
 
@@ -250,49 +269,52 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 				nDeviceExtensionsAvailable = true;
 				break;
 			}
-
-#ifdef DEBUG
-			if (j == (nAvailableDeviceExtensionCount - 1)) {
-				printf("Missing %s\n", s_apDeviceExtensions[i]);
-			}
-#endif
 		}
 
 		if (!nDeviceExtensionsAvailable) {
+#ifdef DEBUG
+			printf("Missing %s\n", s_apDeviceExtensions[i]);
+#endif
+
 			nRequiredDeviceExtensionsAvailable = false;
 			break;
 		}
 	}
+
+	free(pxAvailableDeviceExtensions);
 
 	if (!nRequiredDeviceExtensionsAvailable) {
 		printf("Failed to find required device extensions\n");
 		return false;
 	}
 
-	free(pxAvailableDeviceExtensions);
+	return true;
+}
 
-///////////////////////////////////////////////////////////////////////////////
-// Check Swap Chain Capabilities
-///////////////////////////////////////////////////////////////////////////////
-
-	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_xPhysicalDevice, s_xSurface, &xSurfaceCapabilities);
-
+static bool Vulkan_CheckSwapChainCapabilities(void) {
 	uint32_t nSurfaceFormatCount;
 	uint32_t nPresentModeCount;
 
-	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xPhysicalDevice, s_xSurface, &nSurfaceFormatCount, 0);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xPhysicalDevice, s_xSurface, &nPresentModeCount, 0);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, 0);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, 0);
 
 	VkSurfaceFormatKHR* pxSurfaceFormats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * nSurfaceFormatCount);
 	VkPresentModeKHR* pxPresentModes = (VkPresentModeKHR*)malloc(sizeof(VkPresentModeKHR) * nPresentModeCount);
 
-	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xPhysicalDevice, s_xSurface, &nSurfaceFormatCount, pxSurfaceFormats);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xPhysicalDevice, s_xSurface, &nPresentModeCount, pxPresentModes);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, pxSurfaceFormats);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, pxPresentModes);
 
 	uint32_t nSwapChainAdequate = (nSurfaceFormatCount > 0) && (nPresentModeCount > 0);
 
 	if (nSwapChainAdequate == 0) {
+		if (pxSurfaceFormats) {
+			free(pxSurfaceFormats);
+		}
+
+		if (pxPresentModes) {
+			free(pxPresentModes);
+		}
+
 		printf("Failed swap chain capabilities check\n");
 		return false;
 	}
@@ -300,22 +322,22 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	bool bPreferedSurfaceFormatAvailable;
 	bool bPreferedPresentModeAvailable;
 
-	VkSurfaceFormatKHR xPreferedSurfaceFormat;
-	VkPresentModeKHR xPreferedPresentMode;
-
 	for (uint32_t i = 0; i < nSurfaceFormatCount; ++i) {
 		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
-			memcpy(&xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(xPreferedSurfaceFormat));
+			memcpy(&s_xVulkan.xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(s_xVulkan.xPreferedSurfaceFormat));
 			bPreferedSurfaceFormatAvailable = true;
 		}
 	}
 
 	for (uint32_t i = 0; i < nPresentModeCount; ++i) {
 		if (pxPresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-			memcpy(&xPreferedPresentMode, &pxPresentModes[i], sizeof(xPreferedPresentMode));
+			memcpy(&s_xVulkan.xPreferedPresentMode, &pxPresentModes[i], sizeof(s_xVulkan.xPreferedPresentMode));
 			bPreferedPresentModeAvailable = true;
 		}
 	}
+
+	free(pxSurfaceFormats);
+	free(pxPresentModes);
 
 	if (!bPreferedSurfaceFormatAvailable) {
 		printf("Failed finding prefered surface format\n");
@@ -327,38 +349,40 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 		return false;
 	}
 
+	return true;
+}
+
+static bool Vulkan_CreateSwapChain(struct xWindow_t* pxWindow) {
 	VkExtent2D xSwapChainExtent;
 	memset(&xSwapChainExtent, 0, sizeof(xSwapChainExtent));
 	xSwapChainExtent.width = Window_GetWidth(pxWindow);
 	xSwapChainExtent.height = Window_GetHeight(pxWindow);
 
-	free(pxSurfaceFormats);
-	free(pxPresentModes);
-
-///////////////////////////////////////////////////////////////////////////////
-// Create Swap Chain
-///////////////////////////////////////////////////////////////////////////////
+	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &xSurfaceCapabilities);
 
 	uint32_t nImageCount = xSurfaceCapabilities.minImageCount + 1;
 
 	VkSwapchainCreateInfoKHR xSwapChaincreateInfo;
 	memset(&xSwapChaincreateInfo, 0, sizeof(xSwapChaincreateInfo));
 	xSwapChaincreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	xSwapChaincreateInfo.surface = s_xSurface;
+	xSwapChaincreateInfo.surface = s_xVulkan.xSurface;
 	xSwapChaincreateInfo.minImageCount = nImageCount;
-	xSwapChaincreateInfo.imageFormat = xPreferedSurfaceFormat.format;
-	xSwapChaincreateInfo.imageColorSpace = xPreferedSurfaceFormat.colorSpace;
+	xSwapChaincreateInfo.imageFormat = s_xVulkan.xPreferedSurfaceFormat.format;
+	xSwapChaincreateInfo.imageColorSpace = s_xVulkan.xPreferedSurfaceFormat.colorSpace;
 	xSwapChaincreateInfo.imageExtent = xSwapChainExtent;
 	xSwapChaincreateInfo.imageArrayLayers = 1;
 	xSwapChaincreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-///////////////////////////////////////////////////////////////////////////////
-// Create Logical Device
-///////////////////////////////////////////////////////////////////////////////
+	// TODO: Finish tha swap freagin chain..
 
+	return true;
+}
+
+static bool Vulkan_CreateLogicalDevice(int32_t* pnGraphicsQueueIndex, int32_t* pnPresentQueueIndex) {
 #ifdef DEBUG
-	printf("GraphicsQueueIndex %d\n", nGraphicsQueueIndex);
-	printf("PresentQueueIndex %d\n", nPresentQueueIndex);
+	printf("GraphicsQueueIndex %d\n", *pnGraphicsQueueIndex);
+	printf("PresentQueueIndex %d\n", *pnPresentQueueIndex);
 #endif
 
 	float fQueuePriority = 1.0f;
@@ -367,12 +391,12 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	memset(&xQueueCreateInfos, 0, sizeof(xQueueCreateInfos));
 
 	xQueueCreateInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[0].queueFamilyIndex = nGraphicsQueueIndex;
+	xQueueCreateInfos[0].queueFamilyIndex = *pnGraphicsQueueIndex;
 	xQueueCreateInfos[0].queueCount = 1;
 	xQueueCreateInfos[0].pQueuePriorities = &fQueuePriority;
 
 	xQueueCreateInfos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[1].queueFamilyIndex = nPresentQueueIndex;
+	xQueueCreateInfos[1].queueFamilyIndex = *pnPresentQueueIndex;
 	xQueueCreateInfos[1].queueCount = 1;
 	xQueueCreateInfos[1].pQueuePriorities = &fQueuePriority;
 
@@ -392,25 +416,66 @@ bool Vulkan_Alloc(struct xWindow_t* pxWindow) {
 	xDeviceCreateInfo.ppEnabledLayerNames = s_apValidationLayers;
 #endif
 
-	if (vkCreateDevice(s_xPhysicalDevice, &xDeviceCreateInfo, 0, &s_xDevice) != VK_SUCCESS) {
+	if (vkCreateDevice(s_xVulkan.xPhysicalDevice, &xDeviceCreateInfo, 0, &s_xVulkan.xDevice) != VK_SUCCESS) {
 		printf("Failed to create logical device");
 		return false;
 	}
 
-	vkGetDeviceQueue(s_xDevice, nGraphicsQueueIndex, 0, &s_xGraphicsQueue);
-	vkGetDeviceQueue(s_xDevice, nPresentQueueIndex, 0, &s_xPresentQueue);
+	vkGetDeviceQueue(s_xVulkan.xDevice, *pnGraphicsQueueIndex, 0, &s_xVulkan.xGraphicsQueue);
+	vkGetDeviceQueue(s_xVulkan.xDevice, *pnPresentQueueIndex, 0, &s_xVulkan.xPresentQueue);
 
 	return true;
 }
 
-void Vulkan_Free(void) {
-	vkDestroyDevice(s_xDevice, 0);
+struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
+	int32_t nGraphicsQueueIndex = -1;
+	int32_t nPresentQueueIndex = -1;
 
-	vkDestroySurfaceKHR(s_xInstance, s_xSurface, 0);
+	if (!Vulkan_CreateInstance()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
 
-#ifdef DEBUG
-	DestroyDebugUtilsMessengerEXT(s_xInstance, s_xDebugMessenger, 0);
-#endif
+	if (!Vulkan_CreateSurface(pxWindow)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
 
-	vkDestroyInstance(s_xInstance, 0);
+	if (!Vulkan_FindPhysicalDevice()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_FindQueueFamilies(&nGraphicsQueueIndex, &nPresentQueueIndex)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CheckPhysicalDeviceExtensions()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CheckSwapChainCapabilities()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateSwapChain(pxWindow)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateLogicalDevice(&nGraphicsQueueIndex, &nPresentQueueIndex)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	return &s_xVulkan;
+}
+
+void Vulkan_Free(struct xVulkan_t* pxVulkan) {
+	UNUSED(pxVulkan);
+
+	Vulkan_Cleanup();
 }

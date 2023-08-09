@@ -18,18 +18,17 @@ int32_t main(void) {
 #endif
 
 	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
-
 	if (pxWindow) {
 
-		if (Vulkan_Alloc(pxWindow)) {
+		struct xVulkan_t* pxVulkan = Vulkan_Alloc(pxWindow);
+		if (pxVulkan) {
 
 			while (Window_ShouldNotClose(pxWindow)) {
 				Window_PollEvents(pxWindow);
 				Window_SwapBuffers(pxWindow);
 			}
 
-			Vulkan_Free();
-
+			Vulkan_Free(pxVulkan);
 		}
 
 		Window_Free(pxWindow);
