@@ -8,10 +8,10 @@ void FileUtl_ReadBinary(char** ppcData, uint32_t* pnSize, const char* pcFilePath
 
     fseek(pxFile, 0, SEEK_END);
     *pnSize = (uint32_t)ftell(pxFile);
-    *ppcData = calloc(1, *pnSize);
+    *ppcData = calloc(*pnSize, sizeof(char));
     fseek(pxFile, 0, SEEK_SET);
 
-    fread(*ppcData, 1, *pnSize, pxFile);
+    fread(*ppcData, sizeof(char), *pnSize, pxFile);
 
     fclose(pxFile);
 }
@@ -21,10 +21,10 @@ void FileUtl_ReadText(char** ppcData, uint32_t* pnSize, const char* pcFilePath) 
 
     fseek(pxFile, 0, SEEK_END);
     *pnSize = (uint32_t)ftell(pxFile);
-    *ppcData = calloc(1, (*pnSize) + 1);
+    *ppcData = calloc((*pnSize) + 1, sizeof(char));
     fseek(pxFile, 0, SEEK_SET);
 
-    fread(*ppcData, 1, *pnSize, pxFile);
+    fread(*ppcData, sizeof(char), *pnSize, pxFile);
 
     fclose(pxFile);
 }
@@ -34,7 +34,7 @@ void FileUtl_WriteBinary(const char* pcData, uint32_t nSize, const char* pcFileP
 
     fseek(pxFile, 0, SEEK_SET);
 
-    fwrite(pcData, 1, nSize, pxFile);
+    fwrite(pcData, sizeof(char), nSize, pxFile);
 
     fclose(pxFile);
 }
@@ -44,7 +44,7 @@ void FileUtl_WriteText(const char* pcData, uint32_t nSize, const char* pcFilePat
 
     fseek(pxFile, 0, SEEK_SET);
 
-    fwrite(pcData, 1, nSize, pxFile);
+    fwrite(pcData, sizeof(char), nSize, pxFile);
 
     fclose(pxFile);
 }

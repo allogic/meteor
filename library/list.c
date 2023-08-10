@@ -17,7 +17,7 @@ struct xList_t {
 };
 
 struct xList_t* List_Alloc(void) {
-	return calloc(sizeof(struct xList_t), 1);
+	return calloc(1, sizeof(struct xList_t));
 }
 
 void List_Free(struct xList_t* pxList) {
@@ -38,12 +38,12 @@ void List_Free(struct xList_t* pxList) {
 
 void List_Push(struct xList_t* pxList, void* pData, uint32_t nSize) {
 	if (pxList->pxHead == 0) {
-		pxList->pxHead = calloc(sizeof(struct xNode_t), 1);
+		pxList->pxHead = calloc(1, sizeof(struct xNode_t));
 		pxList->pxHead->pData = malloc(nSize);
 		memcpy(pxList->pxHead->pData, pData, nSize);
 		pxList->pxTail = pxList->pxHead;
 	} else {
-		pxList->pxTail->pxNext = calloc(sizeof(struct xNode_t), 1);
+		pxList->pxTail->pxNext = calloc(1, sizeof(struct xNode_t));
 		pxList->pxTail->pxNext->pData = malloc(nSize);
 		memcpy(pxList->pxTail->pxNext->pData, pData, nSize);
 		pxList->pxTail = pxList->pxTail->pxNext;

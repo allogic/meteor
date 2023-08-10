@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <macros.h>
+#include <fileutl.h>
 
 #include <graphics/vulkan.h>
 
@@ -33,6 +34,14 @@ struct xVulkan_t {
 	VkDevice xDevice;
 	VkQueue xGraphicsQueue;
 	VkQueue xPresentQueue;
+	VkExtent2D xSwapChainExtent;
+	VkSwapchainKHR xSwapChain;
+	uint32_t nSwapChainImageCount;
+	VkImage* pxSwapChainImages;
+	VkImageView* pxSwapChainImageViews;
+	VkShaderModule xVertModule;
+	VkShaderModule xFragModule;
+	VkPipelineLayout xPipelineLayout;
 };
 
 static struct xVulkan_t s_xVulkan;
@@ -86,21 +95,49 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 #endif
 
 static void Vulkan_Cleanup(void) {
-	if (s_xVulkan.xDevice) {
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xPipelineLayout != VK_NULL_HANDLE)) {
+		vkDestroyPipelineLayout(s_xVulkan.xDevice, s_xVulkan.xPipelineLayout, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xFragModule != VK_NULL_HANDLE)) {
+		vkDestroyShaderModule(s_xVulkan.xDevice, s_xVulkan.xFragModule, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xVertModule != VK_NULL_HANDLE)) {
+		vkDestroyShaderModule(s_xVulkan.xDevice, s_xVulkan.xVertModule, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && s_xVulkan.pxSwapChainImageViews && s_xVulkan.nSwapChainImageCount) {
+		for (uint32_t i = 0; i < s_xVulkan.nSwapChainImageCount; ++i) {
+			vkDestroyImageView(s_xVulkan.xDevice, s_xVulkan.pxSwapChainImageViews[i], 0);
+		}
+
+		free(s_xVulkan.pxSwapChainImageViews);
+	}
+
+	if (s_xVulkan.pxSwapChainImages) {
+		free(s_xVulkan.pxSwapChainImages);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xSwapChain != VK_NULL_HANDLE)) {
+		vkDestroySwapchainKHR(s_xVulkan.xDevice, s_xVulkan.xSwapChain, 0);
+	}
+
+	if (s_xVulkan.xDevice != VK_NULL_HANDLE) {
 		vkDestroyDevice(s_xVulkan.xDevice, 0);
 	}
 
-	if (s_xVulkan.xInstance && s_xVulkan.xSurface) {
+	if ((s_xVulkan.xInstance != VK_NULL_HANDLE) && (s_xVulkan.xSurface != VK_NULL_HANDLE)) {
 		vkDestroySurfaceKHR(s_xVulkan.xInstance, s_xVulkan.xSurface, 0);
 	}
 
 #ifdef DEBUG
-	if (s_xVulkan.xInstance && s_xVulkan.xDebugMessenger) {
+	if ((s_xVulkan.xInstance != VK_NULL_HANDLE) && (s_xVulkan.xDebugMessenger != VK_NULL_HANDLE)) {
 		DestroyDebugUtilsMessengerEXT(s_xVulkan.xInstance, s_xVulkan.xDebugMessenger, 0);
 	}
 #endif
 
-	if (s_xVulkan.xInstance) {
+	if (s_xVulkan.xInstance != VK_NULL_HANDLE) {
 		vkDestroyInstance(s_xVulkan.xInstance, 0);
 	}
 }
@@ -291,94 +328,6 @@ static bool Vulkan_CheckPhysicalDeviceExtensions(void) {
 	return true;
 }
 
-static bool Vulkan_CheckSwapChainCapabilities(void) {
-	uint32_t nSurfaceFormatCount;
-	uint32_t nPresentModeCount;
-
-	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, 0);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, 0);
-
-	VkSurfaceFormatKHR* pxSurfaceFormats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * nSurfaceFormatCount);
-	VkPresentModeKHR* pxPresentModes = (VkPresentModeKHR*)malloc(sizeof(VkPresentModeKHR) * nPresentModeCount);
-
-	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, pxSurfaceFormats);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, pxPresentModes);
-
-	uint32_t nSwapChainAdequate = (nSurfaceFormatCount > 0) && (nPresentModeCount > 0);
-
-	if (nSwapChainAdequate == 0) {
-		if (pxSurfaceFormats) {
-			free(pxSurfaceFormats);
-		}
-
-		if (pxPresentModes) {
-			free(pxPresentModes);
-		}
-
-		printf("Failed swap chain capabilities check\n");
-		return false;
-	}
-
-	bool bPreferedSurfaceFormatAvailable;
-	bool bPreferedPresentModeAvailable;
-
-	for (uint32_t i = 0; i < nSurfaceFormatCount; ++i) {
-		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
-			memcpy(&s_xVulkan.xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(s_xVulkan.xPreferedSurfaceFormat));
-			bPreferedSurfaceFormatAvailable = true;
-		}
-	}
-
-	for (uint32_t i = 0; i < nPresentModeCount; ++i) {
-		if (pxPresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-			memcpy(&s_xVulkan.xPreferedPresentMode, &pxPresentModes[i], sizeof(s_xVulkan.xPreferedPresentMode));
-			bPreferedPresentModeAvailable = true;
-		}
-	}
-
-	free(pxSurfaceFormats);
-	free(pxPresentModes);
-
-	if (!bPreferedSurfaceFormatAvailable) {
-		printf("Failed finding prefered surface format\n");
-		return false;
-	}
-
-	if (!bPreferedPresentModeAvailable) {
-		printf("Failed finding prefered present mode\n");
-		return false;
-	}
-
-	return true;
-}
-
-static bool Vulkan_CreateSwapChain(struct xWindow_t* pxWindow) {
-	VkExtent2D xSwapChainExtent;
-	memset(&xSwapChainExtent, 0, sizeof(xSwapChainExtent));
-	xSwapChainExtent.width = Window_GetWidth(pxWindow);
-	xSwapChainExtent.height = Window_GetHeight(pxWindow);
-
-	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &xSurfaceCapabilities);
-
-	uint32_t nImageCount = xSurfaceCapabilities.minImageCount + 1;
-
-	VkSwapchainCreateInfoKHR xSwapChaincreateInfo;
-	memset(&xSwapChaincreateInfo, 0, sizeof(xSwapChaincreateInfo));
-	xSwapChaincreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	xSwapChaincreateInfo.surface = s_xVulkan.xSurface;
-	xSwapChaincreateInfo.minImageCount = nImageCount;
-	xSwapChaincreateInfo.imageFormat = s_xVulkan.xPreferedSurfaceFormat.format;
-	xSwapChaincreateInfo.imageColorSpace = s_xVulkan.xPreferedSurfaceFormat.colorSpace;
-	xSwapChaincreateInfo.imageExtent = xSwapChainExtent;
-	xSwapChaincreateInfo.imageArrayLayers = 1;
-	xSwapChaincreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	// TODO: Finish tha swap freagin chain..
-
-	return true;
-}
-
 static bool Vulkan_CreateLogicalDevice(int32_t nGraphicsQueueIndex, int32_t nPresentQueueIndex) {
 #ifdef DEBUG
 	printf("GraphicsQueueIndex %d\n", nGraphicsQueueIndex);
@@ -427,7 +376,307 @@ static bool Vulkan_CreateLogicalDevice(int32_t nGraphicsQueueIndex, int32_t nPre
 	return true;
 }
 
+static bool Vulkan_CheckSwapChainCapabilities(void) {
+	uint32_t nSurfaceFormatCount;
+	uint32_t nPresentModeCount;
+
+	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, 0);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, 0);
+
+	VkSurfaceFormatKHR* pxSurfaceFormats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * nSurfaceFormatCount);
+	VkPresentModeKHR* pxPresentModes = (VkPresentModeKHR*)malloc(sizeof(VkPresentModeKHR) * nPresentModeCount);
+
+	vkGetPhysicalDeviceSurfaceFormatsKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nSurfaceFormatCount, pxSurfaceFormats);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &nPresentModeCount, pxPresentModes);
+
+	bool bPreferedSurfaceFormatAvailable;
+	bool bPreferedPresentModeAvailable;
+
+	for (uint32_t i = 0; i < nSurfaceFormatCount; ++i) {
+		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
+			memcpy(&s_xVulkan.xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(s_xVulkan.xPreferedSurfaceFormat));
+			bPreferedSurfaceFormatAvailable = true;
+		}
+	}
+
+	for (uint32_t i = 0; i < nPresentModeCount; ++i) {
+		if (pxPresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+			memcpy(&s_xVulkan.xPreferedPresentMode, &pxPresentModes[i], sizeof(s_xVulkan.xPreferedPresentMode));
+			bPreferedPresentModeAvailable = true;
+		}
+	}
+
+	free(pxSurfaceFormats);
+	free(pxPresentModes);
+
+	if (!bPreferedSurfaceFormatAvailable) {
+		printf("Failed finding prefered surface format\n");
+		return false;
+	}
+
+	if (!bPreferedPresentModeAvailable) {
+		printf("Failed finding prefered present mode\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreateSwapChain(struct xWindow_t* pxWindow, int32_t nGraphicsQueueIndex, int32_t nPresentQueueIndex) {
+	s_xVulkan.xSwapChainExtent.width = Window_GetWidth(pxWindow);
+	s_xVulkan.xSwapChainExtent.height = Window_GetHeight(pxWindow);
+
+	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_xVulkan.xPhysicalDevice, s_xVulkan.xSurface, &xSurfaceCapabilities);
+
+	uint32_t nMinImageCount = xSurfaceCapabilities.minImageCount + 1;
+
+	VkSwapchainCreateInfoKHR xSwapChaincreateInfo;
+	memset(&xSwapChaincreateInfo, 0, sizeof(xSwapChaincreateInfo));
+	xSwapChaincreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	xSwapChaincreateInfo.surface = s_xVulkan.xSurface;
+	xSwapChaincreateInfo.minImageCount = nMinImageCount;
+	xSwapChaincreateInfo.imageFormat = s_xVulkan.xPreferedSurfaceFormat.format;
+	xSwapChaincreateInfo.imageColorSpace = s_xVulkan.xPreferedSurfaceFormat.colorSpace;
+	xSwapChaincreateInfo.imageExtent = s_xVulkan.xSwapChainExtent;
+	xSwapChaincreateInfo.imageArrayLayers = 1;
+	xSwapChaincreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	xSwapChaincreateInfo.preTransform = xSurfaceCapabilities.currentTransform;
+	xSwapChaincreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	xSwapChaincreateInfo.presentMode = s_xVulkan.xPreferedPresentMode;
+	xSwapChaincreateInfo.clipped = VK_TRUE;
+	xSwapChaincreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	uint32_t anQueueFamilies[] = { nGraphicsQueueIndex, nPresentQueueIndex };
+
+	if (nGraphicsQueueIndex == nPresentQueueIndex) {
+		xSwapChaincreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		xSwapChaincreateInfo.queueFamilyIndexCount = 0;
+		xSwapChaincreateInfo.pQueueFamilyIndices = 0;
+	} else {
+		xSwapChaincreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		xSwapChaincreateInfo.queueFamilyIndexCount = ARRAY_LENGTH(anQueueFamilies);
+		xSwapChaincreateInfo.pQueueFamilyIndices = anQueueFamilies;
+	}
+
+	if (vkCreateSwapchainKHR(s_xVulkan.xDevice, &xSwapChaincreateInfo, 0, &s_xVulkan.xSwapChain) != VK_SUCCESS) {
+		printf("Failed creating swap chain\n");
+		return false;
+	}
+
+	vkGetSwapchainImagesKHR(s_xVulkan.xDevice, s_xVulkan.xSwapChain, &s_xVulkan.nSwapChainImageCount, 0);
+
+	if (s_xVulkan.nSwapChainImageCount == 0) {
+		printf("Failed retrieving swap chain images");
+		return false;
+	}
+
+	s_xVulkan.pxSwapChainImages = (VkImage*)malloc(sizeof(VkImage) * s_xVulkan.nSwapChainImageCount);
+	vkGetSwapchainImagesKHR(s_xVulkan.xDevice, s_xVulkan.xSwapChain, &s_xVulkan.nSwapChainImageCount, s_xVulkan.pxSwapChainImages);
+
+	return true;
+}
+
+static bool Vulkan_CreateImageViews(void) {
+	s_xVulkan.pxSwapChainImageViews = (VkImageView*)malloc(sizeof(VkImageView) * s_xVulkan.nSwapChainImageCount);
+
+	VkImageViewCreateInfo xImageViewCreateInfo;
+
+	for (uint32_t i = 0; i < s_xVulkan.nSwapChainImageCount; ++i) {
+		memset(&xImageViewCreateInfo, 0, sizeof(xImageViewCreateInfo));
+		xImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		xImageViewCreateInfo.image = s_xVulkan.pxSwapChainImages[i];
+		xImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		xImageViewCreateInfo.format = s_xVulkan.xPreferedSurfaceFormat.format;
+		xImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		xImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		xImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		xImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		xImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		xImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		xImageViewCreateInfo.subresourceRange.levelCount = 1;
+		xImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		xImageViewCreateInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(s_xVulkan.xDevice, &xImageViewCreateInfo, 0, &s_xVulkan.pxSwapChainImageViews[i]) != VK_SUCCESS) {
+    		printf("Failed creating image view\n");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreateRenderPass(void) {
+	return true;
+}
+
+static bool Vulkan_CreateShaderModules(const char* pcVertFilePath, const char* pcFragFilePath) {
+	char* pcVertShaderBytes;
+    char* pcFragShaderBytes;
+    
+    uint32_t nVertShaderSize;
+    uint32_t nFragShaderSize;
+
+    FileUtl_ReadBinary(&pcVertShaderBytes, &nVertShaderSize, pcVertFilePath);
+    FileUtl_ReadBinary(&pcFragShaderBytes, &nFragShaderSize, pcFragFilePath);
+
+    VkShaderModuleCreateInfo xVertCreateInfo;
+    memset(&xVertCreateInfo, 0, sizeof(xVertCreateInfo));
+    xVertCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    xVertCreateInfo.codeSize = nVertShaderSize;
+    xVertCreateInfo.pCode = (const uint32_t*)pcVertShaderBytes;
+
+    VkShaderModuleCreateInfo xFragCreateInfo;
+    memset(&xFragCreateInfo, 0, sizeof(xFragCreateInfo));
+    xFragCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    xFragCreateInfo.codeSize = nFragShaderSize;
+    xFragCreateInfo.pCode = (const uint32_t*)pcFragShaderBytes;
+
+    if (vkCreateShaderModule(s_xVulkan.xDevice, &xVertCreateInfo, 0, &s_xVulkan.xVertModule) != VK_SUCCESS) {
+        printf("Failed creating vertex shader module\n");
+
+        free(pcVertShaderBytes);
+
+        return false;
+    }
+
+    free(pcVertShaderBytes);
+
+    if (vkCreateShaderModule(s_xVulkan.xDevice, &xFragCreateInfo, 0, &s_xVulkan.xFragModule) != VK_SUCCESS) {
+        printf("Failed creating fragment shader module\n");
+
+        free(pcFragShaderBytes);
+
+        return false;
+    }
+
+    free(pcFragShaderBytes);
+
+	return true;
+}
+
+static bool Vulkan_CreateGraphicsPipeline(void) {
+	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
+	memset(&xVertShaderStageCreateInfo, 0, sizeof(xVertShaderStageCreateInfo));
+	xVertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	xVertShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	xVertShaderStageCreateInfo.module = s_xVulkan.xVertModule;
+	xVertShaderStageCreateInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo xFragShaderStageCreateInfo;
+	memset(&xFragShaderStageCreateInfo, 0, sizeof(xFragShaderStageCreateInfo));
+	xFragShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	xFragShaderStageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	xFragShaderStageCreateInfo.module = s_xVulkan.xFragModule;
+	xFragShaderStageCreateInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo axShaderStages[] = { xVertShaderStageCreateInfo, xFragShaderStageCreateInfo };
+
+	VkDynamicState axDynamicState[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+	VkPipelineDynamicStateCreateInfo xDynamicStateCreateInfo;
+	memset(&xDynamicStateCreateInfo, 0, sizeof(xDynamicStateCreateInfo));
+	xDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	xDynamicStateCreateInfo.dynamicStateCount = ARRAY_LENGTH(axDynamicState);
+	xDynamicStateCreateInfo.pDynamicStates = axDynamicState;
+
+	VkPipelineInputAssemblyStateCreateInfo xInputAssemblyCreateInfo;
+	memset(&xInputAssemblyCreateInfo, 0, sizeof(xInputAssemblyCreateInfo));
+	xInputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	xInputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	xInputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	VkViewport xViewport;
+	memset(&xViewport, 0, sizeof(xViewport));
+	xViewport.x = 0.0F;
+	xViewport.y = 0.0F;
+	xViewport.width = (float)s_xVulkan.xSwapChainExtent.width;
+	xViewport.height = (float)s_xVulkan.xSwapChainExtent.height;
+	xViewport.minDepth = 0.0F;
+	xViewport.maxDepth = 1.0F;
+
+	VkRect2D xScissor;
+	memset(&xScissor, 0, sizeof(xScissor));
+	xScissor.offset.x = 0;
+	xScissor.offset.y = 0;
+	xScissor.extent.width = s_xVulkan.xSwapChainExtent.width;
+	xScissor.extent.height = s_xVulkan.xSwapChainExtent.height;
+
+	VkPipelineViewportStateCreateInfo xViewportStateCreateInfo;
+	memset(&xViewportStateCreateInfo, 0, sizeof(xViewportStateCreateInfo));
+	xViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	xViewportStateCreateInfo.viewportCount = 1;
+	xViewportStateCreateInfo.pViewports = &xViewport;
+	xViewportStateCreateInfo.scissorCount = 1;
+	xViewportStateCreateInfo.pScissors = &xScissor;
+
+	VkPipelineRasterizationStateCreateInfo xRasterizerCreateInfo;
+	memset(&xRasterizerCreateInfo, 0, sizeof(xRasterizerCreateInfo));
+	xRasterizerCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	xRasterizerCreateInfo.depthClampEnable = VK_FALSE;
+	xRasterizerCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+	xRasterizerCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	xRasterizerCreateInfo.lineWidth = 0.0F;
+	xRasterizerCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	xRasterizerCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	xRasterizerCreateInfo.depthBiasEnable = VK_FALSE;
+	xRasterizerCreateInfo.depthBiasConstantFactor = 0.0F;
+	xRasterizerCreateInfo.depthBiasClamp = 0.0F;
+	xRasterizerCreateInfo.depthBiasSlopeFactor = 0.0F;
+
+	VkPipelineMultisampleStateCreateInfo xMultisamplingCreateInfo;
+	memset(&xMultisamplingCreateInfo, 0, sizeof(xMultisamplingCreateInfo));
+	xMultisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	xMultisamplingCreateInfo.sampleShadingEnable = VK_FALSE;
+	xMultisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	xMultisamplingCreateInfo.minSampleShading = 1.0F;
+	xMultisamplingCreateInfo.pSampleMask = 0;
+	xMultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
+	xMultisamplingCreateInfo.alphaToOneEnable = VK_FALSE;
+
+	VkPipelineColorBlendAttachmentState xColorBlendAttachment;
+	memset(&xColorBlendAttachment, 0, sizeof(xColorBlendAttachment));
+	xColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	xColorBlendAttachment.blendEnable = VK_FALSE;
+	xColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	xColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	xColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	xColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	xColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	xColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	VkPipelineColorBlendStateCreateInfo xColorBlendCreateInfo;
+	memset(&xColorBlendCreateInfo, 0, sizeof(xColorBlendCreateInfo));
+	xColorBlendCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	xColorBlendCreateInfo.logicOpEnable = VK_FALSE;
+	xColorBlendCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+	xColorBlendCreateInfo.attachmentCount = 1;
+	xColorBlendCreateInfo.pAttachments = &xColorBlendAttachment;
+	xColorBlendCreateInfo.blendConstants[0] = 0.0F;
+	xColorBlendCreateInfo.blendConstants[1] = 0.0F;
+	xColorBlendCreateInfo.blendConstants[2] = 0.0F;
+	xColorBlendCreateInfo.blendConstants[3] = 0.0F;
+
+	VkPipelineLayoutCreateInfo xPipelineLayoutCreateInfo;
+	memset(&xPipelineLayoutCreateInfo, 0, sizeof(xPipelineLayoutCreateInfo));
+	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	xPipelineLayoutCreateInfo.setLayoutCount = 0;
+	xPipelineLayoutCreateInfo.pSetLayouts = 0;
+	xPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	xPipelineLayoutCreateInfo.pPushConstantRanges = 0;
+
+	if (vkCreatePipelineLayout(s_xVulkan.xDevice, &xPipelineLayoutCreateInfo, 0, &s_xVulkan.xPipelineLayout) != VK_SUCCESS) {
+    	printf("Failed creating pipeline layout\n");
+		return false;
+	}
+
+	return true;
+}
+
 struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
+	memset(&s_xVulkan, 0, sizeof(s_xVulkan));
+
 	int32_t nGraphicsQueueIndex = -1;
 	int32_t nPresentQueueIndex = -1;
 
@@ -456,17 +705,37 @@ struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
 		return 0;
 	}
 
+	if (!Vulkan_CreateLogicalDevice(nGraphicsQueueIndex, nPresentQueueIndex)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
 	if (!Vulkan_CheckSwapChainCapabilities()) {
 		Vulkan_Cleanup();
 		return 0;
 	}
 
-	if (!Vulkan_CreateSwapChain(pxWindow)) {
+	if (!Vulkan_CreateSwapChain(pxWindow, nGraphicsQueueIndex, nPresentQueueIndex)) {
 		Vulkan_Cleanup();
 		return 0;
 	}
 
-	if (!Vulkan_CreateLogicalDevice(nGraphicsQueueIndex, nPresentQueueIndex)) {
+	if (!Vulkan_CreateImageViews()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateRenderPass()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateShaderModules("../shaders/vert.spv", "../shaders/frag.spv")) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateGraphicsPipeline()) {
 		Vulkan_Cleanup();
 		return 0;
 	}

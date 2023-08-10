@@ -20,7 +20,6 @@ struct xWindow_t {
 #ifdef OS_WINDOWS
 	HMODULE xInstance;
 	HWND xWindow;
-	HDC xDeviceContext;
 	MSG xMsg;
 #endif
 #ifdef OS_LINUX
@@ -113,25 +112,6 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 		return 0;
 	}
 
-	s_xWindow.xDeviceContext = GetDC(s_xWindow.xWindow);
-	if (s_xWindow.xDeviceContext == 0) {
-		printf("Failed creating device context\n");
-		return 0;
-	}
-
-	PIXELFORMATDESCRIPTOR xPixelFormatDesc;
-	memset(&xPixelFormatDesc, 0, sizeof(xPixelFormatDesc));
-	xPixelFormatDesc.nSize = sizeof(xPixelFormatDesc);
-	xPixelFormatDesc.nVersion = 1;
-	xPixelFormatDesc.dwFlags = PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
-	xPixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
-	xPixelFormatDesc.cColorBits = 32;
-	xPixelFormatDesc.cDepthBits = 24;
-	xPixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
-
-	INT nPixelFormat = ChoosePixelFormat(s_xWindow.xDeviceContext, &xPixelFormatDesc);
-	SetPixelFormat(s_xWindow.xDeviceContext, nPixelFormat, &xPixelFormatDesc);
-
 	ShowWindow(s_xWindow.xWindow, SW_SHOW);
 	UpdateWindow(s_xWindow.xWindow);
 #endif
@@ -196,8 +176,6 @@ struct xWindow_t* Window_Alloc(const char* pcWindowTitle, uint32_t nWidth, uint3
 
 void Window_Free(struct xWindow_t* pxWindow) {
 #ifdef OS_WINDOWS
-	ReleaseDC(pxWindow->xWindow, pxWindow->xDeviceContext);
-
 	DestroyWindow(pxWindow->xWindow);
 #endif
 
@@ -245,9 +223,9 @@ void* Window_GetModuleHandle(struct xWindow_t* pxWindow) {
 #endif
 
 uint32_t Window_GetWidth(struct xWindow_t* pxWindow) {
-	return pxWindow->nWindowWidth;
+	return pxWindow->nWindowWidth - 16; // TODO: Compute and subtract window border if any..
 }
 
 uint32_t Window_GetHeight(struct xWindow_t* pxWindow) {
-	return pxWindow->nWindowHeight;
+	return pxWindow->nWindowHeight - 39; // TODO: Compute and subtract window border if any..
 }

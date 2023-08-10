@@ -1,10 +1,9 @@
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_link_options("-lUser32")
-	add_link_options("-lGdi32") # TODO
 
-	include_directories("C:/vulkan/include")
+	include_directories("C:/VulkanSDK/1.3.250.1/Include")
 
-	add_link_options("-lC:/vulkan/lib/vulkan1")
+	add_link_options("-lC:/VulkanSDK/1.3.250.1/Lib/vulkan-1")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_link_options("-lwayland-client")
 
