@@ -1,7 +1,5 @@
 add_compile_options("-std=c99")
 
-add_compile_options("-nobuiltininc")
-
 add_compile_options("-Wpedantic")
 add_compile_options("-Wall")
 add_compile_options("-Wextra")
@@ -32,12 +30,6 @@ set(GRAPHICS_DIR "../../library/graphics")
 
 include_directories(${PROJECT_DIR})
 include_directories(${LIBRARY_DIR})
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	include_directories("C:/llvm/lib/clang/18/include")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	include_directories("/opt/llvm/lib/clang/18/include")
-endif()
 
 add_compile_definitions("_CRT_SECURE_NO_WARNINGS")
 
