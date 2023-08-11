@@ -14,7 +14,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "debug")
 	add_compile_definitions("DEBUG")
 elseif(CMAKE_BUILD_TYPE STREQUAL "release")
 	add_compile_options("-O2")
-	add_compile_options("-flto")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
