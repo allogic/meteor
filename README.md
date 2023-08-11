@@ -28,6 +28,6 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 # Compile
 
 ```sh
-build_project.sh <project> <type>
-build_project.ps1 <project> <type>
+python meteor cbr test debug
+python meteor cbr vulkan debug
 ```
