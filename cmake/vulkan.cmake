@@ -2,16 +2,16 @@ find_package(Vulkan REQUIRED)
 
 include_directories(${Vulkan_INCLUDE_DIRS})
 
+add_link_options(${Vulkan_LIBRARIES})
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_link_options("-lUser32")
-
-	add_link_options("-lvulkan-1")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_link_options("-lwayland-client")
 
 	include_directories("/opt/vulkan/include")
 
-	add_link_options("-lvulkan")
+	#add_link_options("-lvulkan") # TODO
 
 	list(APPEND SOURCES "${PLATFORM_DIR}/xdgshell.c")
 endif()

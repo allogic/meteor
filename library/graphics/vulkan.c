@@ -746,7 +746,7 @@ struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
 		return 0;
 	}
 
-	if (!Vulkan_CreateShaderModules("../shaders/vert.spv", "../shaders/frag.spv")) {
+	if (!Vulkan_CreateShaderModules("../shaders/test.vert.spv", "../shaders/test.frag.spv")) {
 		Vulkan_Cleanup();
 		return 0;
 	}
