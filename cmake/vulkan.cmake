@@ -1,20 +1,17 @@
+find_package(Vulkan REQUIRED)
+
+include_directories(${Vulkan_INCLUDE_DIRS})
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_link_options("-lUser32")
 
-	include_directories("C:/VulkanSDK/1.3.250.1/Include")
-
-	add_link_options("-lC:/VulkanSDK/1.3.250.1/Lib/vulkan-1")
+	add_link_options("-lvulkan-1")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_link_options("-lwayland-client")
 
 	include_directories("/opt/vulkan/include")
 
-	add_link_options("-L/opt/vulkan/lib")
-
-	add_link_options("-lvku")
-	add_link_options("-lvolk")
-	add_link_options("-lVkLayer_utils")
-	add_link_options("-lVulkanLayerUtils")
+	add_link_options("-lvulkan")
 
 	list(APPEND SOURCES "${PLATFORM_DIR}/xdgshell.c")
 endif()

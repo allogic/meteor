@@ -3,6 +3,7 @@
 *.elf
 *.exe
 *.json
+*.spv
 
 build
 
