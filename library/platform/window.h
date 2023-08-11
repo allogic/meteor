@@ -18,6 +18,11 @@ void* Window_GetWindowHandle(struct xWindow_t* pxWindow);
 void* Window_GetModuleHandle(struct xWindow_t* pxWindow);
 #endif
 
+#ifdef OS_LINUX
+void* Window_GetDisplayHandle(struct xWindow_t* pxWindow);
+void* Window_GetSurfaceHandle(struct xWindow_t* pxWindow);
+#endif
+
 uint32_t Window_GetWidth(struct xWindow_t* pxWindow);
 uint32_t Window_GetHeight(struct xWindow_t* pxWindow);
 

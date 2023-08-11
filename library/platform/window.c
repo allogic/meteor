@@ -222,6 +222,16 @@ void* Window_GetModuleHandle(struct xWindow_t* pxWindow) {
 }
 #endif
 
+#ifdef OS_LINUX
+void* Window_GetDisplayHandle(struct xWindow_t* pxWindow) {
+	return pxWindow->pxDisplay;
+}
+
+void* Window_GetSurfaceHandle(struct xWindow_t* pxWindow) {
+	return pxWindow->pxSurface;
+}
+#endif
+
 uint32_t Window_GetWidth(struct xWindow_t* pxWindow) {
 	return pxWindow->nWindowWidth - 16; // TODO: Compute and subtract window border if any..
 }

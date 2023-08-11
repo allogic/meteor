@@ -46,13 +46,16 @@ struct xVulkan_t {
 
 static struct xVulkan_t s_xVulkan;
 
-static const char* s_apInstanceExtensions[] = {
+static const char* s_apLayerExtensions[] = {
 	"VK_KHR_surface",
 #ifdef DEBUG
 	"VK_EXT_debug_utils",
 #endif
 #ifdef OS_WINDOWS
 	"VK_KHR_win32_surface",
+#endif
+#ifdef OS_LINUX
+	"VK_KHR_wayland_surface",
 #endif
 };
 
@@ -156,8 +159,8 @@ static bool Vulkan_CreateInstance(void) {
 	memset(&xInstanceCreateInfo, 0, sizeof(xInstanceCreateInfo));
 	xInstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	xInstanceCreateInfo.pApplicationInfo = &xAppInfo;
-	xInstanceCreateInfo.enabledExtensionCount = ARRAY_LENGTH(s_apInstanceExtensions);
-	xInstanceCreateInfo.ppEnabledExtensionNames = s_apInstanceExtensions;
+	xInstanceCreateInfo.enabledExtensionCount = ARRAY_LENGTH(s_apLayerExtensions);
+	xInstanceCreateInfo.ppEnabledExtensionNames = s_apLayerExtensions;
 
 #ifdef DEBUG
 	VkDebugUtilsMessengerCreateInfoEXT xDebugCreateInfo;
@@ -196,7 +199,20 @@ static bool Vulkan_CreateSurface(struct xWindow_t* pxWindow) {
 	xSurfaceCreateInfo.hinstance = Window_GetModuleHandle(pxWindow);
 
 	if (vkCreateWin32SurfaceKHR(s_xVulkan.xInstance, &xSurfaceCreateInfo, 0, &s_xVulkan.xSurface) != VK_SUCCESS) {
-		printf("failed to create window surface\n");
+		printf("Failed creating win32 window surface\n");
+		return false;
+	}
+#endif
+
+#ifdef OS_LINUX
+	VkWaylandSurfaceCreateInfoKHR xSurfaceCreateInfo;
+	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
+	xSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+	xSurfaceCreateInfo.display = Window_GetDisplayHandle(pxWindow);
+	xSurfaceCreateInfo.surface = Window_GetSurfaceHandle(pxWindow);
+
+	if (vkCreateWaylandSurfaceKHR(s_xVulkan.xInstance, &xSurfaceCreateInfo, 0, &s_xVulkan.xSurface) != VK_SUCCESS) {
+		printf("Failed creating wayland window surface\n");
 		return false;
 	}
 #endif

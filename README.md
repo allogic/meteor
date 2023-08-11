@@ -15,14 +15,7 @@ choco install git cmake python3
 # Debian
 
 ```sh
-apt-get install git cmake python3 build-essential
-```
-
-# Clang
-
-```sh
-build_llvm.sh
-build_llvm.ps1
+apt-get install git cmake python3 build-essential libvulkan1 vulkan-sdk
 ```
 
 # Wayland
@@ -37,10 +30,4 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 ```sh
 build_project.sh <project> <type>
 build_project.ps1 <project> <type>
-```
-
-# Misc
-
-```sh
-clang -print-resource-dir
 ```
