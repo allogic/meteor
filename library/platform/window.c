@@ -208,10 +208,6 @@ void Window_PollEvents(struct xWindow_t* pxWindow) {
 #endif
 }
 
-void Window_SwapBuffers(struct xWindow_t* pxWindow) {
-	UNUSED(pxWindow);
-}
-
 #ifdef OS_WINDOWS
 void* Window_GetWindowHandle(struct xWindow_t* pxWindow) {
 	return pxWindow->xWindow;

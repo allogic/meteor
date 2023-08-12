@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hardfault.h>
+#include <stacktrace.h>
 #include <macros.h>
 #include <strutl.h>
 
@@ -14,7 +14,7 @@
 int32_t main(void) {
 
 #ifdef DEBUG
-	Hardfault_Alloc();
+	StackTrace_Alloc();
 #endif
 
 	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
@@ -25,7 +25,8 @@ int32_t main(void) {
 
 			while (Window_ShouldNotClose(pxWindow)) {
 				Window_PollEvents(pxWindow);
-				Window_SwapBuffers(pxWindow);
+
+				Vulkan_Draw(pxVulkan);
 			}
 
 			Vulkan_Free(pxVulkan);
@@ -35,7 +36,7 @@ int32_t main(void) {
 	}
 
 #ifdef DEBUG
-	Hardfault_Free();
+	StackTrace_Free();
 #endif
 
 	return 0;

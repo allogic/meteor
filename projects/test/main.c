@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hardfault.h>
+#include <stacktrace.h>
 #include <macros.h>
 #include <list.h>
 #include <filelist.h>
@@ -82,7 +82,7 @@ static void StrUtl_Test(void) {
 int32_t main(void) {
 
 #ifdef DEBUG
-	Hardfault_Alloc();
+	StackTrace_Alloc();
 #endif
 
 	List_Test();
@@ -90,7 +90,7 @@ int32_t main(void) {
 	StrUtl_Test();
 	
 #ifdef DEBUG
-	Hardfault_Free();
+	StackTrace_Free();
 #endif
 
 	return 0;

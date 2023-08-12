@@ -11,7 +11,6 @@ void Window_Free(struct xWindow_t* pxWindow);
 
 bool Window_ShouldNotClose(struct xWindow_t* pxWindow);
 void Window_PollEvents(struct xWindow_t* pxWindow);
-void Window_SwapBuffers(struct xWindow_t* pxWindow);
 
 #ifdef OS_WINDOWS
 void* Window_GetWindowHandle(struct xWindow_t* pxWindow);

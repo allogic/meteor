@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include <macros.h>
@@ -39,9 +38,17 @@ struct xVulkan_t {
 	uint32_t nSwapChainImageCount;
 	VkImage* pxSwapChainImages;
 	VkImageView* pxSwapChainImageViews;
+	VkRenderPass xRenderPass;
 	VkShaderModule xVertModule;
 	VkShaderModule xFragModule;
 	VkPipelineLayout xPipelineLayout;
+	VkPipeline xGraphicsPipeline;
+	VkFramebuffer* pxFrameBuffers;
+	VkCommandPool xCommandPool;
+	VkCommandBuffer xCommandBuffer;
+	VkSemaphore xImageAvailableSemaphore;
+	VkSemaphore xRenderFinishedSemaphore;
+	VkFence xInFlightFence;
 };
 
 static struct xVulkan_t s_xVulkan;
@@ -98,6 +105,34 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 #endif
 
 static void Vulkan_Cleanup(void) {
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xInFlightFence != VK_NULL_HANDLE)) {
+		vkDestroyFence(s_xVulkan.xDevice, s_xVulkan.xInFlightFence, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xRenderFinishedSemaphore != VK_NULL_HANDLE)) {
+		vkDestroySemaphore(s_xVulkan.xDevice, s_xVulkan.xRenderFinishedSemaphore, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xImageAvailableSemaphore != VK_NULL_HANDLE)) {
+		vkDestroySemaphore(s_xVulkan.xDevice, s_xVulkan.xImageAvailableSemaphore, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xCommandPool != VK_NULL_HANDLE)) {
+		vkDestroyCommandPool(s_xVulkan.xDevice, s_xVulkan.xCommandPool, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && s_xVulkan.pxFrameBuffers && s_xVulkan.nSwapChainImageCount) {
+		for (uint32_t i = 0; i < s_xVulkan.nSwapChainImageCount; ++i) {
+			vkDestroyFramebuffer(s_xVulkan.xDevice, s_xVulkan.pxFrameBuffers[i], 0);
+		}
+
+		free(s_xVulkan.pxFrameBuffers);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xGraphicsPipeline != VK_NULL_HANDLE)) {
+		vkDestroyPipeline(s_xVulkan.xDevice, s_xVulkan.xGraphicsPipeline, 0);
+	}
+
 	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xPipelineLayout != VK_NULL_HANDLE)) {
 		vkDestroyPipelineLayout(s_xVulkan.xDevice, s_xVulkan.xPipelineLayout, 0);
 	}
@@ -108,6 +143,10 @@ static void Vulkan_Cleanup(void) {
 
 	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xVertModule != VK_NULL_HANDLE)) {
 		vkDestroyShaderModule(s_xVulkan.xDevice, s_xVulkan.xVertModule, 0);
+	}
+
+	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && (s_xVulkan.xRenderPass != VK_NULL_HANDLE)) {
+		vkDestroyRenderPass(s_xVulkan.xDevice, s_xVulkan.xRenderPass, 0);
 	}
 
 	if ((s_xVulkan.xDevice != VK_NULL_HANDLE) && s_xVulkan.pxSwapChainImageViews && s_xVulkan.nSwapChainImageCount) {
@@ -515,7 +554,7 @@ static bool Vulkan_CreateImageViews(void) {
 		xImageViewCreateInfo.subresourceRange.layerCount = 1;
 
 		if (vkCreateImageView(s_xVulkan.xDevice, &xImageViewCreateInfo, 0, &s_xVulkan.pxSwapChainImageViews[i]) != VK_SUCCESS) {
-    		printf("Failed creating image view\n");
+			printf("Failed creating image view\n");
 			return false;
 		}
 	}
@@ -524,50 +563,103 @@ static bool Vulkan_CreateImageViews(void) {
 }
 
 static bool Vulkan_CreateRenderPass(void) {
+	VkAttachmentDescription xColorAttachmentDesc;
+	memset(&xColorAttachmentDesc, 0, sizeof(xColorAttachmentDesc));
+	xColorAttachmentDesc.format = s_xVulkan.xPreferedSurfaceFormat.format;
+	xColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+	xColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	xColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	xColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	xColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	xColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	xColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference xColorAttachmentRef;
+	memset(&xColorAttachmentRef, 0, sizeof(xColorAttachmentRef));
+	xColorAttachmentRef.attachment = 0;
+	xColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription xSubpassDesc;
+	memset(&xSubpassDesc, 0, sizeof(xSubpassDesc));
+	xSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	xSubpassDesc.colorAttachmentCount = 1;
+	xSubpassDesc.pColorAttachments = &xColorAttachmentRef;
+
+	VkSubpassDependency xSubpassDependency;
+	memset(&xSubpassDependency, 0, sizeof(xSubpassDependency));
+	xSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	xSubpassDependency.dstSubpass = 0;
+	xSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	xSubpassDependency.srcAccessMask = 0;
+	xSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	xSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkRenderPassCreateInfo xRenderPassCreateInfo;
+	memset(&xRenderPassCreateInfo, 0, sizeof(xRenderPassCreateInfo));
+	xRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	xRenderPassCreateInfo.attachmentCount = 1;
+	xRenderPassCreateInfo.pAttachments = &xColorAttachmentDesc;
+	xRenderPassCreateInfo.subpassCount = 1;
+	xRenderPassCreateInfo.pSubpasses = &xSubpassDesc;
+	xRenderPassCreateInfo.dependencyCount = 1;
+	xRenderPassCreateInfo.pDependencies = &xSubpassDependency;
+
+	if (vkCreateRenderPass(s_xVulkan.xDevice, &xRenderPassCreateInfo, 0, &s_xVulkan.xRenderPass) != VK_SUCCESS) {
+		printf("Failed creating render pass\n");
+		return false;
+	}
+
 	return true;
 }
 
 static bool Vulkan_CreateShaderModules(const char* pcVertFilePath, const char* pcFragFilePath) {
 	char* pcVertShaderBytes;
-    char* pcFragShaderBytes;
-    
-    uint32_t nVertShaderSize;
-    uint32_t nFragShaderSize;
+	char* pcFragShaderBytes;
+	
+	uint32_t nVertShaderSize;
+	uint32_t nFragShaderSize;
 
-    FileUtl_ReadBinary(&pcVertShaderBytes, &nVertShaderSize, pcVertFilePath);
-    FileUtl_ReadBinary(&pcFragShaderBytes, &nFragShaderSize, pcFragFilePath);
+	FileUtl_ReadBinary(&pcVertShaderBytes, &nVertShaderSize, pcVertFilePath);
+	FileUtl_ReadBinary(&pcFragShaderBytes, &nFragShaderSize, pcFragFilePath);
 
-    VkShaderModuleCreateInfo xVertCreateInfo;
-    memset(&xVertCreateInfo, 0, sizeof(xVertCreateInfo));
-    xVertCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    xVertCreateInfo.codeSize = nVertShaderSize;
-    xVertCreateInfo.pCode = (const uint32_t*)pcVertShaderBytes;
+	VkShaderModuleCreateInfo xVertCreateInfo;
+	memset(&xVertCreateInfo, 0, sizeof(xVertCreateInfo));
+	xVertCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	xVertCreateInfo.codeSize = nVertShaderSize;
+	xVertCreateInfo.pCode = (const uint32_t*)pcVertShaderBytes;
 
-    VkShaderModuleCreateInfo xFragCreateInfo;
-    memset(&xFragCreateInfo, 0, sizeof(xFragCreateInfo));
-    xFragCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    xFragCreateInfo.codeSize = nFragShaderSize;
-    xFragCreateInfo.pCode = (const uint32_t*)pcFragShaderBytes;
+	VkShaderModuleCreateInfo xFragCreateInfo;
+	memset(&xFragCreateInfo, 0, sizeof(xFragCreateInfo));
+	xFragCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	xFragCreateInfo.codeSize = nFragShaderSize;
+	xFragCreateInfo.pCode = (const uint32_t*)pcFragShaderBytes;
 
-    if (vkCreateShaderModule(s_xVulkan.xDevice, &xVertCreateInfo, 0, &s_xVulkan.xVertModule) != VK_SUCCESS) {
-        printf("Failed creating vertex shader module\n");
+	if (vkCreateShaderModule(s_xVulkan.xDevice, &xVertCreateInfo, 0, &s_xVulkan.xVertModule) != VK_SUCCESS) {
+		printf("Failed creating vertex shader module\n");
 
-        free(pcVertShaderBytes);
+		free(pcVertShaderBytes);
 
-        return false;
-    }
+		return false;
+	}
 
-    free(pcVertShaderBytes);
+	free(pcVertShaderBytes);
 
-    if (vkCreateShaderModule(s_xVulkan.xDevice, &xFragCreateInfo, 0, &s_xVulkan.xFragModule) != VK_SUCCESS) {
-        printf("Failed creating fragment shader module\n");
+	if (vkCreateShaderModule(s_xVulkan.xDevice, &xFragCreateInfo, 0, &s_xVulkan.xFragModule) != VK_SUCCESS) {
+		printf("Failed creating fragment shader module\n");
 
-        free(pcFragShaderBytes);
+		free(pcFragShaderBytes);
 
-        return false;
-    }
+		return false;
+	}
 
-    free(pcFragShaderBytes);
+	free(pcFragShaderBytes);
+
+	return true;
+}
+
+static bool Vulkan_DestroyShaderModules(void) {
+	vkDestroyShaderModule(s_xVulkan.xDevice, s_xVulkan.xVertModule, 0);
+	vkDestroyShaderModule(s_xVulkan.xDevice, s_xVulkan.xFragModule, 0);
 
 	return true;
 }
@@ -589,13 +681,11 @@ static bool Vulkan_CreateGraphicsPipeline(void) {
 
 	VkPipelineShaderStageCreateInfo axShaderStages[] = { xVertShaderStageCreateInfo, xFragShaderStageCreateInfo };
 
-	VkDynamicState axDynamicState[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-
-	VkPipelineDynamicStateCreateInfo xDynamicStateCreateInfo;
-	memset(&xDynamicStateCreateInfo, 0, sizeof(xDynamicStateCreateInfo));
-	xDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	xDynamicStateCreateInfo.dynamicStateCount = ARRAY_LENGTH(axDynamicState);
-	xDynamicStateCreateInfo.pDynamicStates = axDynamicState;
+	VkPipelineVertexInputStateCreateInfo xVertexInputCreateInfo;
+	memset(&xVertexInputCreateInfo, 0, sizeof(xVertexInputCreateInfo));
+	xVertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	xVertexInputCreateInfo.vertexBindingDescriptionCount = 0;
+	xVertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
 
 	VkPipelineInputAssemblyStateCreateInfo xInputAssemblyCreateInfo;
 	memset(&xInputAssemblyCreateInfo, 0, sizeof(xInputAssemblyCreateInfo));
@@ -633,7 +723,7 @@ static bool Vulkan_CreateGraphicsPipeline(void) {
 	xRasterizerCreateInfo.depthClampEnable = VK_FALSE;
 	xRasterizerCreateInfo.rasterizerDiscardEnable = VK_FALSE;
 	xRasterizerCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-	xRasterizerCreateInfo.lineWidth = 0.0F;
+	xRasterizerCreateInfo.lineWidth = 1.0F;
 	xRasterizerCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	xRasterizerCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	xRasterizerCreateInfo.depthBiasEnable = VK_FALSE;
@@ -674,6 +764,14 @@ static bool Vulkan_CreateGraphicsPipeline(void) {
 	xColorBlendCreateInfo.blendConstants[2] = 0.0F;
 	xColorBlendCreateInfo.blendConstants[3] = 0.0F;
 
+	VkDynamicState axDynamicState[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+	VkPipelineDynamicStateCreateInfo xDynamicStateCreateInfo;
+	memset(&xDynamicStateCreateInfo, 0, sizeof(xDynamicStateCreateInfo));
+	xDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	xDynamicStateCreateInfo.dynamicStateCount = ARRAY_LENGTH(axDynamicState);
+	xDynamicStateCreateInfo.pDynamicStates = axDynamicState;
+
 	VkPipelineLayoutCreateInfo xPipelineLayoutCreateInfo;
 	memset(&xPipelineLayoutCreateInfo, 0, sizeof(xPipelineLayoutCreateInfo));
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -683,7 +781,180 @@ static bool Vulkan_CreateGraphicsPipeline(void) {
 	xPipelineLayoutCreateInfo.pPushConstantRanges = 0;
 
 	if (vkCreatePipelineLayout(s_xVulkan.xDevice, &xPipelineLayoutCreateInfo, 0, &s_xVulkan.xPipelineLayout) != VK_SUCCESS) {
-    	printf("Failed creating pipeline layout\n");
+		printf("Failed creating pipeline layout\n");
+		return false;
+	}
+
+	VkGraphicsPipelineCreateInfo xPipelineCreateInfo;
+	memset(&xPipelineCreateInfo, 0, sizeof(xPipelineCreateInfo));
+	xPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	xPipelineCreateInfo.stageCount = ARRAY_LENGTH(axShaderStages);
+	xPipelineCreateInfo.pStages = axShaderStages;
+	xPipelineCreateInfo.pVertexInputState = &xVertexInputCreateInfo;
+	xPipelineCreateInfo.pInputAssemblyState = &xInputAssemblyCreateInfo;
+	xPipelineCreateInfo.pViewportState = &xViewportStateCreateInfo;
+	xPipelineCreateInfo.pRasterizationState = &xRasterizerCreateInfo;
+	xPipelineCreateInfo.pMultisampleState = &xMultisamplingCreateInfo;
+	xPipelineCreateInfo.pDepthStencilState = 0;
+	xPipelineCreateInfo.pColorBlendState = &xColorBlendCreateInfo;
+	xPipelineCreateInfo.pDynamicState = &xDynamicStateCreateInfo;
+	xPipelineCreateInfo.layout = s_xVulkan.xPipelineLayout;
+	xPipelineCreateInfo.renderPass = s_xVulkan.xRenderPass;
+	xPipelineCreateInfo.subpass = 0;
+	xPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+	if (vkCreateGraphicsPipelines(s_xVulkan.xDevice, VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &s_xVulkan.xGraphicsPipeline) != VK_SUCCESS) {
+		printf("Failed creating graphics pipeline\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreateFrameBuffers(void) {
+	s_xVulkan.pxFrameBuffers = (VkFramebuffer*)malloc(sizeof(VkFramebuffer) * s_xVulkan.nSwapChainImageCount);
+
+	for (uint32_t i = 0; i < s_xVulkan.nSwapChainImageCount; ++i) {
+    	VkImageView axAttachments[] = {
+        	s_xVulkan.pxSwapChainImageViews[i],
+    	};
+
+    	VkFramebufferCreateInfo xFramebufferCreateInfo;
+		memset(&xFramebufferCreateInfo, 0, sizeof(xFramebufferCreateInfo));
+    	xFramebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    	xFramebufferCreateInfo.renderPass = s_xVulkan.xRenderPass;
+    	xFramebufferCreateInfo.attachmentCount = ARRAY_LENGTH(axAttachments);
+    	xFramebufferCreateInfo.pAttachments = axAttachments;
+    	xFramebufferCreateInfo.width = s_xVulkan.xSwapChainExtent.width;
+    	xFramebufferCreateInfo.height = s_xVulkan.xSwapChainExtent.height;
+    	xFramebufferCreateInfo.layers = 1;
+
+    	if (vkCreateFramebuffer(s_xVulkan.xDevice, &xFramebufferCreateInfo, 0, &s_xVulkan.pxFrameBuffers[i]) != VK_SUCCESS) {
+        	printf("Failed creating framebuffer\n");
+			return false;
+    	}
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreateCommandPool(int32_t nGraphicsQueueIndex) {
+	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
+	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
+	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	xCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	xCommandPoolCreateInfo.queueFamilyIndex = nGraphicsQueueIndex;
+
+	if (vkCreateCommandPool(s_xVulkan.xDevice, &xCommandPoolCreateInfo, 0, &s_xVulkan.xCommandPool) != VK_SUCCESS) {
+	    printf("Failed creating command pool\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreateCommandBuffer(void) {
+	VkCommandBufferAllocateInfo xCommandBufferAllocCreateInfo;
+	memset(&xCommandBufferAllocCreateInfo, 0, sizeof(xCommandBufferAllocCreateInfo));
+	xCommandBufferAllocCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	xCommandBufferAllocCreateInfo.commandPool = s_xVulkan.xCommandPool;
+	xCommandBufferAllocCreateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	xCommandBufferAllocCreateInfo.commandBufferCount = 1;
+
+	if (vkAllocateCommandBuffers(s_xVulkan.xDevice, &xCommandBufferAllocCreateInfo, &s_xVulkan.xCommandBuffer) != VK_SUCCESS) {
+    	printf("Failed allocating command buffers\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Vulkan_RecordCommandBuffer(uint32_t nImageIndex) {
+	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
+	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
+	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	xCommandBufferBeginInfo.flags = 0;
+	xCommandBufferBeginInfo.pInheritanceInfo = 0;
+
+	if (vkBeginCommandBuffer(s_xVulkan.xCommandBuffer, &xCommandBufferBeginInfo) != VK_SUCCESS) {
+	    printf("Failed recording command buffer\n");
+		return false;
+	}
+
+	VkClearValue xClearColor;
+	memset(&xClearColor, 0, sizeof(xClearColor));
+	xClearColor.color.float32[0] = 0.0F;
+	xClearColor.color.float32[1] = 0.0F;
+	xClearColor.color.float32[2] = 0.0F;
+	xClearColor.color.float32[3] = 1.0F;
+
+	VkRenderPassBeginInfo xRenderPassCreateInfo;
+	memset(&xRenderPassCreateInfo, 0, sizeof(xRenderPassCreateInfo));
+	xRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	xRenderPassCreateInfo.renderPass = s_xVulkan.xRenderPass;
+	xRenderPassCreateInfo.framebuffer = s_xVulkan.pxFrameBuffers[nImageIndex];
+	xRenderPassCreateInfo.renderArea.offset.x = 0;
+	xRenderPassCreateInfo.renderArea.offset.y = 0;
+	xRenderPassCreateInfo.renderArea.extent = s_xVulkan.xSwapChainExtent;
+	xRenderPassCreateInfo.clearValueCount = 1;
+	xRenderPassCreateInfo.pClearValues = &xClearColor;
+
+	vkCmdBeginRenderPass(s_xVulkan.xCommandBuffer, &xRenderPassCreateInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(s_xVulkan.xCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_xVulkan.xGraphicsPipeline);
+
+		VkViewport xViewport;
+		memset(&xViewport, 0, sizeof(xViewport));
+		xViewport.x = 0.0F;
+		xViewport.y = 0.0F;
+		xViewport.width = (float)s_xVulkan.xSwapChainExtent.width;
+		xViewport.height = (float)s_xVulkan.xSwapChainExtent.height;
+		xViewport.minDepth = 0.0F;
+		xViewport.maxDepth = 1.0F;
+		vkCmdSetViewport(s_xVulkan.xCommandBuffer, 0, 1, &xViewport);
+
+		VkRect2D xScissor;
+		memset(&xScissor, 0, sizeof(xScissor));
+		xScissor.offset.x = 0;
+		xScissor.offset.y = 0;
+		xScissor.extent.width = s_xVulkan.xSwapChainExtent.width;
+		xScissor.extent.height = s_xVulkan.xSwapChainExtent.height;
+		vkCmdSetScissor(s_xVulkan.xCommandBuffer, 0, 1, &xScissor);            
+
+		vkCmdDraw(s_xVulkan.xCommandBuffer, 3, 1, 0, 0);
+
+	vkCmdEndRenderPass(s_xVulkan.xCommandBuffer);
+
+	if (vkEndCommandBuffer(s_xVulkan.xCommandBuffer) != VK_SUCCESS) {
+		printf("Failed recording command buffer\n");
+		return false;
+	}
+
+	return true;
+}
+
+static bool Vulkan_CreatSyncObjects(void) {
+	VkSemaphoreCreateInfo xSemaphoreCreateInfo;
+	memset(&xSemaphoreCreateInfo, 0, sizeof(xSemaphoreCreateInfo));
+    xSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo xFenceCreateInfo;
+	memset(&xFenceCreateInfo, 0, sizeof(xFenceCreateInfo));
+	xFenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	xFenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	if (vkCreateSemaphore(s_xVulkan.xDevice, &xSemaphoreCreateInfo, 0, &s_xVulkan.xImageAvailableSemaphore) != VK_SUCCESS) {
+		printf("Failed creating semaphore\n");
+		return false;
+	}
+
+    if (vkCreateSemaphore(s_xVulkan.xDevice, &xSemaphoreCreateInfo, 0, &s_xVulkan.xRenderFinishedSemaphore) != VK_SUCCESS) {
+		printf("Failed creating semaphore\n");
+		return false;
+	}
+
+    if (vkCreateFence(s_xVulkan.xDevice, &xFenceCreateInfo, 0, &s_xVulkan.xInFlightFence) != VK_SUCCESS) {
+		printf("Failed creating fence\n");
 		return false;
 	}
 
@@ -756,6 +1027,26 @@ struct xVulkan_t* Vulkan_Alloc(struct xWindow_t* pxWindow) {
 		return 0;
 	}
 
+	if (!Vulkan_CreateFrameBuffers()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateCommandPool(nGraphicsQueueIndex)) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreateCommandBuffer()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
+	if (!Vulkan_CreatSyncObjects()) {
+		Vulkan_Cleanup();
+		return 0;
+	}
+
 	return &s_xVulkan;
 }
 
@@ -763,4 +1054,53 @@ void Vulkan_Free(struct xVulkan_t* pxVulkan) {
 	UNUSED(pxVulkan);
 
 	Vulkan_Cleanup();
+}
+
+bool Vulkan_Draw(struct xVulkan_t* pxVulkan) {
+	vkResetFences(pxVulkan->xDevice, 1, &pxVulkan->xInFlightFence);
+
+	uint32_t nImageIndex;
+	vkAcquireNextImageKHR(pxVulkan->xDevice, pxVulkan->xSwapChain, UINT64_MAX, pxVulkan->xImageAvailableSemaphore, VK_NULL_HANDLE, &nImageIndex);
+
+	vkResetCommandBuffer(pxVulkan->xCommandBuffer, 0);
+
+	if (!Vulkan_RecordCommandBuffer(nImageIndex)) {
+		return false;
+	}
+
+	VkSemaphore axWaitSemaphores[] = { pxVulkan->xImageAvailableSemaphore };
+	VkSemaphore axSignalSemaphores[] = { pxVulkan->xRenderFinishedSemaphore };
+	VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkSwapchainKHR axSwapChains[] = { pxVulkan->xSwapChain };
+
+	VkSubmitInfo xSubmitInfo;
+	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
+	xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	xSubmitInfo.waitSemaphoreCount = ARRAY_LENGTH(axWaitSemaphores);
+	xSubmitInfo.pWaitSemaphores = axWaitSemaphores;
+	xSubmitInfo.pWaitDstStageMask = axWaitStages;
+	xSubmitInfo.commandBufferCount = 1;
+	xSubmitInfo.pCommandBuffers = &pxVulkan->xCommandBuffer;
+	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
+
+	if (vkQueueSubmit(pxVulkan->xGraphicsQueue, 1, &xSubmitInfo, pxVulkan->xInFlightFence) != VK_SUCCESS) {
+		printf("Failed submitting draw command buffer\n");
+		return false;
+	}
+
+	VkPresentInfoKHR xPresentInfo;
+	memset(&xPresentInfo, 0, sizeof(xPresentInfo));
+	xPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	xPresentInfo.waitSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+	xPresentInfo.pWaitSemaphores = axSignalSemaphores;
+	xPresentInfo.swapchainCount = ARRAY_LENGTH(axSwapChains);
+	xPresentInfo.pSwapchains = axSwapChains;
+	xPresentInfo.pImageIndices = &nImageIndex;
+
+	vkQueuePresentKHR(pxVulkan->xPresentQueue, &xPresentInfo);
+
+	vkWaitForFences(pxVulkan->xDevice, 1, &pxVulkan->xInFlightFence, VK_TRUE, UINT64_MAX);
+
+	return true;
 }

@@ -11,7 +11,7 @@
 #include <signal.h>
 
 #include <macros.h>
-#include <hardfault.h>
+#include <stacktrace.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
@@ -133,7 +133,7 @@ static void ExceptionHandler(int32_t nSignal) {
 }
 #endif
 
-void Hardfault_Alloc(void) {
+void StackTrace_Alloc(void) {
 #ifdef OS_WINDOWS
 	s_hDbgHelp = LoadLibrary("dbghelp.dll");
 
@@ -162,7 +162,7 @@ void Hardfault_Alloc(void) {
 #endif
 }
 
-void Hardfault_Free(void) {
+void StackTrace_Free(void) {
 #ifdef OS_WINDOWS
 	RemoveVectoredExceptionHandler(s_pGlobalExceptionHandler);
 
