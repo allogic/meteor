@@ -50,10 +50,10 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 
 	CONTEXT* pContext = pxExceptionInfo->ContextRecord;
 
-	DWORD64 lExceptionAddress = (DWORD64)pxExceptionInfo->ExceptionRecord->ExceptionAddress;
-	DWORD64 lModuleBaseAddress = (DWORD64)GetModuleHandle(0);
+	DWORD64 wExceptionAddress = (DWORD64)pxExceptionInfo->ExceptionRecord->ExceptionAddress;
+	DWORD64 wModuleBaseAddress = (DWORD64)GetModuleHandle(0);
 
-	if ((lExceptionAddress >= lModuleBaseAddress) && (lExceptionAddress < (lModuleBaseAddress + 0x1000000))) {
+	if ((wExceptionAddress >= wModuleBaseAddress) && (wExceptionAddress < (wModuleBaseAddress + 0x1000000))) {
 		STACKFRAME64 xStackFrame;
 		memset(&xStackFrame, 0, sizeof(xStackFrame));
 		xStackFrame.AddrPC.Offset = pContext->Rip;
@@ -70,8 +70,8 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 		UINT nBacktraceCount = 0;
 
 		while ((s_pStackWalk64(IMAGE_FILE_MACHINE_AMD64, hProcess, hThread, &xStackFrame, pContext, 0, s_pSymFunctionTableAccess64, s_pSymGetModuleBase64, 0)) && (nBacktraceCount < BACKTRACE_BUFFER_SIZE)) {
-			DWORD64 lAddress = xStackFrame.AddrPC.Offset;
-			DWORD64 lDisplacement;
+			DWORD64 wAddress = xStackFrame.AddrPC.Offset;
+			DWORD64 wDisplacement;
 
 			char acSymbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(CHAR)];
 
@@ -80,18 +80,18 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 			pxSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 			pxSymbol->MaxNameLen = MAX_SYM_NAME;
 
-			if (s_pSymFromAddr(hProcess, lAddress, &lDisplacement, pxSymbol)) {
-				printf("%s(+0x%I64x) [0x%I64x]\n", pxSymbol->Name, lDisplacement, lAddress);
+			if (s_pSymFromAddr(hProcess, wAddress, &wDisplacement, pxSymbol)) {
+				printf("%s(+0x%I64x) [0x%I64x]\n", pxSymbol->Name, wDisplacement, wAddress);
 			} else {
 				IMAGEHLP_MODULE64 xModuleInfo;
 
 				memset(&xModuleInfo, 0, sizeof(xModuleInfo));
 	            xModuleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
 
-	            if (s_pSymGetModuleInfo64(hProcess, lAddress, &xModuleInfo)) {
-	                printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, lDisplacement, lAddress);
+	            if (s_pSymGetModuleInfo64(hProcess, wAddress, &xModuleInfo)) {
+	                printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, wDisplacement, wAddress);
 	            } else {
-	                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0ULL, lAddress);
+	                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0ULL, wAddress);
 	            }
 			}
 

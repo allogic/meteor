@@ -33,6 +33,7 @@ struct xVkInstance_t {
 	int32_t nPresentQueueIndex;
 	VkQueue xGraphicsQueue;
 	VkQueue xPresentQueue;
+	VkCommandPool xCommandPool;
 };
 
 static const char* s_apLayerExtensions[] = {
@@ -305,6 +306,16 @@ static void VkInstance_CheckSurfaceCapabilities(struct xVkInstance_t* pxVkInstan
 	free(pxPresentModes);
 }
 
+static void VkInstance_CreateCommandPool(struct xVkInstance_t* pxVkInstance) {
+	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
+	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
+	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	xCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	xCommandPoolCreateInfo.queueFamilyIndex = pxVkInstance->nGraphicsQueueIndex;
+
+	VK_CHECK(vkCreateCommandPool(pxVkInstance->xDevice, &xCommandPoolCreateInfo, 0, &pxVkInstance->xCommandPool));
+}
+
 struct xVkInstance_t* VkInstance_Alloc(void) {
 	struct xVkInstance_t* pxVkInstance = (struct xVkInstance_t*)calloc(1, sizeof(struct xVkInstance_t));
 
@@ -318,11 +329,14 @@ struct xVkInstance_t* VkInstance_Alloc(void) {
 	VkInstance_CheckPhysicalDeviceExtensions(pxVkInstance);
 	VkInstance_CreateLogicalDevice(pxVkInstance);
 	VkInstance_CheckSurfaceCapabilities(pxVkInstance);
+	VkInstance_CreateCommandPool(pxVkInstance);
 
 	return pxVkInstance;
 }
 
 void VkInstance_Free(struct xVkInstance_t* pxVkInstance) {
+	vkDestroyCommandPool(pxVkInstance->xDevice, pxVkInstance->xCommandPool, 0);
+
 	vkDestroyDevice(pxVkInstance->xDevice, 0);
 
 	vkDestroySurfaceKHR(pxVkInstance->xInstance, pxVkInstance->xSurface, 0);
@@ -374,4 +388,8 @@ VkQueue VkInstance_GetGraphicsQueue(struct xVkInstance_t* pxVkInstance) {
 
 VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance) {
 	return pxVkInstance->xPresentQueue;
+}
+
+VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance) {
+	return pxVkInstance->xCommandPool;
 }

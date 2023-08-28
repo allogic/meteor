@@ -10,15 +10,21 @@
 #include <vulkan/vkinstance.h>
 #include <vulkan/vkswapchain.h>
 #include <vulkan/vkrenderer.h>
-#include <vulkan/vkbuffer.h>
 #include <vulkan/vkvertex.h>
+#include <vulkan/vkbuffer.h>
+#include <vulkan/vkbuffervariants.h>
 
 #include <vulkan/vulkan.h>
 
-struct xVkVertex_t axVertices[3] = {
-	{  {  0.0F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
-	{  {  0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
-	{  { -0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
+struct xVkVertex_t axVertices[4] = {
+	{  { -0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
+	{  {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
+	{  {  0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
+	{  { -0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 1.0F, 1.0F, 1.0F } },
+};
+
+uint32_t anIndices[6] = {
+	0, 1, 2, 2, 3, 0,
 };
 
 int32_t main(void) {
@@ -32,7 +38,8 @@ int32_t main(void) {
 	struct xVkInstance_t* pxVkInstance = VkInstance_Alloc();
 	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
 	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
-	struct xVkBuffer_t* pxVkVertexBuffer = VkVertexBuffer_Alloc(pxVkInstance, axVertices, 3);
+	struct xVkBuffer_t* pxVkVertexBuffer = VkVertexBuffer_Alloc(pxVkInstance, axVertices, sizeof(struct xVkVertex_t) * 4);
+	struct xVkBuffer_t* pxVkIndexBuffer = VkIndexBuffer_Alloc(pxVkInstance, anIndices, sizeof(uint32_t) * 6);
 
 	while (NativeWindow_ShouldNotClose()) {
 		NativeWindow_PollEvents();
@@ -45,10 +52,11 @@ int32_t main(void) {
 			pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 		}
 
-		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain, pxVkVertexBuffer);
+		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain, pxVkVertexBuffer, pxVkIndexBuffer, 6);
 	}
 
-	VkVertexBuffer_Free(pxVkVertexBuffer, pxVkInstance);
+	VkBuffer_Free(pxVkIndexBuffer, pxVkInstance);
+	VkBuffer_Free(pxVkVertexBuffer, pxVkInstance);
 	VkRenderer_Free(pxVkRenderer, pxVkInstance, pxVkSwapChain);
 	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
 	VkInstance_Free(pxVkInstance);

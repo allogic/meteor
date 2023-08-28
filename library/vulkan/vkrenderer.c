@@ -18,7 +18,6 @@ struct xVkRenderer_t {
 	VkPipelineLayout xPipelineLayout;
 	VkPipeline xGraphicsPipeline;
 	VkFramebuffer* pxFrameBuffers;
-	VkCommandPool xCommandPool;
 	VkCommandBuffer xCommandBuffer;
 	VkSemaphore xImageAvailableSemaphore;
 	VkSemaphore xRenderFinishedSemaphore;
@@ -258,28 +257,18 @@ static void VkRenderer_CreateFrameBuffers(struct xVkRenderer_t* pxVkRenderer, st
 	}
 }
 
-static void VkRenderer_CreateCommandPool(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
-	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
-	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
-	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	xCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	xCommandPoolCreateInfo.queueFamilyIndex = VkInstance_GetGraphicsQueueIndex(pxVkInstance);
-
-	VK_CHECK(vkCreateCommandPool(VkInstance_GetDevice(pxVkInstance), &xCommandPoolCreateInfo, 0, &pxVkRenderer->xCommandPool));
-}
-
 static void VkRenderer_CreateCommandBuffer(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
 	VkCommandBufferAllocateInfo xCommandBufferAllocCreateInfo;
 	memset(&xCommandBufferAllocCreateInfo, 0, sizeof(xCommandBufferAllocCreateInfo));
 	xCommandBufferAllocCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	xCommandBufferAllocCreateInfo.commandPool = pxVkRenderer->xCommandPool;
+	xCommandBufferAllocCreateInfo.commandPool = VkInstance_GetCommandPool(pxVkInstance);
 	xCommandBufferAllocCreateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	xCommandBufferAllocCreateInfo.commandBufferCount = 1;
 
 	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxVkInstance), &xCommandBufferAllocCreateInfo, &pxVkRenderer->xCommandBuffer));
 }
 
-static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, uint32_t nImageIndex, struct xVkBuffer_t* pxVkBuffer) {
+static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, uint32_t nImageIndex, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -329,12 +318,13 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, u
 		xScissor.extent.height = NativeWindow_GetHeight();
 		vkCmdSetScissor(pxVkRenderer->xCommandBuffer, 0, 1, &xScissor);
 
-		VkBuffer axVertexBuffers[] = { VkBuffer_GetBuffer(pxVkBuffer) };
-		VkDeviceSize axOffsets[] = { 0 };
+		VkBuffer axVertexBuffers[] = { VkBuffer_GetBuffer(pxVkVertexBuffer) };
+		uint64_t awOffsets[] = { 0 };
 
-		vkCmdBindVertexBuffers(pxVkRenderer->xCommandBuffer, 0, 1, axVertexBuffers, axOffsets);
+		vkCmdBindVertexBuffers(pxVkRenderer->xCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
+		vkCmdBindIndexBuffer(pxVkRenderer->xCommandBuffer, VkBuffer_GetBuffer(pxVkIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdDraw(pxVkRenderer->xCommandBuffer, 3, 1, 0, 0); // TODO
+		vkCmdDrawIndexed(pxVkRenderer->xCommandBuffer, nIndexCount, 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(pxVkRenderer->xCommandBuffer);
 
@@ -368,7 +358,6 @@ struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struc
 	VkRenderer_CreateRenderPass(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreateGraphicsPipeline(pxVkRenderer, pxVkInstance, xVertModule, xFragModule);
 	VkRenderer_CreateFrameBuffers(pxVkRenderer, pxVkInstance, pxVkSwapChain);
-	VkRenderer_CreateCommandPool(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreateCommandBuffer(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreatSyncObjects(pxVkRenderer, pxVkInstance);
 
@@ -385,8 +374,6 @@ void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	vkDestroySemaphore(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xRenderFinishedSemaphore, 0);
 	vkDestroySemaphore(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xImageAvailableSemaphore, 0);
 
-	vkDestroyCommandPool(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xCommandPool, 0);
-
 	for (uint32_t i = 0; i < VkSwapChain_GetImageCount(pxVkSwapChain); ++i) {
 		vkDestroyFramebuffer(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->pxFrameBuffers[i], 0);
 	}
@@ -402,7 +389,7 @@ void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	free(pxVkRenderer);
 }
 
-void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, struct xVkBuffer_t* pxVkBuffer) {
+void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
 	VK_CHECK(vkResetFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->xInFlightFence));
 
 	uint32_t nImageIndex;
@@ -410,7 +397,7 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 
 	VK_CHECK(vkResetCommandBuffer(pxVkRenderer->xCommandBuffer, 0));
 
-	VkRenderer_RecordCommandBuffer(pxVkRenderer, nImageIndex, pxVkBuffer);
+	VkRenderer_RecordCommandBuffer(pxVkRenderer, nImageIndex, pxVkVertexBuffer, pxVkIndexBuffer, nIndexCount);
 
 	VkSemaphore axWaitSemaphores[] = { pxVkRenderer->xImageAvailableSemaphore };
 	VkSemaphore axSignalSemaphores[] = { pxVkRenderer->xRenderFinishedSemaphore };

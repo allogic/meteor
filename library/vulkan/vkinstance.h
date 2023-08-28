@@ -21,5 +21,6 @@ uint32_t VkInstance_GetGraphicsQueueIndex(struct xVkInstance_t* pxVkInstance);
 uint32_t VkInstance_GetPresentQueueIndex(struct xVkInstance_t* pxVkInstance);
 VkQueue VkInstance_GetGraphicsQueue(struct xVkInstance_t* pxVkInstance);
 VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance);
+VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance);
 
 #endif
