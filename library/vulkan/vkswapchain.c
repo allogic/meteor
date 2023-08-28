@@ -11,17 +11,13 @@
 #include <platform/nativewindow.h>
 
 struct xVkSwapChain_t {
-	VkExtent2D xExtent;
 	VkSwapchainKHR xSwapChain;
 	uint32_t nImageCount;
 	VkImage* pxImages;
 	VkImageView* pxImageViews;
 };
 
-static void VkSwapChain_CreateSwapChain(struct xVkSwapChain_t* pxVkSwapChain, struct xNativeWindow_t* pxNativeWindow, struct xVkInstance_t* pxVkInstance) {
-	pxVkSwapChain->xExtent.width = NativeWindow_GetWidth(pxNativeWindow);
-	pxVkSwapChain->xExtent.height = NativeWindow_GetHeight(pxNativeWindow);
-
+static void VkSwapChain_CreateSwapChain(struct xVkSwapChain_t* pxVkSwapChain, struct xVkInstance_t* pxVkInstance) {
 	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkInstance_GetPhysicalDevice(pxVkInstance), VkInstance_GetSurface(pxVkInstance), &xSurfaceCapabilities));
 
@@ -34,7 +30,8 @@ static void VkSwapChain_CreateSwapChain(struct xVkSwapChain_t* pxVkSwapChain, st
 	xSwapChaincreateInfo.minImageCount = nMinImageCount;
 	xSwapChaincreateInfo.imageFormat = VkInstance_GetPreferedSurfaceFormat(pxVkInstance);
 	xSwapChaincreateInfo.imageColorSpace = VkInstance_GetPreferedSurfaceColorSpace(pxVkInstance);
-	xSwapChaincreateInfo.imageExtent = pxVkSwapChain->xExtent;
+	xSwapChaincreateInfo.imageExtent.width = NativeWindow_GetWidth();
+	xSwapChaincreateInfo.imageExtent.height = NativeWindow_GetHeight();
 	xSwapChaincreateInfo.imageArrayLayers = 1;
 	xSwapChaincreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	xSwapChaincreateInfo.preTransform = xSurfaceCapabilities.currentTransform;
@@ -89,10 +86,10 @@ static void VkSwapChain_CreateImageViews(struct xVkSwapChain_t* pxVkSwapChain, s
 	}
 }
 
-struct xVkSwapChain_t* VkSwapChain_Alloc(struct xNativeWindow_t* pxNativeWindow, struct xVkInstance_t* pxVkInstance) {
+struct xVkSwapChain_t* VkSwapChain_Alloc(struct xVkInstance_t* pxVkInstance) {
 	struct xVkSwapChain_t* pxVkSwapChain = (struct xVkSwapChain_t*)calloc(1, sizeof(struct xVkSwapChain_t));
 
-	VkSwapChain_CreateSwapChain(pxVkSwapChain, pxNativeWindow, pxVkInstance);
+	VkSwapChain_CreateSwapChain(pxVkSwapChain, pxVkInstance);
 	VkSwapChain_CreateImageViews(pxVkSwapChain, pxVkInstance);
 
 	return pxVkSwapChain;
@@ -109,14 +106,6 @@ void VkSwapChain_Free(struct xVkSwapChain_t* pxVkSwapChain, struct xVkInstance_t
 	vkDestroySwapchainKHR(VkInstance_GetDevice(pxVkInstance), pxVkSwapChain->xSwapChain, 0);
 
 	free(pxVkSwapChain);
-}
-
-uint32_t VkSwapChain_GetWidth(struct xVkSwapChain_t* pxVkSwapChain) {
-	return pxVkSwapChain->xExtent.width;
-}
-
-uint32_t VkSwapChain_GetHeight(struct xVkSwapChain_t* pxVkSwapChain) {
-	return pxVkSwapChain->xExtent.height;
 }
 
 VkSwapchainKHR VkSwapChain_GetSwapChain(struct xVkSwapChain_t* pxVkSwapChain) {

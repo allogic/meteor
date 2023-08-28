@@ -33,6 +33,7 @@ struct xNativeWindow_t {
 	struct xdg_toplevel* pxXdgTopLevel;
 #endif
 	bool bShouldClose;
+	bool bHasResized;
 	uint32_t nWidth;
 	uint32_t nHeight;
 	uint32_t nMouseX;
@@ -48,6 +49,17 @@ static LRESULT WndProc(HWND xWindow, UINT nMessage, WPARAM wParam, LPARAM lParam
 			s_xNativeWindow.bShouldClose = true;
 		}
 		break;
+		case WM_WINDOWPOSCHANGED: {
+			WINDOWPOS* xWindowPos = (WINDOWPOS*)lParam;
+
+			if ((xWindowPos->cx > 0) && (xWindowPos->cy > 0)) {
+				if (((uint32_t)xWindowPos->cx != s_xNativeWindow.nWidth) || ((uint32_t)xWindowPos->cy != s_xNativeWindow.nHeight)) {
+					s_xNativeWindow.bHasResized = true;
+					s_xNativeWindow.nWidth = (uint32_t)xWindowPos->cx;
+					s_xNativeWindow.nHeight = (uint32_t)xWindowPos->cy;
+				}
+			}
+		}
 		case WM_MOUSEMOVE: {
 			s_xNativeWindow.nMouseX = LOWORD(lParam);
 			s_xNativeWindow.nMouseY = HIWORD(lParam);
@@ -85,7 +97,9 @@ static const struct wl_registry_listener s_xRegistryListener = {
 };
 #endif
 
-struct xNativeWindow_t* NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth, uint32_t nHeight) {
+void NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth, uint32_t nHeight) {
+	memset(&s_xNativeWindow, 0, sizeof(s_xNativeWindow));
+
 #ifdef OS_WINDOWS
 	s_xNativeWindow.xInstance = GetModuleHandle(0);
 
@@ -137,68 +151,75 @@ struct xNativeWindow_t* NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth,
 
 	s_xNativeWindow.nWidth = nWidth;
 	s_xNativeWindow.nHeight = nHeight;
-
-	return &s_xNativeWindow;
 }
 
-void NativeWindow_Free(struct xNativeWindow_t* pxNativeWindow) {
+void NativeWindow_Free(void) {
 #ifdef OS_WINDOWS
-	DestroyWindow(pxNativeWindow->xWindow);
+	DestroyWindow(s_xNativeWindow.xWindow);
 #endif
 
 #ifdef OS_LINUX
-	xdg_toplevel_destroy(pxNativeWindow->pxXdgTopLevel);
-	xdg_surface_destroy(pxNativeWindow->pxXdgSurface);
+	xdg_toplevel_destroy(s_xNativeWindow.pxXdgTopLevel);
+	xdg_surface_destroy(s_xNativeWindow.pxXdgSurface);
 
-	wl_surface_destroy(pxNativeWindow->pxSurface);
-	wl_compositor_destroy(pxNativeWindow->pxCompositor);
-	wl_registry_destroy(pxNativeWindow->pxRegistry);
-	wl_display_disconnect(pxNativeWindow->pxDisplay);
+	wl_surface_destroy(s_xNativeWindow.pxSurface);
+	wl_compositor_destroy(s_xNativeWindow.pxCompositor);
+	wl_registry_destroy(s_xNativeWindow.pxRegistry);
+	wl_display_disconnect(s_xNativeWindow.pxDisplay);
 #endif
 }
 
-bool NativeWindow_ShouldNotClose(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->bShouldClose == 0;
+bool NativeWindow_ShouldNotClose(void) {
+	return !s_xNativeWindow.bShouldClose;
 }
 
-void NativeWindow_PollEvents(struct xNativeWindow_t* pxNativeWindow) {
+bool NativeWindow_HasResized(void) {
+	if (s_xNativeWindow.bHasResized) {
+		s_xNativeWindow.bHasResized = false;
+		return true;
+	}
+
+	return false;
+}
+
+void NativeWindow_PollEvents(void) {
 #ifdef OS_WINDOWS
-	if (PeekMessage(&pxNativeWindow->xMsg, 0, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&pxNativeWindow->xMsg);
-		DispatchMessage(&pxNativeWindow->xMsg);
+	if (PeekMessage(&s_xNativeWindow.xMsg, 0, 0, 0, PM_REMOVE)) {
+		TranslateMessage(&s_xNativeWindow.xMsg);
+		DispatchMessage(&s_xNativeWindow.xMsg);
 	}
 #endif
 
 #ifdef OS_LINUX
-	wl_display_dispatch(pxNativeWindow->pxDisplay);
-	//wl_display_dispatch_pending(pxNativeWindow->pxDisplay); // TODO
+	wl_display_dispatch(s_xNativeWindow.pxDisplay);
+	//wl_display_dispatch_pending(s_xNativeWindow.pxDisplay); // TODO
 #endif
 }
 
 #ifdef OS_WINDOWS
-void* NativeWindow_GetWindowHandle(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->xWindow;
+void* NativeWindow_GetWindowHandle(void) {
+	return s_xNativeWindow.xWindow;
 }
 
-void* NativeWindow_GetModuleHandle(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->xInstance;
+void* NativeWindow_GetModuleHandle(void) {
+	return s_xNativeWindow.xInstance;
 }
 #endif
 
 #ifdef OS_LINUX
-void* NativeWindow_GetDisplayHandle(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->pxDisplay;
+void* NativeWindow_GetDisplayHandle(void) {
+	return s_xNativeWindow.pxDisplay;
 }
 
-void* NativeWindow_GetSurfaceHandle(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->pxSurface;
+void* NativeWindow_GetSurfaceHandle(void) {
+	return s_xNativeWindow.pxSurface;
 }
 #endif
 
-uint32_t NativeWindow_GetWidth(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->nWidth - 16; // TODO: Compute and subtract window border if any..
+uint32_t NativeWindow_GetWidth(void) {
+	return s_xNativeWindow.nWidth - 16; // TODO: Compute and subtract window border if any..
 }
 
-uint32_t NativeWindow_GetHeight(struct xNativeWindow_t* pxNativeWindow) {
-	return pxNativeWindow->nHeight - 39; // TODO: Compute and subtract window border if any..
+uint32_t NativeWindow_GetHeight(void) {
+	return s_xNativeWindow.nHeight - 39; // TODO: Compute and subtract window border if any..
 }

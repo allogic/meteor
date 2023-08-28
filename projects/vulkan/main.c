@@ -17,14 +17,22 @@ int32_t main(void) {
 	StackTrace_Alloc();
 #endif
 
-	struct xNativeWindow_t* pxNativeWindow = NativeWindow_Alloc(WINDOW_NAME, 800, 600);
+	NativeWindow_Alloc(WINDOW_NAME, 800, 600);
 
-	struct xVkInstance_t* pxVkInstance = VkInstance_Alloc(pxNativeWindow);
-	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxNativeWindow, pxVkInstance);
+	struct xVkInstance_t* pxVkInstance = VkInstance_Alloc();
+	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
 	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 
-	while (NativeWindow_ShouldNotClose(pxNativeWindow)) {
-		NativeWindow_PollEvents(pxNativeWindow);
+	while (NativeWindow_ShouldNotClose()) {
+		NativeWindow_PollEvents();
+
+		if (NativeWindow_HasResized()) {
+			VkRenderer_Free(pxVkRenderer, pxVkInstance, pxVkSwapChain);
+			VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
+
+			pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
+			pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
+		}
 
 		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain);
 	}
@@ -33,7 +41,7 @@ int32_t main(void) {
 	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
 	VkInstance_Free(pxVkInstance);
 
-	NativeWindow_Free(pxNativeWindow);
+	NativeWindow_Free();
 
 #ifdef DEBUG
 	StackTrace_Free();

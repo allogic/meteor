@@ -123,13 +123,13 @@ static void VkInstance_CreateInstance(struct xVkInstance_t* pxVkInstance) {
 #endif
 }
 
-static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance, struct xNativeWindow_t* pxNativeWindow) {
+static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance) {
 #ifdef OS_WINDOWS
 	VkWin32SurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
 	xSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	xSurfaceCreateInfo.hwnd = NativeWindow_GetWindowHandle(pxNativeWindow);
-	xSurfaceCreateInfo.hinstance = NativeWindow_GetModuleHandle(pxNativeWindow);
+	xSurfaceCreateInfo.hwnd = NativeWindow_GetWindowHandle();
+	xSurfaceCreateInfo.hinstance = NativeWindow_GetModuleHandle();
 
 	VK_CHECK(vkCreateWin32SurfaceKHR(pxVkInstance->xInstance, &xSurfaceCreateInfo, 0, &pxVkInstance->xSurface));
 #endif
@@ -138,8 +138,8 @@ static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance, struct 
 	VkWaylandSurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
 	xSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
-	xSurfaceCreateInfo.display = NativeWindow_GetDisplayHandle(pxNativeWindow);
-	xSurfaceCreateInfo.surface = NativeWindow_GetSurfaceHandle(pxNativeWindow);
+	xSurfaceCreateInfo.display = NativeWindow_GetDisplayHandle();
+	xSurfaceCreateInfo.surface = NativeWindow_GetSurfaceHandle();
 
 	VK_CHECK(vkCreateWaylandSurfaceKHR(pxVkInstance->xInstance, &xSurfaceCreateInfo, 0, &pxVkInstance->xSurface));
 #endif
@@ -305,14 +305,14 @@ static void VkInstance_CheckSurfaceCapabilities(struct xVkInstance_t* pxVkInstan
 	free(pxPresentModes);
 }
 
-struct xVkInstance_t* VkInstance_Alloc(struct xNativeWindow_t* pxNativeWindow) {
+struct xVkInstance_t* VkInstance_Alloc(void) {
 	struct xVkInstance_t* pxVkInstance = (struct xVkInstance_t*)calloc(1, sizeof(struct xVkInstance_t));
 
 	pxVkInstance->nGraphicsQueueIndex = -1;
 	pxVkInstance->nPresentQueueIndex = -1;
 
 	VkInstance_CreateInstance(pxVkInstance);
-	VkInstance_CreateSurface(pxVkInstance, pxNativeWindow);
+	VkInstance_CreateSurface(pxVkInstance);
 	VkInstance_FindPhysicalDevice(pxVkInstance);
 	VkInstance_FindQueueFamilies(pxVkInstance);
 	VkInstance_CheckPhysicalDeviceExtensions(pxVkInstance);

@@ -6,10 +6,9 @@
 
 #include <vulkan/vulkan.h>
 
-struct xNativeWindow_t;
 struct xVkInstance_t;
 
-struct xVkInstance_t* VkInstance_Alloc(struct xNativeWindow_t* pxNativeWindow);
+struct xVkInstance_t* VkInstance_Alloc(void);
 void VkInstance_Free(struct xVkInstance_t* pxVkInstance);
 
 VkPhysicalDevice VkInstance_GetPhysicalDevice(struct xVkInstance_t* pxVkInstance);

@@ -4,25 +4,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-struct xNativeWindow_t;
+void NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth, uint32_t nHeight);
+void NativeWindow_Free(void);
 
-struct xNativeWindow_t* NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth, uint32_t nHeight);
-void NativeWindow_Free(struct xNativeWindow_t* pxNativeWindow);
-
-bool NativeWindow_ShouldNotClose(struct xNativeWindow_t* pxNativeWindow);
-void NativeWindow_PollEvents(struct xNativeWindow_t* pxNativeWindow);
+bool NativeWindow_ShouldNotClose(void);
+bool NativeWindow_HasResized(void);
+void NativeWindow_PollEvents(void);
 
 #ifdef OS_WINDOWS
-void* NativeWindow_GetWindowHandle(struct xNativeWindow_t* pxNativeWindow);
-void* NativeWindow_GetModuleHandle(struct xNativeWindow_t* pxNativeWindow);
+void* NativeWindow_GetWindowHandle(void);
+void* NativeWindow_GetModuleHandle(void);
 #endif
 
 #ifdef OS_LINUX
-void* NativeWindow_GetDisplayHandle(struct xNativeWindow_t* pxNativeWindow);
-void* NativeWindow_GetSurfaceHandle(struct xNativeWindow_t* pxNativeWindow);
+void* NativeWindow_GetDisplayHandle(void);
+void* NativeWindow_GetSurfaceHandle(void);
 #endif
 
-uint32_t NativeWindow_GetWidth(struct xNativeWindow_t* pxNativeWindow);
-uint32_t NativeWindow_GetHeight(struct xNativeWindow_t* pxNativeWindow);
+uint32_t NativeWindow_GetWidth(void);
+uint32_t NativeWindow_GetHeight(void);
 
 #endif
