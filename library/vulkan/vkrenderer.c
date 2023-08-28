@@ -10,6 +10,8 @@
 #include <vulkan/vkswapchain.h>
 #include <vulkan/vkshader.h>
 #include <vulkan/vkrenderer.h>
+#include <vulkan/vkvertex.h>
+#include <vulkan/vkbuffer.h>
 
 struct xVkRenderer_t {
 	VkRenderPass xRenderPass;
@@ -85,11 +87,36 @@ static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer
 
 	VkPipelineShaderStageCreateInfo axShaderStages[] = { xVertShaderStageCreateInfo, xFragShaderStageCreateInfo };
 
+	VkVertexInputBindingDescription xVertexInputBindingDescription;
+	memset(&xVertexInputBindingDescription, 0, sizeof(xVertexInputBindingDescription));
+	xVertexInputBindingDescription.binding = 0;
+	xVertexInputBindingDescription.stride = sizeof(struct xVkVertex_t);
+	xVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[3];
+
+	axVertexInputAttributeDescriptions[0].binding = 0;
+	axVertexInputAttributeDescriptions[0].location = 0;
+	axVertexInputAttributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+	axVertexInputAttributeDescriptions[0].offset = 0;
+
+	axVertexInputAttributeDescriptions[1].binding = 0;
+	axVertexInputAttributeDescriptions[1].location = 1;
+	axVertexInputAttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+	axVertexInputAttributeDescriptions[1].offset = sizeof(float) * 3;
+
+	axVertexInputAttributeDescriptions[2].binding = 0;
+	axVertexInputAttributeDescriptions[2].location = 2;
+	axVertexInputAttributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+	axVertexInputAttributeDescriptions[2].offset = sizeof(float) * 5;
+
 	VkPipelineVertexInputStateCreateInfo xVertexInputCreateInfo;
 	memset(&xVertexInputCreateInfo, 0, sizeof(xVertexInputCreateInfo));
 	xVertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	xVertexInputCreateInfo.vertexBindingDescriptionCount = 0;
-	xVertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
+	xVertexInputCreateInfo.vertexBindingDescriptionCount = 1;
+	xVertexInputCreateInfo.pVertexBindingDescriptions = &xVertexInputBindingDescription;
+	xVertexInputCreateInfo.vertexAttributeDescriptionCount = ARRAY_LENGTH(axVertexInputAttributeDescriptions);
+	xVertexInputCreateInfo.pVertexAttributeDescriptions = axVertexInputAttributeDescriptions; 
 
 	VkPipelineInputAssemblyStateCreateInfo xInputAssemblyCreateInfo;
 	memset(&xInputAssemblyCreateInfo, 0, sizeof(xInputAssemblyCreateInfo));
@@ -252,7 +279,7 @@ static void VkRenderer_CreateCommandBuffer(struct xVkRenderer_t* pxVkRenderer, s
 	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxVkInstance), &xCommandBufferAllocCreateInfo, &pxVkRenderer->xCommandBuffer));
 }
 
-static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, uint32_t nImageIndex) {
+static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, uint32_t nImageIndex, struct xVkBuffer_t* pxVkBuffer) {
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -302,7 +329,12 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, u
 		xScissor.extent.height = NativeWindow_GetHeight();
 		vkCmdSetScissor(pxVkRenderer->xCommandBuffer, 0, 1, &xScissor);
 
-		vkCmdDraw(pxVkRenderer->xCommandBuffer, 3, 1, 0, 0);
+		VkBuffer axVertexBuffers[] = { VkBuffer_GetBuffer(pxVkBuffer) };
+		VkDeviceSize axOffsets[] = { 0 };
+
+		vkCmdBindVertexBuffers(pxVkRenderer->xCommandBuffer, 0, 1, axVertexBuffers, axOffsets);
+
+		vkCmdDraw(pxVkRenderer->xCommandBuffer, 3, 1, 0, 0); // TODO
 
 	vkCmdEndRenderPass(pxVkRenderer->xCommandBuffer);
 
@@ -370,7 +402,7 @@ void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	free(pxVkRenderer);
 }
 
-void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain) {
+void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, struct xVkBuffer_t* pxVkBuffer) {
 	VK_CHECK(vkResetFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->xInFlightFence));
 
 	uint32_t nImageIndex;
@@ -378,7 +410,7 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 
 	VK_CHECK(vkResetCommandBuffer(pxVkRenderer->xCommandBuffer, 0));
 
-	VkRenderer_RecordCommandBuffer(pxVkRenderer, nImageIndex);
+	VkRenderer_RecordCommandBuffer(pxVkRenderer, nImageIndex, pxVkBuffer);
 
 	VkSemaphore axWaitSemaphores[] = { pxVkRenderer->xImageAvailableSemaphore };
 	VkSemaphore axSignalSemaphores[] = { pxVkRenderer->xRenderFinishedSemaphore };
