@@ -28,6 +28,7 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 # Compile
 
 ```
-python meteor cbr test debug
-python meteor cbr vulkan debug
+python llvm cbi
+python project cbr test debug
+python project cbr vulkan debug
 ```
