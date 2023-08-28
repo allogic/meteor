@@ -49,59 +49,65 @@ LONG ExceptionHandler(EXCEPTION_POINTERS* pxExceptionInfo) {
 	s_pSymInitialize(hProcess, 0, TRUE);
 
 	CONTEXT* pContext = pxExceptionInfo->ContextRecord;
-	DWORD nMachineType = IMAGE_FILE_MACHINE_AMD64;
-	STACKFRAME64 xStackFrame;
 
-	memset(&xStackFrame, 0, sizeof(xStackFrame));
-	xStackFrame.AddrPC.Offset = pContext->Rip;
-	xStackFrame.AddrPC.Mode = AddrModeFlat;
-	xStackFrame.AddrFrame.Offset = pContext->Rsp;
-	xStackFrame.AddrFrame.Mode = AddrModeFlat;
-	xStackFrame.AddrStack.Offset = pContext->Rsp;
-	xStackFrame.AddrStack.Mode = AddrModeFlat;
+	DWORD64 lExceptionAddress = (DWORD64)pxExceptionInfo->ExceptionRecord->ExceptionAddress;
+	DWORD64 lModuleBaseAddress = (DWORD64)GetModuleHandle(0);
 
-	printf("\n");
-	printf("<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>\n");
-	printf("\n");
+	if ((lExceptionAddress >= lModuleBaseAddress) && (lExceptionAddress < (lModuleBaseAddress + 0x1000000))) {
+		STACKFRAME64 xStackFrame;
+		memset(&xStackFrame, 0, sizeof(xStackFrame));
+		xStackFrame.AddrPC.Offset = pContext->Rip;
+		xStackFrame.AddrPC.Mode = AddrModeFlat;
+		xStackFrame.AddrFrame.Offset = pContext->Rsp;
+		xStackFrame.AddrFrame.Mode = AddrModeFlat;
+		xStackFrame.AddrStack.Offset = pContext->Rsp;
+		xStackFrame.AddrStack.Mode = AddrModeFlat;
 
-	UINT nBacktraceCount = 0;
+		printf("\n");
+		printf("<<<<<<<<<<<< STACK TRACE >>>>>>>>>>>>\n");
+		printf("\n");
 
-	while ((s_pStackWalk64(nMachineType, hProcess, hThread, &xStackFrame, pContext, 0, s_pSymFunctionTableAccess64, s_pSymGetModuleBase64, 0)) && (nBacktraceCount < BACKTRACE_BUFFER_SIZE)) {
-		DWORD64 lAddress = xStackFrame.AddrPC.Offset;
-		DWORD64 lDisplacement;
+		UINT nBacktraceCount = 0;
 
-		char acSymbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(CHAR)];
+		while ((s_pStackWalk64(IMAGE_FILE_MACHINE_AMD64, hProcess, hThread, &xStackFrame, pContext, 0, s_pSymFunctionTableAccess64, s_pSymGetModuleBase64, 0)) && (nBacktraceCount < BACKTRACE_BUFFER_SIZE)) {
+			DWORD64 lAddress = xStackFrame.AddrPC.Offset;
+			DWORD64 lDisplacement;
 
-		PSYMBOL_INFO pxSymbol = (PSYMBOL_INFO)acSymbolBuffer;
+			char acSymbolBuffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(CHAR)];
 
-		pxSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-		pxSymbol->MaxNameLen = MAX_SYM_NAME;
+			PSYMBOL_INFO pxSymbol = (PSYMBOL_INFO)acSymbolBuffer;
 
-		if (s_pSymFromAddr(hProcess, lAddress, &lDisplacement, pxSymbol)) {
-			printf("%s(+0x%I64x) [0x%I64x]\n", pxSymbol->Name, lDisplacement, lAddress);
-		} else {
-			IMAGEHLP_MODULE64 xModuleInfo;
+			pxSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+			pxSymbol->MaxNameLen = MAX_SYM_NAME;
 
-			memset(&xModuleInfo, 0, sizeof(xModuleInfo));
-            xModuleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
+			if (s_pSymFromAddr(hProcess, lAddress, &lDisplacement, pxSymbol)) {
+				printf("%s(+0x%I64x) [0x%I64x]\n", pxSymbol->Name, lDisplacement, lAddress);
+			} else {
+				IMAGEHLP_MODULE64 xModuleInfo;
 
-            if (s_pSymGetModuleInfo64(hProcess, lAddress, &xModuleInfo)) {
-                printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, lDisplacement, lAddress);
-            } else {
-                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0ULL, lAddress);
-            }
+				memset(&xModuleInfo, 0, sizeof(xModuleInfo));
+	            xModuleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE64);
+
+	            if (s_pSymGetModuleInfo64(hProcess, lAddress, &xModuleInfo)) {
+	                printf("%s(+0x%I64x) [0x%I64x]\n", xModuleInfo.ModuleName, lDisplacement, lAddress);
+	            } else {
+	                printf("unknown_function(+0x%I64x) [0x%I64x]\n", 0ULL, lAddress);
+	            }
+			}
+
+			nBacktraceCount++;
 		}
 
-		nBacktraceCount++;
+		printf("\n");
+
+		s_pSymCleanup(hProcess);
+
+		ExitProcess(EXIT_FAILURE);
+
+		return EXCEPTION_EXECUTE_HANDLER;
 	}
 
-	printf("\n");
-
-	s_pSymCleanup(hProcess);
-	
-	ExitProcess(EXIT_FAILURE);
-
-	return EXCEPTION_EXECUTE_HANDLER;
+	return EXCEPTION_CONTINUE_SEARCH;
 }
 #endif
 
@@ -146,9 +152,6 @@ void StackTrace_Alloc(void) {
 	s_pSymCleanup = (SYMCLEANUPPROC)GetProcAddress(s_hDbgHelp, "SymCleanup");
 
 	s_pGlobalExceptionHandler = AddVectoredExceptionHandler(1, ExceptionHandler);
-	if (s_pGlobalExceptionHandler == 0) {
-		printf("Failed installing exception handler\n");
-	}
 #endif
 
 #ifdef OS_LINUX

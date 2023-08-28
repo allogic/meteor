@@ -4,12 +4,12 @@
 #include <string.h>
 
 #include <stacktrace.h>
-#include <macros.h>
-#include <strutl.h>
 
-#include <platform/window.h>
+#include <platform/nativewindow.h>
 
-#include <graphics/vulkan.h>
+#include <vulkan/vkinstance.h>
+#include <vulkan/vkswapchain.h>
+#include <vulkan/vkrenderer.h>
 
 int32_t main(void) {
 
@@ -17,23 +17,23 @@ int32_t main(void) {
 	StackTrace_Alloc();
 #endif
 
-	struct xWindow_t* pxWindow = Window_Alloc(WINDOW_NAME, 800, 600);
-	if (pxWindow) {
+	struct xNativeWindow_t* pxNativeWindow = NativeWindow_Alloc(WINDOW_NAME, 800, 600);
 
-		struct xVulkan_t* pxVulkan = Vulkan_Alloc(pxWindow);
-		if (pxVulkan) {
+	struct xVkInstance_t* pxVkInstance = VkInstance_Alloc(pxNativeWindow);
+	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxNativeWindow, pxVkInstance);
+	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 
-			while (Window_ShouldNotClose(pxWindow)) {
-				Window_PollEvents(pxWindow);
+	while (NativeWindow_ShouldNotClose(pxNativeWindow)) {
+		NativeWindow_PollEvents(pxNativeWindow);
 
-				Vulkan_Draw(pxVulkan);
-			}
-
-			Vulkan_Free(pxVulkan);
-		}
-
-		Window_Free(pxWindow);
+		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain);
 	}
+
+	VkRenderer_Free(pxVkRenderer, pxVkInstance, pxVkSwapChain);
+	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
+	VkInstance_Free(pxVkInstance);
+
+	NativeWindow_Free(pxNativeWindow);
 
 #ifdef DEBUG
 	StackTrace_Free();
