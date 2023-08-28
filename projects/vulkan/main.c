@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <stacktrace.h>
+#include <debug/stacktrace.h>
 
 #include <platform/nativewindow.h>
 

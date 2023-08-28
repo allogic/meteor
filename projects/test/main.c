@@ -3,12 +3,15 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <stacktrace.h>
-#include <macros.h>
-#include <list.h>
-#include <filelist.h>
-#include <fileutl.h>
-#include <strutl.h>
+#include <common/macros.h>
+#include <common/stringutil.h>
+
+#include <debug/stacktrace.h>
+
+#include <standard/list.h>
+
+#include <filesystem/filelist.h>
+#include <filesystem/fileutil.h>
 
 static void List_Test(void) {
 	struct xList_t* pxList = List_Alloc();
@@ -47,18 +50,18 @@ static void FileList_Test(void) {
 	FileList_Free(pxList);
 }
 
-static void StrUtl_Test(void) {
-	uint32_t nLength;
+static void StringUtil_Test(void) {
+	uint64_t wLength;
 
-	char* pcPath0 = StrUtl_NormalizePath(".", 0, 0);
-	char* pcPath1 = StrUtl_NormalizePath("..", 0, 0);
-	char* pcPath2 = StrUtl_NormalizePath("./", 0, 0);
-	char* pcPath3 = StrUtl_NormalizePath("../", 0, 0);
-	char* pcPath4 = StrUtl_NormalizePath(".\\test", 0, 0);
-	char* pcPath5 = StrUtl_NormalizePath("..\\\\test.exe", 0, 0);
-	char* pcPath6 = StrUtl_NormalizePath("..\\", &nLength, 1);
+	char* pcPath0 = StringUtil_NormalizePath(".", 0, 0);
+	char* pcPath1 = StringUtil_NormalizePath("..", 0, 0);
+	char* pcPath2 = StringUtil_NormalizePath("./", 0, 0);
+	char* pcPath3 = StringUtil_NormalizePath("../", 0, 0);
+	char* pcPath4 = StringUtil_NormalizePath(".\\test", 0, 0);
+	char* pcPath5 = StringUtil_NormalizePath("..\\\\test.exe", 0, 0);
+	char* pcPath6 = StringUtil_NormalizePath("..\\", &wLength, 1);
 
-	pcPath6[nLength - 1] = '*';
+	pcPath6[wLength - 1] = '*';
 
 	printf("%s\n", pcPath0);
 	printf("%s\n", pcPath1);
@@ -87,7 +90,7 @@ int32_t main(void) {
 
 	List_Test();
 	FileList_Test();
-	StrUtl_Test();
+	StringUtil_Test();
 	
 #ifdef DEBUG
 	StackTrace_Free();

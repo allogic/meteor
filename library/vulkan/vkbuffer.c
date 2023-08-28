@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <macros.h>
+#include <common/macros.h>
 
 #include <vulkan/vkinstance.h>
 #include <vulkan/vkbuffer.h>

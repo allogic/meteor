@@ -2,12 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <macros.h>
-#include <fileutl.h>
-
-#include <vulkan/vkinstance.h>
+#include <common/macros.h>
 
 #include <platform/nativewindow.h>
+
+#include <vulkan/vkinstance.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>

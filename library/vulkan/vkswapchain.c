@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <macros.h>
+#include <common/macros.h>
+
+#include <platform/nativewindow.h>
 
 #include <vulkan/vkinstance.h>
 #include <vulkan/vkswapchain.h>
-
-#include <platform/nativewindow.h>
 
 struct xVkSwapChain_t {
 	VkSwapchainKHR xSwapChain;

@@ -24,6 +24,10 @@ endif()
 
 set(PROJECT_DIR ".")
 set(LIBRARY_DIR "../../library")
+set(COMMON_DIR "../../library/common")
+set(DEBUG_DIR "../../library/debug")
+set(FILESYSTEM_DIR "../../library/filesystem")
+set(STANDARD_DIR "../../library/standard")
 set(PLATFORM_DIR "../../library/platform")
 set(VULKAN_DIR "../../library/vulkan")
 

@@ -4,11 +4,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <fs.h>
-#include <filelist.h>
-#include <macros.h>
-#include <list.h>
-#include <strutl.h>
+#include <common/macros.h>
+#include <common/stringutil.h>
+
+#include <standard/list.h>
+
+#include <filesystem/fs.h>
+#include <filesystem/filelist.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
@@ -30,9 +32,9 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 	struct xList_t* pxList = List_Alloc();
 
 #ifdef OS_WINDOWS
-	uint32_t nNormFilePathLength;
-	char* pcNormFilePath = StrUtl_NormalizePath(pcFilePath, &nNormFilePathLength, 1);
-	pcNormFilePath[nNormFilePathLength - 1] = '*';
+	uint64_t wNormFilePathLength;
+	char* pcNormFilePath = StringUtil_NormalizePath(pcFilePath, &wNormFilePathLength, 1);
+	pcNormFilePath[wNormFilePathLength - 1] = '*';
 
 	WIN32_FIND_DATA xFindData;
 	HANDLE hFile = FindFirstFile(pcNormFilePath, &xFindData);
@@ -44,7 +46,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		GetFullPathName(xFindData.cFileName, sizeof(xFile.acFilePath), xFile.acFilePath, 0);
 
-		StrUtl_ReplaceChar(xFile.acFilePath, '\\', '/');
+		StringUtil_ReplaceChar(xFile.acFilePath, '\\', '/');
 
 		memcpy(xFile.acFileName, xFindData.cFileName, MIN(MAX_PATH, MAX_PATH_SIZE));
 
@@ -59,7 +61,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 #endif
 
 #ifdef OS_LINUX
-	char* pcNormFilePath = StrUtl_NormalizePath(pcFilePath, 0, 0);
+	char* pcNormFilePath = StringUtil(pcFilePath, 0, 0);
 
 	DIR* pxDir = opendir(pcNormFilePath);
 	struct dirent* pxEntry = readdir(pxDir);

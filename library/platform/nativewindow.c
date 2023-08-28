@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <macros.h>
+#include <common/macros.h>
 
 #include <platform/nativewindow.h>
 

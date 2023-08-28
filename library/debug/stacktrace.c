@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include <macros.h>
-#include <stacktrace.h>
+#include <common/macros.h>
+
+#include <debug/stacktrace.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>

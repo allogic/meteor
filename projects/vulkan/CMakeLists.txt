@@ -7,8 +7,9 @@ include("../../cmake/vulkan.cmake")
 
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 
-list(APPEND SOURCES "${LIBRARY_DIR}/stacktrace.c")
-list(APPEND SOURCES "${LIBRARY_DIR}/fileutl.c")
+list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")
+
+list(APPEND SOURCES "${FILESYSTEM_DIR}/fileutil.c")
 
 list(APPEND SOURCES "${PLATFORM_DIR}/nativewindow.c")
 
