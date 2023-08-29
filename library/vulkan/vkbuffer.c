@@ -8,8 +8,10 @@
 #include <vulkan/vkbuffer.h>
 
 struct xVkBuffer_t {
+	uint64_t wSize;
 	VkBuffer xBuffer;
 	VkDeviceMemory xDeviceMemory;
+	void* pMappedData;
 };
 
 static int32_t VkBuffer_CheckMemoryType(struct xVkInstance_t* pxVkInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
@@ -28,6 +30,8 @@ static int32_t VkBuffer_CheckMemoryType(struct xVkInstance_t* pxVkInstance, uint
 struct xVkBuffer_t* VkBuffer_Alloc(struct xVkInstance_t* pxVkInstance, uint64_t wSize, VkBufferUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties) {
 	struct xVkBuffer_t* pxVkBuffer = (struct xVkBuffer_t*)calloc(1, sizeof(struct xVkBuffer_t));
 
+	pxVkBuffer->wSize = wSize;
+
 	VkBufferCreateInfo xBufferCreateInfo;
 	memset(&xBufferCreateInfo, 0, sizeof(xBufferCreateInfo));
 	xBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -40,29 +44,50 @@ struct xVkBuffer_t* VkBuffer_Alloc(struct xVkInstance_t* pxVkInstance, uint64_t 
 	VkMemoryRequirements xMemoryRequirements;
 	vkGetBufferMemoryRequirements(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xBuffer, &xMemoryRequirements);
 
-	VkMemoryAllocateInfo xMemoryAllocteInfo;
-	memset(&xMemoryAllocteInfo, 0, sizeof(xMemoryAllocteInfo));
-	xMemoryAllocteInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	xMemoryAllocteInfo.allocationSize = xMemoryRequirements.size;
-	xMemoryAllocteInfo.memoryTypeIndex = VkBuffer_CheckMemoryType(pxVkInstance, xMemoryRequirements.memoryTypeBits, xMemoryProperties);
+	VkMemoryAllocateInfo xMemoryAllocateInfo;
+	memset(&xMemoryAllocateInfo, 0, sizeof(xMemoryAllocateInfo));
+	xMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	xMemoryAllocateInfo.allocationSize = xMemoryRequirements.size;
+	xMemoryAllocateInfo.memoryTypeIndex = VkBuffer_CheckMemoryType(pxVkInstance, xMemoryRequirements.memoryTypeBits, xMemoryProperties);
 
-	VK_CHECK(vkAllocateMemory(VkInstance_GetDevice(pxVkInstance), &xMemoryAllocteInfo, 0, &pxVkBuffer->xDeviceMemory));
+	VK_CHECK(vkAllocateMemory(VkInstance_GetDevice(pxVkInstance), &xMemoryAllocateInfo, 0, &pxVkBuffer->xDeviceMemory));
 	VK_CHECK(vkBindBufferMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xBuffer, pxVkBuffer->xDeviceMemory, 0));
 
 	return pxVkBuffer;
 }
 
 void VkBuffer_Free(struct xVkBuffer_t* pxVkBuffer, struct xVkInstance_t* pxVkInstance) {
-	vkDestroyBuffer(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xBuffer, 0);
+	//if (pxVkBuffer->pMappedData) {
+	//	vkUnmapMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory);
+	//}
+
 	vkFreeMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory, 0);
+	vkDestroyBuffer(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xBuffer, 0);
 }
 
-VkBuffer VkBuffer_GetBuffer(struct xVkBuffer_t* pxBuffer) {
-	return pxBuffer->xBuffer;
+VkBuffer VkBuffer_GetBuffer(struct xVkBuffer_t* pxVkBuffer) {
+	return pxVkBuffer->xBuffer;
 }
 
-VkDeviceMemory VkBuffer_GetDeviceMemory(struct xVkBuffer_t* pxBuffer) {
-	return pxBuffer->xDeviceMemory;
+VkDeviceMemory VkBuffer_GetDeviceMemory(struct xVkBuffer_t* pxVkBuffer) {
+	return pxVkBuffer->xDeviceMemory;
+}
+
+void* VkBuffer_GetMappedData(struct xVkBuffer_t* pxVkBuffer) {
+	return pxVkBuffer->pMappedData;
+}
+
+void* VkBuffer_GetMappedDataRef(struct xVkBuffer_t* pxVkBuffer) {
+	return &pxVkBuffer->pMappedData;
+}
+
+void VkBuffer_Map(struct xVkInstance_t* pxVkInstance, struct xVkBuffer_t* pxVkBuffer) {
+	VK_CHECK(vkMapMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory, 0, pxVkBuffer->wSize, 0, &pxVkBuffer->pMappedData));
+}
+
+void VkBuffer_UnMap(struct xVkInstance_t* pxVkInstance, struct xVkBuffer_t* pxVkBuffer) {
+	vkUnmapMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory);
+	pxVkBuffer->pMappedData = 0;
 }
 
 void VkBuffer_Copy(struct xVkInstance_t* pxVkInstance, struct xVkBuffer_t* pxVkSourceBuffer, struct xVkBuffer_t* pxVkDestinationBuffer, uint64_t wSize) {
@@ -100,4 +125,8 @@ void VkBuffer_Copy(struct xVkInstance_t* pxVkInstance, struct xVkBuffer_t* pxVkS
 	VK_CHECK(vkQueueWaitIdle(VkInstance_GetGraphicsQueue(pxVkInstance)));
 
 	vkFreeCommandBuffers(VkInstance_GetDevice(pxVkInstance), VkInstance_GetCommandPool(pxVkInstance), 1, &xCommandBuffer);
+}
+
+void VkBuffer_CopyDirect(struct xVkBuffer_t* pxVkBuffer, void* pData, uint64_t wSize) {
+	memcpy(pxVkBuffer->pMappedData, pData, wSize);
 }

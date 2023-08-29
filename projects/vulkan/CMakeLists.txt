@@ -11,6 +11,8 @@ list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")
 
 list(APPEND SOURCES "${FILESYSTEM_DIR}/fileutil.c")
 
+list(APPEND SOURCES "${MATH_DIR}/matrix.c")
+
 list(APPEND SOURCES "${PLATFORM_DIR}/nativewindow.c")
 
 list(APPEND SOURCES "${VULKAN_DIR}/vkinstance.c")
