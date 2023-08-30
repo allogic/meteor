@@ -13,6 +13,7 @@ void VkSwapChain_Free(struct xVkSwapChain_t* pxVkSwapChain, struct xVkInstance_t
 
 VkSwapchainKHR VkSwapChain_GetSwapChain(struct xVkSwapChain_t* pxVkSwapChain);
 uint32_t VkSwapChain_GetImageCount(struct xVkSwapChain_t* pxVkSwapChain);
-VkImageView VkSwapChain_GetImageView(struct xVkSwapChain_t* pxVkSwapChain, uint32_t nIndex);
+VkRenderPass VkSwapChain_GetRenderPass(struct xVkSwapChain_t* pxVkSwapChain);
+VkFramebuffer VkSwapChain_GetFrameBuffer(struct xVkSwapChain_t* pxVkSwapChain, uint32_t nIndex);
 
 #endif

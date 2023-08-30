@@ -57,12 +57,12 @@ struct xVkBuffer_t* VkBuffer_Alloc(struct xVkInstance_t* pxVkInstance, uint64_t 
 }
 
 void VkBuffer_Free(struct xVkBuffer_t* pxVkBuffer, struct xVkInstance_t* pxVkInstance) {
-	//if (pxVkBuffer->pMappedData) {
-	//	vkUnmapMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory);
-	//}
+	if (pxVkBuffer->pMappedData) {
+		vkUnmapMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory);
+	}
 
-	vkFreeMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory, 0);
 	vkDestroyBuffer(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xBuffer, 0);
+	vkFreeMemory(VkInstance_GetDevice(pxVkInstance), pxVkBuffer->xDeviceMemory, 0);
 }
 
 VkBuffer VkBuffer_GetBuffer(struct xVkBuffer_t* pxVkBuffer) {

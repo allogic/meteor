@@ -22,10 +22,8 @@ struct xVkRenderer_t {
 	VkDescriptorPool xDescriptorPool;
 	VkDescriptorSet axDescriptorSet[MAX_FRAMES_IN_FLIGHT];
 	struct xVkBuffer_t* apUniformBuffer[MAX_FRAMES_IN_FLIGHT];
-	VkRenderPass xRenderPass;
 	VkPipelineLayout xPipelineLayout;
 	VkPipeline xGraphicsPipeline;
-	VkFramebuffer* pxFrameBuffer;
 	VkCommandBuffer axCommandBuffer[MAX_FRAMES_IN_FLIGHT];
 	VkSemaphore axImageAvailableSemaphore[MAX_FRAMES_IN_FLIGHT];
 	VkSemaphore axRenderFinishedSemaphore[MAX_FRAMES_IN_FLIGHT];
@@ -111,52 +109,7 @@ static void VkRenderer_CreateDescriptorSets(struct xVkRenderer_t* pxVkRenderer, 
 	}
 }
 
-static void VkRenderer_CreateRenderPass(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
-	VkAttachmentDescription xColorAttachmentDesc;
-	memset(&xColorAttachmentDesc, 0, sizeof(xColorAttachmentDesc));
-	xColorAttachmentDesc.format = VkInstance_GetPreferedSurfaceFormat(pxVkInstance);
-	xColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-	xColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	xColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	xColorAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	xColorAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	xColorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	xColorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference xColorAttachmentRef;
-	memset(&xColorAttachmentRef, 0, sizeof(xColorAttachmentRef));
-	xColorAttachmentRef.attachment = 0;
-	xColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription xSubpassDesc;
-	memset(&xSubpassDesc, 0, sizeof(xSubpassDesc));
-	xSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	xSubpassDesc.colorAttachmentCount = 1;
-	xSubpassDesc.pColorAttachments = &xColorAttachmentRef;
-
-	VkSubpassDependency xSubpassDependency;
-	memset(&xSubpassDependency, 0, sizeof(xSubpassDependency));
-	xSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	xSubpassDependency.dstSubpass = 0;
-	xSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	xSubpassDependency.srcAccessMask = 0;
-	xSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	xSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo xRenderPassCreateInfo;
-	memset(&xRenderPassCreateInfo, 0, sizeof(xRenderPassCreateInfo));
-	xRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	xRenderPassCreateInfo.attachmentCount = 1;
-	xRenderPassCreateInfo.pAttachments = &xColorAttachmentDesc;
-	xRenderPassCreateInfo.subpassCount = 1;
-	xRenderPassCreateInfo.pSubpasses = &xSubpassDesc;
-	xRenderPassCreateInfo.dependencyCount = 1;
-	xRenderPassCreateInfo.pDependencies = &xSubpassDependency;
-
-	VK_CHECK(vkCreateRenderPass(VkInstance_GetDevice(pxVkInstance), &xRenderPassCreateInfo, 0, &pxVkRenderer->xRenderPass));
-}
-
-static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, VkShaderModule xVertModule, VkShaderModule xFragModule) {
+static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule) {
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
 	memset(&xVertShaderStageCreateInfo, 0, sizeof(xVertShaderStageCreateInfo));
 	xVertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -313,35 +266,11 @@ static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer
 	xPipelineCreateInfo.pColorBlendState = &xColorBlendCreateInfo;
 	xPipelineCreateInfo.pDynamicState = &xDynamicStateCreateInfo;
 	xPipelineCreateInfo.layout = pxVkRenderer->xPipelineLayout;
-	xPipelineCreateInfo.renderPass = pxVkRenderer->xRenderPass;
+	xPipelineCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxVkSwapChain);
 	xPipelineCreateInfo.subpass = 0;
 	xPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 	VK_CHECK(vkCreateGraphicsPipelines(VkInstance_GetDevice(pxVkInstance), VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &pxVkRenderer->xGraphicsPipeline));
-}
-
-static void VkRenderer_CreateFrameBuffers(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain) {
-	uint32_t nSwapChainImageCount = VkSwapChain_GetImageCount(pxVkSwapChain);
-
-	pxVkRenderer->pxFrameBuffer = (VkFramebuffer*)malloc(sizeof(VkFramebuffer) * nSwapChainImageCount);
-
-	for (uint32_t i = 0; i < nSwapChainImageCount; ++i) {
-		VkImageView axAttachments[] = {
-			VkSwapChain_GetImageView(pxVkSwapChain, i),
-		};
-
-		VkFramebufferCreateInfo xFramebufferCreateInfo;
-		memset(&xFramebufferCreateInfo, 0, sizeof(xFramebufferCreateInfo));
-		xFramebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		xFramebufferCreateInfo.renderPass = pxVkRenderer->xRenderPass;
-		xFramebufferCreateInfo.attachmentCount = ARRAY_LENGTH(axAttachments);
-		xFramebufferCreateInfo.pAttachments = axAttachments;
-		xFramebufferCreateInfo.width = NativeWindow_GetWidth();
-		xFramebufferCreateInfo.height = NativeWindow_GetHeight();
-		xFramebufferCreateInfo.layers = 1;
-
-		VK_CHECK(vkCreateFramebuffer(VkInstance_GetDevice(pxVkInstance), &xFramebufferCreateInfo, 0, &pxVkRenderer->pxFrameBuffer[i]));
-	}
 }
 
 static void VkRenderer_CreateCommandBuffers(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
@@ -355,7 +284,7 @@ static void VkRenderer_CreateCommandBuffers(struct xVkRenderer_t* pxVkRenderer, 
 	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxVkInstance), &xCommandBufferAllocCreateInfo, pxVkRenderer->axCommandBuffer));
 }
 
-static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, uint32_t nImageIndex, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
+static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, struct xVkSwapChain_t* pxVkSwapChain, uint32_t nImageIndex, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -374,8 +303,8 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, u
 	VkRenderPassBeginInfo xRenderPassCreateInfo;
 	memset(&xRenderPassCreateInfo, 0, sizeof(xRenderPassCreateInfo));
 	xRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	xRenderPassCreateInfo.renderPass = pxVkRenderer->xRenderPass;
-	xRenderPassCreateInfo.framebuffer = pxVkRenderer->pxFrameBuffer[nImageIndex];
+	xRenderPassCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxVkSwapChain);
+	xRenderPassCreateInfo.framebuffer = VkSwapChain_GetFrameBuffer(pxVkSwapChain, nImageIndex);
 	xRenderPassCreateInfo.renderArea.offset.x = 0;
 	xRenderPassCreateInfo.renderArea.offset.y = 0;
 	xRenderPassCreateInfo.renderArea.extent.width = NativeWindow_GetWidth();
@@ -438,7 +367,7 @@ static void VkRenderer_CreatSyncObjects(struct xVkRenderer_t* pxVkRenderer, stru
 	}
 }
 
-struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain) {
+struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxSwapChain) {
 	struct xVkRenderer_t* pxVkRenderer = (struct xVkRenderer_t*)calloc(1, sizeof(struct xVkRenderer_t));
 
 	VkShaderModule xVertModule;
@@ -450,9 +379,7 @@ struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struc
 	VkRenderer_CreateDescriptorSetLayout(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreateDescriptorPool(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreateDescriptorSets(pxVkRenderer, pxVkInstance, sizeof(xModelViewProjection_t));
-	VkRenderer_CreateRenderPass(pxVkRenderer, pxVkInstance);
-	VkRenderer_CreateGraphicsPipeline(pxVkRenderer, pxVkInstance, xVertModule, xFragModule);
-	VkRenderer_CreateFrameBuffers(pxVkRenderer, pxVkInstance, pxVkSwapChain);
+	VkRenderer_CreateGraphicsPipeline(pxVkRenderer, pxVkInstance, pxSwapChain, xVertModule, xFragModule);
 	VkRenderer_CreateCommandBuffers(pxVkRenderer, pxVkInstance);
 	VkRenderer_CreatSyncObjects(pxVkRenderer, pxVkInstance);
 
@@ -461,9 +388,7 @@ struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struc
 	return pxVkRenderer;
 }
 
-void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain) {
-	VK_CHECK(vkDeviceWaitIdle(VkInstance_GetDevice(pxVkInstance)));
-
+void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		vkDestroyFence(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->axInFlightFence[i], 0);
 
@@ -471,17 +396,9 @@ void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 		vkDestroySemaphore(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->axImageAvailableSemaphore[i], 0);
 	}
 
-	for (uint32_t i = 0; i < VkSwapChain_GetImageCount(pxVkSwapChain); ++i) {
-		vkDestroyFramebuffer(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->pxFrameBuffer[i], 0);
-	}
-
-	free(pxVkRenderer->pxFrameBuffer);
-
 	vkDestroyPipeline(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xGraphicsPipeline, 0);
 
 	vkDestroyPipelineLayout(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xPipelineLayout, 0);
-
-	vkDestroyRenderPass(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xRenderPass, 0);
 
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		VkBuffer_Free(pxVkRenderer->apUniformBuffer[i], pxVkInstance);
@@ -502,17 +419,13 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	VK_CHECK(vkWaitForFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->axInFlightFence[pxVkRenderer->nCurrentFrame], VK_TRUE, UINT64_MAX));
 
 	uint32_t nImageIndex;
-	VkResult result = vkAcquireNextImageKHR(VkInstance_GetDevice(pxVkInstance), VkSwapChain_GetSwapChain(pxVkSwapChain), UINT64_MAX, pxVkRenderer->axImageAvailableSemaphore[pxVkRenderer->nCurrentFrame], VK_NULL_HANDLE, &nImageIndex); // TODO
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		return;
-	}
+	VK_CHECK(vkAcquireNextImageKHR(VkInstance_GetDevice(pxVkInstance), VkSwapChain_GetSwapChain(pxVkSwapChain), UINT64_MAX, pxVkRenderer->axImageAvailableSemaphore[pxVkRenderer->nCurrentFrame], VK_NULL_HANDLE, &nImageIndex));
 
 	VK_CHECK(vkResetFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->axInFlightFence[pxVkRenderer->nCurrentFrame]));
 
 	VK_CHECK(vkResetCommandBuffer(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], 0));
 
-	VkRenderer_RecordCommandBuffer(pxVkRenderer, nImageIndex, pxVkVertexBuffer, pxVkIndexBuffer, nIndexCount);
+	VkRenderer_RecordCommandBuffer(pxVkRenderer, pxVkSwapChain, nImageIndex, pxVkVertexBuffer, pxVkIndexBuffer, nIndexCount);
 
 	VkSemaphore axWaitSemaphores[] = { pxVkRenderer->axImageAvailableSemaphore[pxVkRenderer->nCurrentFrame] };
 	VkSemaphore axSignalSemaphores[] = { pxVkRenderer->axRenderFinishedSemaphore[pxVkRenderer->nCurrentFrame] };
@@ -541,7 +454,7 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	xPresentInfo.pSwapchains = axSwapChains;
 	xPresentInfo.pImageIndices = &nImageIndex;
 
-	vkQueuePresentKHR(VkInstance_GetPresentQueue(pxVkInstance), &xPresentInfo); // TODO
+	VK_CHECK(vkQueuePresentKHR(VkInstance_GetPresentQueue(pxVkInstance), &xPresentInfo));
 
 	pxVkRenderer->nCurrentFrame = (pxVkRenderer->nCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }

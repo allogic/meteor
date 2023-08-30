@@ -40,32 +40,32 @@ int32_t main(void) {
 
 	struct xVkInstance_t* pxVkInstance = VkInstance_Alloc();
 	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
-	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
-
 	struct xVkBuffer_t* pxVkVertexBuffer = VkVertexBuffer_Alloc(pxVkInstance, axVertices, sizeof(xVertex_t) * 4);
 	struct xVkBuffer_t* pxVkIndexBuffer = VkIndexBuffer_Alloc(pxVkInstance, anIndices, sizeof(uint32_t) * 6);
+	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 
 	while (NativeWindow_ShouldNotClose()) {
 		NativeWindow_PollEvents();
 
-		//if (NativeWindow_HasResized()) {
-		//	VkRenderer_Free(pxVkRenderer, pxVkInstance, pxVkSwapChain);
-		//	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
-//
-		//	pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
-		//	pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
-		//}
+		if (NativeWindow_HasResized()) {
+			VkInstance_WaitIdle(pxVkInstance);
+
+			VkRenderer_Free(pxVkRenderer, pxVkInstance);
+			VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
+
+			pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
+			pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
+		}
 
 		VkRenderer_UpdateModelViewProjection(pxVkRenderer, &s_xMvp);
 		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain, pxVkVertexBuffer, pxVkIndexBuffer, 6);
-
-		//break; // TODO
 	}
 
+	VkInstance_WaitIdle(pxVkInstance);
+
+	VkRenderer_Free(pxVkRenderer, pxVkInstance);
 	VkBuffer_Free(pxVkIndexBuffer, pxVkInstance);
 	VkBuffer_Free(pxVkVertexBuffer, pxVkInstance);
-
-	VkRenderer_Free(pxVkRenderer, pxVkInstance, pxVkSwapChain);
 	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
 	VkInstance_Free(pxVkInstance);
 

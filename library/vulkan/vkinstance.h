@@ -23,4 +23,6 @@ VkQueue VkInstance_GetGraphicsQueue(struct xVkInstance_t* pxVkInstance);
 VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance);
 VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance);
 
+void VkInstance_WaitIdle(struct xVkInstance_t* pxVkInstance);
+
 #endif

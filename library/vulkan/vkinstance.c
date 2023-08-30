@@ -392,3 +392,7 @@ VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance) {
 VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance) {
 	return pxVkInstance->xCommandPool;
 }
+
+void VkInstance_WaitIdle(struct xVkInstance_t* pxVkInstance) {
+	VK_CHECK(vkDeviceWaitIdle(pxVkInstance->xDevice));
+}
