@@ -15,6 +15,8 @@
 
 void Matrix_GetPosition(xMat4_t xMat, xVec3_t xVec);
 
+void Matrix_SetPosition(xMat4_t xMat, xVec3_t xVec);
+
 void Matrix_Zero(xMat4_t xMat);
 void Matrix_Copy(xMat4_t xMat, xMat4_t xRes);
 

@@ -7,6 +7,12 @@ void Matrix_GetPosition(xMat4_t xMat, xVec3_t xVec) {
 	xVec[2] = xMat[2][0];
 }
 
+void Matrix_SetPosition(xMat4_t xMat, xVec3_t xVec) {
+	xMat[3][0] = xVec[0];
+	xMat[3][1] = xVec[1];
+	xMat[3][2] = xVec[2];
+}
+
 void Matrix_Zero(xMat4_t xMat) {
 	xMat[0][0] = xMat[0][1] = xMat[0][2] = xMat[0][3] = 0.0F;
 	xMat[1][0] = xMat[1][1] = xMat[1][2] = xMat[1][3] = 0.0F;

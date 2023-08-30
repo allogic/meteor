@@ -9,10 +9,10 @@ void Vector_Sub(xVec3_t xVecA, xVec3_t xVecB, xVec3_t xRes) {
 }
 
 void Vector_MulAdd(xVec4_t xVec, float fScalar, xVec4_t xRes) {
-	xRes[0] = xVec[0] * fScalar;
-	xRes[1] = xVec[1] * fScalar;
-	xRes[2] = xVec[2] * fScalar;
-	xRes[3] = xVec[3] * fScalar;
+	xRes[0] += xVec[0] * fScalar;
+	xRes[1] += xVec[1] * fScalar;
+	xRes[2] += xVec[2] * fScalar;
+	xRes[3] += xVec[3] * fScalar;
 }
 
 void Vector_Scale(xVec3_t xVec, float fScale, xVec3_t xRes) {

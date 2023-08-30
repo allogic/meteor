@@ -69,20 +69,15 @@ int32_t main(void) {
 			pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 		}
 
-		Orthographic_Projection(-10.0F, 10.0F, -10.0F, 10.0F, 0.001F, 100.0F, s_xMvp.xProjection);
+		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xMvp.xProjection);
 
 		xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
 		xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
 		xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
 		View_LookAt(xEye, xCenter, xUp, s_xMvp.xView);
 
-		xVec3_t xPosition = { 0.0F, 0.0F, 0.0F };
-		//Matrix_GetPosition(s_xMvp.xModel, xPosition);
-		//xPosition[0] = sinf(Timer_GetTime(pxTimer));
-		//xPosition[1] = cosf(Timer_GetTime(pxTimer));
-
-		Matrix_Translate(s_xMvp.xModel, xPosition);
-		//Matrix_Mul(s_xMvp.xModel, xTranslation, s_xMvp.xModel);
+		xVec3_t xPosition = { sinf(Timer_GetTime(pxTimer)), cosf(Timer_GetTime(pxTimer)), 0.0F };
+		Matrix_SetPosition(s_xMvp.xModel, xPosition);
 
 		VkRenderer_UpdateModelViewProjection(pxVkRenderer, &s_xMvp);
 		VkRenderer_Draw(pxVkRenderer, pxVkInstance, pxVkSwapChain, pxVkVertexBuffer, pxVkIndexBuffer, 6);
