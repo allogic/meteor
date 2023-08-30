@@ -7,11 +7,16 @@ include("../../cmake/vulkan.cmake")
 
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 
+list(APPEND SOURCES "${COMMON_DIR}/timer.c")
+
 list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")
 
 list(APPEND SOURCES "${FILESYSTEM_DIR}/fileutil.c")
 
+list(APPEND SOURCES "${MATH_DIR}/vector.c")
 list(APPEND SOURCES "${MATH_DIR}/matrix.c")
+list(APPEND SOURCES "${MATH_DIR}/orthographic.c")
+list(APPEND SOURCES "${MATH_DIR}/view.c")
 
 list(APPEND SOURCES "${PLATFORM_DIR}/nativewindow.c")
 

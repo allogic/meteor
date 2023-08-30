@@ -1,12 +1,12 @@
 #ifndef VK_VERTEX_H
 #define VK_VERTEX_H
 
-//#include <math/vector.h> // TODO
+#include <math/vector.h>
 
 typedef struct {
-    float Position[3];
-    float Uv[2];
-    float Color[4];
+    xVec3_t Position;
+    xVec2_t Uv;
+    xVec4_t Color;
 } xVertex_t;
 
 #endif

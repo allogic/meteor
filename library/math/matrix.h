@@ -1,13 +1,25 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <math/types.h>
+
+#define MAT4_ZERO { { 0.0F, 0.0F, 0.0F, 0.0F }, \
+					{ 0.0F, 0.0F, 0.0F, 0.0F }, \
+					{ 0.0F, 0.0F, 0.0F, 0.0F }, \
+					{ 0.0F, 0.0F, 0.0F, 0.0F } }
+
 #define MAT4_IDENTITY { { 1.0F, 0.0F, 0.0F, 0.0F }, \
 						{ 0.0F, 1.0F, 0.0F, 0.0F }, \
 						{ 0.0F, 0.0F, 1.0F, 0.0F }, \
 						{ 0.0F, 0.0F, 0.0F, 1.0F } }
 
-typedef float xMat4_t[4][4];
+void Matrix_GetPosition(xMat4_t xMat, xVec3_t xVec);
 
-void Matrix_Mul(xMat4_t xMat1, xMat4_t xMat2, xMat4_t xMatProduct);
+void Matrix_Zero(xMat4_t xMat);
+void Matrix_Copy(xMat4_t xMat, xMat4_t xRes);
+
+void Matrix_Mul(xMat4_t xMatA, xMat4_t xMatB, xMat4_t xRes);
+
+void Matrix_Translate(xMat4_t xMat, xVec3_t xVec);
 
 #endif
