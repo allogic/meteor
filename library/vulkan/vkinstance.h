@@ -2,7 +2,6 @@
 #define METEOR_INSTANCE_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include <vulkan/vulkan.h>
 
@@ -24,5 +23,6 @@ VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance);
 VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance);
 
 void VkInstance_WaitIdle(struct xVkInstance_t* pxVkInstance);
+int32_t VkInstance_CheckMemoryType(struct xVkInstance_t* pxVkInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags);
 
 #endif

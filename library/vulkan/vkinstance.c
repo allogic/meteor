@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <common/macros.h>
 
@@ -395,4 +396,17 @@ VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance) {
 
 void VkInstance_WaitIdle(struct xVkInstance_t* pxVkInstance) {
 	VK_CHECK(vkDeviceWaitIdle(pxVkInstance->xDevice));
+}
+
+int32_t VkInstance_CheckMemoryType(struct xVkInstance_t* pxVkInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
+	VkPhysicalDeviceMemoryProperties xPhysicalDeviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(pxVkInstance->xPhysicalDevice, &xPhysicalDeviceMemoryProperties);
+
+	for (uint32_t i = 0; i < xPhysicalDeviceMemoryProperties.memoryTypeCount; ++i) {
+		if ((nTypeFilter & (1 << i)) && ((xPhysicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & xMemoryPropertyFlags) == xMemoryPropertyFlags)) {
+			return i;
+		}
+	}
+
+	return -1;
 }

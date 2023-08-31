@@ -21,7 +21,9 @@
 #include <vulkan/vkuniform.h>
 #include <vulkan/vkvertex.h>
 #include <vulkan/vkbuffer.h>
-#include <vulkan/vkbuffervariants.h>
+#include <vulkan/vkbuffervariance.h>
+#include <vulkan/vkimage.h>
+#include <vulkan/vkimagevariance.h>
 
 xVertex_t axVertices[4] = {
 	{ { -0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
@@ -50,6 +52,7 @@ int32_t main(void) {
 	struct xVkSwapChain_t* pxVkSwapChain = VkSwapChain_Alloc(pxVkInstance);
 	struct xVkBuffer_t* pxVkVertexBuffer = VkVertexBuffer_Alloc(pxVkInstance, axVertices, sizeof(xVertex_t) * 4);
 	struct xVkBuffer_t* pxVkIndexBuffer = VkIndexBuffer_Alloc(pxVkInstance, anIndices, sizeof(uint32_t) * 6);
+	struct xVkImage_t* pxVkTextureImage = VkTextureImage_Alloc(pxVkInstance, "../test.bmp");
 	struct xVkRenderer_t* pxVkRenderer = VkRenderer_Alloc(pxVkInstance, pxVkSwapChain);
 
 	Timer_Start(pxTimer);
@@ -86,6 +89,7 @@ int32_t main(void) {
 	VkInstance_WaitIdle(pxVkInstance);
 
 	VkRenderer_Free(pxVkRenderer, pxVkInstance);
+	VkImage_Free(pxVkTextureImage, pxVkInstance);
 	VkBuffer_Free(pxVkIndexBuffer, pxVkInstance);
 	VkBuffer_Free(pxVkVertexBuffer, pxVkInstance);
 	VkSwapChain_Free(pxVkSwapChain, pxVkInstance);
