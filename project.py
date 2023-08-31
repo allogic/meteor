@@ -25,12 +25,8 @@ def run_project(project):
 
 def debug_project(project):
 	build_path=f'projects/{project}/build'
-	if platform.system() == 'Windows':
-		c_debugger=f'C:/llvm/bin/lldb'
-	elif platform.system() == 'Linux':
-		c_debugger=f'/opt/llvm/bin/lldb'
 	os.chdir(build_path)
-	os.system(f'{c_debugger} {project}')
+	os.system(f'lldb {project}')
 
 def build_shader(project):
 	shader_path=f'projects/{project}/shaders'
