@@ -15,7 +15,13 @@ choco install git cmake python3
 # Debian
 
 ```
-apt-get install git cmake python3 build-essential libvulkan1 vulkan-sdk
+sudo apt-get install git cmake python3 build-essential libvulkan1 vulkan-sdk
+```
+
+# Arch
+
+```
+sudo pacman -S git cmake python base-devel
 ```
 
 # Wayland
@@ -28,7 +34,7 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 # Compile
 
 ```
-python llvm cbi
-python project cbr test debug
-python project cbr vulkan debug
+sudo python llvm.py cbi
+sudo python project.py cbr test debug
+sudo python project.py cbr vulkan debug
 ```
