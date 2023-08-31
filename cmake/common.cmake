@@ -9,7 +9,6 @@ add_compile_options("-Wall")
 add_compile_options("-Wextra")
 
 add_compile_options("-Wno-visibility")
-add_compile_options("-Wno-gnu-include-next")
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
 	add_compile_options("-g")
