@@ -15,7 +15,7 @@ choco install git cmake python3
 # Debian
 
 ```
-sudo apt-get install git cmake python3 build-essential libvulkan1 vulkan-sdk
+sudo apt install git cmake python3 build-essential libvulkan1 vulkan-sdk
 ```
 
 # Arch
