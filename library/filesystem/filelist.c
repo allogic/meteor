@@ -61,7 +61,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 #endif
 
 #ifdef OS_LINUX
-	char* pcNormFilePath = StringUtil(pcFilePath, 0, 0);
+	char* pcNormFilePath = StringUtil_NormalizePath(pcFilePath, 0, 0);
 
 	DIR* pxDir = opendir(pcNormFilePath);
 	struct dirent* pxEntry = readdir(pxDir);

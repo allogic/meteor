@@ -13,15 +13,15 @@ def configure_llvm():
 	if os.path.exists(build_path):
 		shutil.rmtree(build_path)
 	os.mkdir(build_path)
-	os.system(f'cmake -D LLVM_ENABLE_PROJECTS=clang;lld;lldb -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX={install_path} -G "Unix Makefiles" -S {llvm_path} -B {build_path}')
+	os.system(f'cmake -D "LLVM_ENABLE_PROJECTS=clang;lld;lldb" -D "CMAKE_BUILD_TYPE=Release" -D "CMAKE_INSTALL_PREFIX={install_path}" -G "Unix Makefiles" -S "{llvm_path}" -B "{build_path}"')
 
 def build_llvm():
 	build_path=f'llvm/build'
-	os.system(f'cmake --build {build_path} --parallel 8')
+	os.system(f'cmake --build "{build_path}" --config Release --parallel 8')
 
 def install_llvm():
 	build_path=f'llvm/build'
-	os.system(f'cmake --install {build_path}')
+	os.system(f'cmake --install "{build_path}"')
 
 cmd=sys.argv[1]
 

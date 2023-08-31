@@ -3,32 +3,38 @@ import sys
 import shutil
 import platform
 
-if platform.system() == 'Windows':
-	os.environ['PATH'] += os.pathsep + 'C:/llvm/bin'
-elif platform.system() == 'Linux':
-	os.environ['PATH'] += os.pathsep + '/opt/llvm/bin'
-
 def configure_project(project, configuration):
 	project_path=f'projects/{project}'
 	build_path=f'projects/{project}/build'
+	if platform.system() == 'Windows':
+		c_compiler=f'C:/llvm/bin/clang'
+	elif platform.system() == 'Linux':
+		c_compiler=f'/opt/llvm/bin/clang'
 	if os.path.exists(build_path):
 		shutil.rmtree(build_path)
 	os.mkdir(build_path)
-	os.system(f'cmake -D CMAKE_C_COMPILER=clang -D CMAKE_BUILD_TYPE={configuration} -G "Unix Makefiles" -S {project_path} -B {build_path}')
+	os.system(f'cmake -D "CMAKE_C_COMPILER={c_compiler}" -D "CMAKE_BUILD_TYPE={configuration}" -G "Unix Makefiles" -S "{project_path}" -B "{build_path}"')
 
-def build_project(project):
+def build_project(project, configuration):
 	build_path=f'projects/{project}/build'
-	os.system(f'cmake --build {build_path} --parallel 8')
+	os.system(f'cmake --build "{build_path}" --config {configuration} --parallel 8')
 
 def run_project(project):
 	build_path=f'projects/{project}/build'
 	os.chdir(build_path)
-	os.system(f'{project}')
+	if platform.system() == 'Windows':
+		os.system(f'{project}')
+	elif platform.system() == 'Linux':
+		os.system(f'./{project}')
 
 def debug_project(project):
 	build_path=f'projects/{project}/build'
+	if platform.system() == 'Windows':
+		c_debugger=f'C:/llvm/bin/lldb'
+	elif platform.system() == 'Linux':
+		c_debugger=f'/opt/llvm/bin/lldb'
 	os.chdir(build_path)
-	os.system(f'lldb {project}')
+	os.system(f'{c_debugger} {project}')
 
 def build_shader(project):
 	shader_path=f'projects/{project}/shaders'
@@ -48,7 +54,8 @@ if 'c' in cmd:
 
 if 'b' in cmd:
 	project = sys.argv[2]
-	build_project(project)
+	configuration = sys.argv[3]
+	build_project(project, configuration)
 
 if 'r' in cmd:
 	project = sys.argv[2]

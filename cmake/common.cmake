@@ -1,4 +1,8 @@
-add_compile_options("-std=c99")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	add_compile_options("-std=c99")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_compile_options("-std=gnu99")
+endif()
 
 add_compile_options("-Wpedantic")
 add_compile_options("-Wall")
@@ -20,6 +24,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_compile_definitions("OS_WINDOWS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_definitions("OS_LINUX")
+
+	add_link_options("-lm")
+	add_link_options("-lrt")
 endif()
 
 set(PROJECT_DIR ".")
