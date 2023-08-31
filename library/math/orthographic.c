@@ -1,4 +1,3 @@
-#include <math/types.h>
 #include <math/matrix.h>
 
 #include <math/orthographic.h>
