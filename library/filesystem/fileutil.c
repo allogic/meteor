@@ -32,46 +32,32 @@ void FileUtil_ReadText(char** ppcData, uint64_t* pwSize, const char* pcFilePath)
 void FileUtil_ReadBmp(char** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint32_t* pnHeight, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "rb");
 
+#define BMP_HEADER_STRUCT { \
+		int16_t sSignature; \
+		int32_t nFileSize; \
+		int32_t nReserved; \
+		int32_t nDataOffset; \
+		int32_t nHeaderSize; \
+		int32_t nWidth; \
+		int32_t nHeight; \
+		int16_t sPlanes; \
+		int16_t sBitsPerPixel; \
+		int32_t nCompression; \
+		int32_t nDataSize; \
+		int32_t nHorizontalRes; \
+		int32_t nVerticalRes; \
+		int32_t nColors; \
+		int32_t nImportantColors; \
+	}
+
 #ifdef OS_WINDOWS
 #pragma pack(push, 1)
-	struct xBmpHeader_t {
-		int16_t sSignature;       // File signature ('B' and 'M')
-		int32_t nFileSize;        // File size in bytes
-		int32_t nReserved;        // Reserved, should be set to 0
-		int32_t nDataOffset;      // Offset to the beginning of image data
-		int32_t nHeaderSize;      // Size of the header (40 bytes for BMP)
-		int32_t nWidth;           // Image width in pixels
-		int32_t nHeight;          // Image height in pixels
-		int16_t sPlanes;          // Number of color planes (1)
-		int16_t sBitsPerPixel;    // Number of bits per pixel (usually 24 for RGB)
-		int32_t nCompression;     // Compression method (0 for no compression)
-		int32_t nDataSize;        // Size of the raw image data
-		int32_t nHorizontalRes;   // Horizontal resolution (pixels per meter)
-		int32_t nVerticalRes;     // Vertical resolution (pixels per meter)
-		int32_t nColors;          // Number of colors in the palette (0 for no palette)
-		int32_t nImportantColors; // Number of important colors (0 when every color is important)
-	};
+	struct xBmpHeader_t BMP_HEADER_STRUCT;
 #pragma pack(pop)
 #endif
 
 #ifdef OS_LINUX
-	__attribute__((packed)) struct xBmpHeader_t {
-		int16_t sSignature;       // File signature ('B' and 'M')
-		int32_t nFileSize;        // File size in bytes
-		int32_t nReserved;        // Reserved, should be set to 0
-		int32_t nDataOffset;      // Offset to the beginning of image data
-		int32_t nHeaderSize;      // Size of the header (40 bytes for BMP)
-		int32_t nWidth;           // Image width in pixels
-		int32_t nHeight;          // Image height in pixels
-		int16_t sPlanes;          // Number of color planes (1)
-		int16_t sBitsPerPixel;    // Number of bits per pixel (usually 24 for RGB)
-		int32_t nCompression;     // Compression method (0 for no compression)
-		int32_t nDataSize;        // Size of the raw image data
-		int32_t nHorizontalRes;   // Horizontal resolution (pixels per meter)
-		int32_t nVerticalRes;     // Vertical resolution (pixels per meter)
-		int32_t nColors;          // Number of colors in the palette (0 for no palette)
-		int32_t nImportantColors; // Number of important colors (0 when every color is important)
-	};
+	__attribute__((packed)) struct xBmpHeader_t BMP_HEADER_STRUCT;
 #endif
 
 	struct xBmpHeader_t xBmpHeader;
