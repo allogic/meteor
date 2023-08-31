@@ -83,8 +83,6 @@ void FileUtil_ReadBmp(char** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint3
 	*ppcData = calloc(*pwSize, sizeof(char));
 	fread(*ppcData, sizeof(char), *pwSize, pxFile);
 
-	printf("Width:%u Height:%u Size:%llu\n", *pnWidth, *pnHeight, *pwSize);
-
 	fclose(pxFile);
 }
 
