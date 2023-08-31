@@ -6,14 +6,10 @@ import platform
 def configure_project(project, configuration):
 	project_path=f'projects/{project}'
 	build_path=f'projects/{project}/build'
-	if platform.system() == 'Windows':
-		c_compiler=f'C:/llvm/bin/clang'
-	elif platform.system() == 'Linux':
-		c_compiler=f'/opt/llvm/bin/clang'
 	if os.path.exists(build_path):
 		shutil.rmtree(build_path)
 	os.mkdir(build_path)
-	os.system(f'cmake -D "CMAKE_C_COMPILER={c_compiler}" -D "CMAKE_BUILD_TYPE={configuration}" -G "Unix Makefiles" -S "{project_path}" -B "{build_path}"')
+	os.system(f'cmake -D "CMAKE_C_COMPILER=clang" -D "CMAKE_BUILD_TYPE={configuration}" -G "Unix Makefiles" -S "{project_path}" -B "{build_path}"')
 
 def build_project(project, configuration):
 	build_path=f'projects/{project}/build'

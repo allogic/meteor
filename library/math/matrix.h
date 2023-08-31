@@ -1,7 +1,7 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef METEOR_MATRIX_H
+#define METEOR_MATRIX_H
 
-#include <math/types.h>
+#include <math/mathtypes.h>
 
 #define MAT4_ZERO { { 0.0F, 0.0F, 0.0F, 0.0F }, \
 					{ 0.0F, 0.0F, 0.0F, 0.0F }, \

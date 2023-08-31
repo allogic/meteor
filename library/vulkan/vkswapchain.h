@@ -1,5 +1,5 @@
-#ifndef VK_SWAPCHAIN_H
-#define VK_SWAPCHAIN_H
+#ifndef METEOR_SWAPCHAIN_H
+#define METEOR_SWAPCHAIN_H
 
 #include <stdint.h>
 

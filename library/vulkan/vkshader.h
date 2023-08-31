@@ -1,5 +1,5 @@
-#ifndef VK_SHADER_H
-#define VK_SHADER_H
+#ifndef METEOR_SHADER_H
+#define METEOR_SHADER_H
 
 #include <vulkan/vulkan.h>
 

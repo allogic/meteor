@@ -1,5 +1,5 @@
-#ifndef NATIVE_WINDOW_H
-#define NATIVE_WINDOW_H
+#ifndef METEOR_NATIVEWINDOW_H
+#define METEOR_NATIVEWINDOW_H
 
 #include <stdint.h>
 #include <stdbool.h>

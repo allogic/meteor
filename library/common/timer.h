@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef METEOR_TIMER_H
+#define METEOR_TIMER_H
 
 struct xTimer_t;
 

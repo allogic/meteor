@@ -1,5 +1,5 @@
-#ifndef VK_BUFFER_VARIANTS_H
-#define VK_BUFFER_VARIANTS_H
+#ifndef METEOR_BUFFERVARIANTS_H
+#define METEOR_BUFFERVARIANTS_H
 
 #include <stdint.h>
 

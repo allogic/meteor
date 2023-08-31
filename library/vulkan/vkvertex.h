@@ -1,5 +1,5 @@
-#ifndef VK_VERTEX_H
-#define VK_VERTEX_H
+#ifndef METEOR_VERTEX_H
+#define METEOR_VERTEX_H
 
 #include <math/vector.h>
 

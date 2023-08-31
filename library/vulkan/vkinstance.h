@@ -1,5 +1,5 @@
-#ifndef VK_INSTANCE_H
-#define VK_INSTANCE_H
+#ifndef METEOR_INSTANCE_H
+#define METEOR_INSTANCE_H
 
 #include <stdint.h>
 #include <stdbool.h>

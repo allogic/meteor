@@ -1,5 +1,5 @@
-#ifndef LIST_H
-#define LIST_H
+#ifndef METEOR_LIST_H
+#define METEOR_LIST_H
 
 #include <stdint.h>
 

@@ -1,5 +1,5 @@
-#ifndef VK_RENDERER_H
-#define VK_RENDERER_H
+#ifndef METEOR_RENDERER_H
+#define METEOR_RENDERER_H
 
 #include <stdint.h>
 
