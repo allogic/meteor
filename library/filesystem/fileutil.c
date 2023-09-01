@@ -57,7 +57,7 @@ void FileUtil_ReadBmp(char** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint3
 #endif
 
 #ifdef OS_LINUX
-	__attribute__((packed)) struct xBmpHeader_t BMP_HEADER_STRUCT;
+	struct __attribute__((packed)) xBmpHeader_t BMP_HEADER_STRUCT;
 #endif
 
 	struct xBmpHeader_t xBmpHeader;

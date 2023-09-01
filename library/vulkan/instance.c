@@ -7,7 +7,7 @@
 
 #include <platform/nativewindow.h>
 
-#include <vulkan/vkinstance.h>
+#include <vulkan/instance.h>
 
 #ifdef OS_WINDOWS
 #	include <windows.h>
@@ -19,7 +19,7 @@
 #	include <vulkan/vulkan_wayland.h>
 #endif
 
-struct xVkInstance_t {
+struct xInstance_t {
 	VkInstance xInstance;
 #ifdef DEBUG
 	VkDebugUtilsMessengerEXT xDebugMessenger;
@@ -87,7 +87,7 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 }
 #endif
 
-static void VkInstance_CreateInstance(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CreateInstance(struct xInstance_t* pxInstance) {
 	VkApplicationInfo xAppInfo;
 	memset(&xAppInfo, 0, sizeof(xAppInfo));
 	xAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -117,14 +117,14 @@ static void VkInstance_CreateInstance(struct xVkInstance_t* pxVkInstance) {
 	xInstanceCreateInfo.ppEnabledLayerNames = s_apValidationLayers;
 #endif
 
-	VK_CHECK(vkCreateInstance(&xInstanceCreateInfo, 0, &pxVkInstance->xInstance));
+	VK_CHECK(vkCreateInstance(&xInstanceCreateInfo, 0, &pxInstance->xInstance));
 
 #ifdef DEBUG
-	CreateDebugUtilsMessengerEXT(pxVkInstance->xInstance, &xDebugCreateInfo, 0, &pxVkInstance->xDebugMessenger);
+	CreateDebugUtilsMessengerEXT(pxInstance->xInstance, &xDebugCreateInfo, 0, &pxInstance->xDebugMessenger);
 #endif
 }
 
-static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CreateSurface(struct xInstance_t* pxInstance) {
 #ifdef OS_WINDOWS
 	VkWin32SurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
@@ -132,7 +132,7 @@ static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance) {
 	xSurfaceCreateInfo.hwnd = NativeWindow_GetWindowHandle();
 	xSurfaceCreateInfo.hinstance = NativeWindow_GetModuleHandle();
 
-	VK_CHECK(vkCreateWin32SurfaceKHR(pxVkInstance->xInstance, &xSurfaceCreateInfo, 0, &pxVkInstance->xSurface));
+	VK_CHECK(vkCreateWin32SurfaceKHR(pxInstance->xInstance, &xSurfaceCreateInfo, 0, &pxInstance->xSurface));
 #endif
 
 #ifdef OS_LINUX
@@ -142,16 +142,16 @@ static void VkInstance_CreateSurface(struct xVkInstance_t* pxVkInstance) {
 	xSurfaceCreateInfo.display = NativeWindow_GetDisplayHandle();
 	xSurfaceCreateInfo.surface = NativeWindow_GetSurfaceHandle();
 
-	VK_CHECK(vkCreateWaylandSurfaceKHR(pxVkInstance->xInstance, &xSurfaceCreateInfo, 0, &pxVkInstance->xSurface));
+	VK_CHECK(vkCreateWaylandSurfaceKHR(pxInstance->xInstance, &xSurfaceCreateInfo, 0, &pxInstance->xSurface));
 #endif
 }
 
-static void VkInstance_FindPhysicalDevice(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_FindPhysicalDevice(struct xInstance_t* pxInstance) {
 	uint32_t nPhysicalDeviceCount;
-	VK_CHECK(vkEnumeratePhysicalDevices(pxVkInstance->xInstance, &nPhysicalDeviceCount, 0));
+	VK_CHECK(vkEnumeratePhysicalDevices(pxInstance->xInstance, &nPhysicalDeviceCount, 0));
 
 	VkPhysicalDevice* pxPhysicalDevices = (VkPhysicalDevice*)malloc(sizeof(VkPhysicalDevice) * nPhysicalDeviceCount);
-	VK_CHECK(vkEnumeratePhysicalDevices(pxVkInstance->xInstance, &nPhysicalDeviceCount, pxPhysicalDevices));
+	VK_CHECK(vkEnumeratePhysicalDevices(pxInstance->xInstance, &nPhysicalDeviceCount, pxPhysicalDevices));
 
 	for (uint32_t i = 0; i < nPhysicalDeviceCount; ++i) {
 		VkPhysicalDeviceProperties xPhysicalDeviceProperties;
@@ -162,7 +162,7 @@ static void VkInstance_FindPhysicalDevice(struct xVkInstance_t* pxVkInstance) {
 
 		if (xPhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 			if (xPhysicalDeviceFeatures.geometryShader) {
-				memcpy(&pxVkInstance->xPhysicalDevice, &pxPhysicalDevices[i], sizeof(pxVkInstance->xPhysicalDevice));
+				memcpy(&pxInstance->xPhysicalDevice, &pxPhysicalDevices[i], sizeof(pxInstance->xPhysicalDevice));
 				break;
 			}
 		}
@@ -171,12 +171,12 @@ static void VkInstance_FindPhysicalDevice(struct xVkInstance_t* pxVkInstance) {
 	free(pxPhysicalDevices);
 }
 
-static void VkInstance_FindQueueFamilies(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_FindQueueFamilies(struct xInstance_t* pxInstance) {
 	uint32_t nQueueFamilyCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(pxVkInstance->xPhysicalDevice, &nQueueFamilyCount, 0);
+	vkGetPhysicalDeviceQueueFamilyProperties(pxInstance->xPhysicalDevice, &nQueueFamilyCount, 0);
 
 	VkQueueFamilyProperties* pxQueueFamilyProperties = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * nQueueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(pxVkInstance->xPhysicalDevice, &nQueueFamilyCount, pxQueueFamilyProperties);
+	vkGetPhysicalDeviceQueueFamilyProperties(pxInstance->xPhysicalDevice, &nQueueFamilyCount, pxQueueFamilyProperties);
 
 	for (uint32_t i = 0; i < nQueueFamilyCount; ++i) {
 		uint32_t nGraphicsSupport = 0;
@@ -184,15 +184,15 @@ static void VkInstance_FindQueueFamilies(struct xVkInstance_t* pxVkInstance) {
 
 		nGraphicsSupport = pxQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT;
 
-		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(pxVkInstance->xPhysicalDevice, i, pxVkInstance->xSurface, &nPresentSupport));
+		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(pxInstance->xPhysicalDevice, i, pxInstance->xSurface, &nPresentSupport));
 
-		if (nGraphicsSupport && (pxVkInstance->nGraphicsQueueIndex == -1)) {
-			pxVkInstance->nGraphicsQueueIndex = i;
-		} else if (nPresentSupport && (pxVkInstance->nPresentQueueIndex == -1)) {
-			pxVkInstance->nPresentQueueIndex = i;
+		if (nGraphicsSupport && (pxInstance->nGraphicsQueueIndex == -1)) {
+			pxInstance->nGraphicsQueueIndex = i;
+		} else if (nPresentSupport && (pxInstance->nPresentQueueIndex == -1)) {
+			pxInstance->nPresentQueueIndex = i;
 		}
 
-		if ((pxVkInstance->nGraphicsQueueIndex != -1) && (pxVkInstance->nPresentQueueIndex != -1)) {
+		if ((pxInstance->nGraphicsQueueIndex != -1) && (pxInstance->nPresentQueueIndex != -1)) {
 			break;
 		}
 	}
@@ -200,12 +200,12 @@ static void VkInstance_FindQueueFamilies(struct xVkInstance_t* pxVkInstance) {
 	free(pxQueueFamilyProperties);
 }
 
-static void VkInstance_CheckPhysicalDeviceExtensions(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstance) {
 	uint32_t nAvailableDeviceExtensionCount;
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(pxVkInstance->xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, 0));
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(pxInstance->xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, 0));
 
 	VkExtensionProperties* pxAvailableDeviceExtensions = (VkExtensionProperties*)malloc(sizeof(VkExtensionProperties) * nAvailableDeviceExtensionCount);
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(pxVkInstance->xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, pxAvailableDeviceExtensions));
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(pxInstance->xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, pxAvailableDeviceExtensions));
 
 	for (uint32_t i = 0; i < ARRAY_LENGTH(s_apDeviceExtensions); ++i) {
 		bool nDeviceExtensionsAvailable = false;
@@ -232,10 +232,10 @@ static void VkInstance_CheckPhysicalDeviceExtensions(struct xVkInstance_t* pxVkI
 	free(pxAvailableDeviceExtensions);
 }
 
-static void VkInstance_CreateLogicalDevice(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 #ifdef DEBUG
-	printf("GraphicsQueueIndex %d\n", pxVkInstance->nGraphicsQueueIndex);
-	printf("PresentQueueIndex %d\n", pxVkInstance->nPresentQueueIndex);
+	printf("GraphicsQueueIndex %d\n", pxInstance->nGraphicsQueueIndex);
+	printf("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
 #endif
 
 	float fQueuePriority = 1.0f;
@@ -244,12 +244,12 @@ static void VkInstance_CreateLogicalDevice(struct xVkInstance_t* pxVkInstance) {
 	memset(&xQueueCreateInfos, 0, sizeof(xQueueCreateInfos));
 
 	xQueueCreateInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[0].queueFamilyIndex = pxVkInstance->nGraphicsQueueIndex;
+	xQueueCreateInfos[0].queueFamilyIndex = pxInstance->nGraphicsQueueIndex;
 	xQueueCreateInfos[0].queueCount = 1;
 	xQueueCreateInfos[0].pQueuePriorities = &fQueuePriority;
 
 	xQueueCreateInfos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[1].queueFamilyIndex = pxVkInstance->nPresentQueueIndex;
+	xQueueCreateInfos[1].queueFamilyIndex = pxInstance->nPresentQueueIndex;
 	xQueueCreateInfos[1].queueCount = 1;
 	xQueueCreateInfos[1].pQueuePriorities = &fQueuePriority;
 
@@ -269,35 +269,35 @@ static void VkInstance_CreateLogicalDevice(struct xVkInstance_t* pxVkInstance) {
 	xDeviceCreateInfo.ppEnabledLayerNames = s_apValidationLayers;
 #endif
 
-	VK_CHECK(vkCreateDevice(pxVkInstance->xPhysicalDevice, &xDeviceCreateInfo, 0, &pxVkInstance->xDevice));
+	VK_CHECK(vkCreateDevice(pxInstance->xPhysicalDevice, &xDeviceCreateInfo, 0, &pxInstance->xDevice));
 
-	vkGetDeviceQueue(pxVkInstance->xDevice, pxVkInstance->nGraphicsQueueIndex, 0, &pxVkInstance->xGraphicsQueue);
-	vkGetDeviceQueue(pxVkInstance->xDevice, pxVkInstance->nPresentQueueIndex, 0, &pxVkInstance->xPresentQueue);
+	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nGraphicsQueueIndex, 0, &pxInstance->xGraphicsQueue);
+	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nPresentQueueIndex, 0, &pxInstance->xPresentQueue);
 }
 
-static void VkInstance_CheckSurfaceCapabilities(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) {
 	uint32_t nSurfaceFormatCount;
 	uint32_t nPresentModeCount;
 
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pxVkInstance->xPhysicalDevice, pxVkInstance->xSurface, &nSurfaceFormatCount, 0));
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(pxVkInstance->xPhysicalDevice, pxVkInstance->xSurface, &nPresentModeCount, 0));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pxInstance->xPhysicalDevice, pxInstance->xSurface, &nSurfaceFormatCount, 0));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(pxInstance->xPhysicalDevice, pxInstance->xSurface, &nPresentModeCount, 0));
 
 	VkSurfaceFormatKHR* pxSurfaceFormats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * nSurfaceFormatCount);
 	VkPresentModeKHR* pxPresentModes = (VkPresentModeKHR*)malloc(sizeof(VkPresentModeKHR) * nPresentModeCount);
 
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pxVkInstance->xPhysicalDevice, pxVkInstance->xSurface, &nSurfaceFormatCount, pxSurfaceFormats));
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(pxVkInstance->xPhysicalDevice, pxVkInstance->xSurface, &nPresentModeCount, pxPresentModes));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pxInstance->xPhysicalDevice, pxInstance->xSurface, &nSurfaceFormatCount, pxSurfaceFormats));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(pxInstance->xPhysicalDevice, pxInstance->xSurface, &nPresentModeCount, pxPresentModes));
 
 	for (uint32_t i = 0; i < nSurfaceFormatCount; ++i) {
 		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
-			memcpy(&pxVkInstance->xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(pxVkInstance->xPreferedSurfaceFormat));
+			memcpy(&pxInstance->xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(pxInstance->xPreferedSurfaceFormat));
 			break;
 		}
 	}
 
 	for (uint32_t i = 0; i < nPresentModeCount; ++i) {
 		if (pxPresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-			memcpy(&pxVkInstance->xPreferedPresentMode, &pxPresentModes[i], sizeof(pxVkInstance->xPreferedPresentMode));
+			memcpy(&pxInstance->xPreferedPresentMode, &pxPresentModes[i], sizeof(pxInstance->xPreferedPresentMode));
 			break;
 		}
 	}
@@ -306,101 +306,101 @@ static void VkInstance_CheckSurfaceCapabilities(struct xVkInstance_t* pxVkInstan
 	free(pxPresentModes);
 }
 
-static void VkInstance_CreateCommandPool(struct xVkInstance_t* pxVkInstance) {
+static void VkInstance_CreateCommandPool(struct xInstance_t* pxInstance) {
 	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
 	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
 	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	xCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	xCommandPoolCreateInfo.queueFamilyIndex = pxVkInstance->nGraphicsQueueIndex;
+	xCommandPoolCreateInfo.queueFamilyIndex = pxInstance->nGraphicsQueueIndex;
 
-	VK_CHECK(vkCreateCommandPool(pxVkInstance->xDevice, &xCommandPoolCreateInfo, 0, &pxVkInstance->xCommandPool));
+	VK_CHECK(vkCreateCommandPool(pxInstance->xDevice, &xCommandPoolCreateInfo, 0, &pxInstance->xCommandPool));
 }
 
-struct xVkInstance_t* VkInstance_Alloc(void) {
-	struct xVkInstance_t* pxVkInstance = (struct xVkInstance_t*)calloc(1, sizeof(struct xVkInstance_t));
+struct xInstance_t* VkInstance_Alloc(void) {
+	struct xInstance_t* pxInstance = (struct xInstance_t*)calloc(1, sizeof(struct xInstance_t));
 
-	pxVkInstance->nGraphicsQueueIndex = -1;
-	pxVkInstance->nPresentQueueIndex = -1;
+	pxInstance->nGraphicsQueueIndex = -1;
+	pxInstance->nPresentQueueIndex = -1;
 
-	VkInstance_CreateInstance(pxVkInstance);
-	VkInstance_CreateSurface(pxVkInstance);
-	VkInstance_FindPhysicalDevice(pxVkInstance);
-	VkInstance_FindQueueFamilies(pxVkInstance);
-	VkInstance_CheckPhysicalDeviceExtensions(pxVkInstance);
-	VkInstance_CreateLogicalDevice(pxVkInstance);
-	VkInstance_CheckSurfaceCapabilities(pxVkInstance);
-	VkInstance_CreateCommandPool(pxVkInstance);
+	VkInstance_CreateInstance(pxInstance);
+	VkInstance_CreateSurface(pxInstance);
+	VkInstance_FindPhysicalDevice(pxInstance);
+	VkInstance_FindQueueFamilies(pxInstance);
+	VkInstance_CheckPhysicalDeviceExtensions(pxInstance);
+	VkInstance_CreateLogicalDevice(pxInstance);
+	VkInstance_CheckSurfaceCapabilities(pxInstance);
+	VkInstance_CreateCommandPool(pxInstance);
 
-	return pxVkInstance;
+	return pxInstance;
 }
 
-void VkInstance_Free(struct xVkInstance_t* pxVkInstance) {
-	vkDestroyCommandPool(pxVkInstance->xDevice, pxVkInstance->xCommandPool, 0);
+void VkInstance_Free(struct xInstance_t* pxInstance) {
+	vkDestroyCommandPool(pxInstance->xDevice, pxInstance->xCommandPool, 0);
 
-	vkDestroyDevice(pxVkInstance->xDevice, 0);
+	vkDestroyDevice(pxInstance->xDevice, 0);
 
-	vkDestroySurfaceKHR(pxVkInstance->xInstance, pxVkInstance->xSurface, 0);
+	vkDestroySurfaceKHR(pxInstance->xInstance, pxInstance->xSurface, 0);
 
 #ifdef DEBUG
-	DestroyDebugUtilsMessengerEXT(pxVkInstance->xInstance, pxVkInstance->xDebugMessenger, 0);
+	DestroyDebugUtilsMessengerEXT(pxInstance->xInstance, pxInstance->xDebugMessenger, 0);
 #endif
 
-	vkDestroyInstance(pxVkInstance->xInstance, 0);
+	vkDestroyInstance(pxInstance->xInstance, 0);
 
-	free(pxVkInstance);
+	free(pxInstance);
 }
 
-VkPhysicalDevice VkInstance_GetPhysicalDevice(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xPhysicalDevice;
+VkPhysicalDevice VkInstance_GetPhysicalDevice(struct xInstance_t* pxInstance) {
+	return pxInstance->xPhysicalDevice;
 }
 
-VkDevice VkInstance_GetDevice(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xDevice;
+VkDevice VkInstance_GetDevice(struct xInstance_t* pxInstance) {
+	return pxInstance->xDevice;
 }
 
-VkSurfaceKHR VkInstance_GetSurface(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xSurface;
+VkSurfaceKHR VkInstance_GetSurface(struct xInstance_t* pxInstance) {
+	return pxInstance->xSurface;
 }
 
-VkFormat VkInstance_GetPreferedSurfaceFormat(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xPreferedSurfaceFormat.format;
+VkFormat VkInstance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance) {
+	return pxInstance->xPreferedSurfaceFormat.format;
 }
 
-VkColorSpaceKHR VkInstance_GetPreferedSurfaceColorSpace(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xPreferedSurfaceFormat.colorSpace;
+VkColorSpaceKHR VkInstance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance) {
+	return pxInstance->xPreferedSurfaceFormat.colorSpace;
 }
 
-VkPresentModeKHR VkInstance_GetPreferedPresentMode(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xPreferedPresentMode;
+VkPresentModeKHR VkInstance_GetPreferedPresentMode(struct xInstance_t* pxInstance) {
+	return pxInstance->xPreferedPresentMode;
 }
 
-uint32_t VkInstance_GetGraphicsQueueIndex(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->nGraphicsQueueIndex;
+uint32_t VkInstance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance) {
+	return pxInstance->nGraphicsQueueIndex;
 }
 
-uint32_t VkInstance_GetPresentQueueIndex(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->nPresentQueueIndex;
+uint32_t VkInstance_GetPresentQueueIndex(struct xInstance_t* pxInstance) {
+	return pxInstance->nPresentQueueIndex;
 }
 
-VkQueue VkInstance_GetGraphicsQueue(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xGraphicsQueue;
+VkQueue VkInstance_GetGraphicsQueue(struct xInstance_t* pxInstance) {
+	return pxInstance->xGraphicsQueue;
 }
 
-VkQueue VkInstance_GetPresentQueue(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xPresentQueue;
+VkQueue VkInstance_GetPresentQueue(struct xInstance_t* pxInstance) {
+	return pxInstance->xPresentQueue;
 }
 
-VkCommandPool VkInstance_GetCommandPool(struct xVkInstance_t* pxVkInstance) {
-	return pxVkInstance->xCommandPool;
+VkCommandPool VkInstance_GetCommandPool(struct xInstance_t* pxInstance) {
+	return pxInstance->xCommandPool;
 }
 
-void VkInstance_WaitIdle(struct xVkInstance_t* pxVkInstance) {
-	VK_CHECK(vkDeviceWaitIdle(pxVkInstance->xDevice));
+void VkInstance_WaitIdle(struct xInstance_t* pxInstance) {
+	VK_CHECK(vkDeviceWaitIdle(pxInstance->xDevice));
 }
 
-int32_t VkInstance_CheckMemoryType(struct xVkInstance_t* pxVkInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
+int32_t VkInstance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
 	VkPhysicalDeviceMemoryProperties xPhysicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(pxVkInstance->xPhysicalDevice, &xPhysicalDeviceMemoryProperties);
+	vkGetPhysicalDeviceMemoryProperties(pxInstance->xPhysicalDevice, &xPhysicalDeviceMemoryProperties);
 
 	for (uint32_t i = 0; i < xPhysicalDeviceMemoryProperties.memoryTypeCount; ++i) {
 		if ((nTypeFilter & (1 << i)) && ((xPhysicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & xMemoryPropertyFlags) == xMemoryPropertyFlags)) {

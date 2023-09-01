@@ -3,19 +3,19 @@
 
 #include <common/macros.h>
 
-#include <vulkan/vkinstance.h>
-#include <vulkan/vkcommand.h>
+#include <vulkan/instance.h>
+#include <vulkan/command.h>
 
-VkCommandBuffer VkCommand_BeginSingleTimeCommands(struct xVkInstance_t* pxVkInstance) {
+VkCommandBuffer VkCommand_BeginSingleTimeCommands(struct xInstance_t* pxInstance) {
 	VkCommandBufferAllocateInfo xCommandBufferAllocateInfo;
 	memset(&xCommandBufferAllocateInfo, 0, sizeof(xCommandBufferAllocateInfo));
 	xCommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	xCommandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	xCommandBufferAllocateInfo.commandPool = VkInstance_GetCommandPool(pxVkInstance);
+	xCommandBufferAllocateInfo.commandPool = VkInstance_GetCommandPool(pxInstance);
 	xCommandBufferAllocateInfo.commandBufferCount = 1;
 
 	VkCommandBuffer xCommandBuffer;
-	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxVkInstance), &xCommandBufferAllocateInfo, &xCommandBuffer));
+	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxInstance), &xCommandBufferAllocateInfo, &xCommandBuffer));
 
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
@@ -27,7 +27,7 @@ VkCommandBuffer VkCommand_BeginSingleTimeCommands(struct xVkInstance_t* pxVkInst
 	return xCommandBuffer;
 }
 
-void VkCommand_EndSingleTimeCommands(struct xVkInstance_t* pxVkInstance, VkCommandBuffer xCommandBuffer) {
+void VkCommand_EndSingleTimeCommands(struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer) {
 	VK_CHECK(vkEndCommandBuffer(xCommandBuffer));
 
 	VkSubmitInfo xSubmitInfo;
@@ -36,8 +36,8 @@ void VkCommand_EndSingleTimeCommands(struct xVkInstance_t* pxVkInstance, VkComma
 	xSubmitInfo.commandBufferCount = 1;
 	xSubmitInfo.pCommandBuffers = &xCommandBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkInstance_GetGraphicsQueue(pxVkInstance), 1, &xSubmitInfo, VK_NULL_HANDLE));
-	VK_CHECK(vkQueueWaitIdle(VkInstance_GetGraphicsQueue(pxVkInstance)));
+	VK_CHECK(vkQueueSubmit(VkInstance_GetGraphicsQueue(pxInstance), 1, &xSubmitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueWaitIdle(VkInstance_GetGraphicsQueue(pxInstance)));
 
-	vkFreeCommandBuffers(VkInstance_GetDevice(pxVkInstance), VkInstance_GetCommandPool(pxVkInstance), 1, &xCommandBuffer);
+	vkFreeCommandBuffers(VkInstance_GetDevice(pxInstance), VkInstance_GetCommandPool(pxInstance), 1, &xCommandBuffer);
 }

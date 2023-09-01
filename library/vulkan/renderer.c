@@ -6,22 +6,22 @@
 
 #include <platform/nativewindow.h>
 
-#include <vulkan/vkinstance.h>
-#include <vulkan/vkswapchain.h>
-#include <vulkan/vkshader.h>
-#include <vulkan/vkrenderer.h>
-#include <vulkan/vkuniform.h>
-#include <vulkan/vkvertex.h>
-#include <vulkan/vkbuffer.h>
-#include <vulkan/vkbuffervariance.h>
+#include <vulkan/instance.h>
+#include <vulkan/swapchain.h>
+#include <vulkan/shader.h>
+#include <vulkan/renderer.h>
+#include <vulkan/uniform.h>
+#include <vulkan/vertex.h>
+#include <vulkan/buffer.h>
+#include <vulkan/buffervariance.h>
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
-struct xVkRenderer_t {
+struct xRenderer_t {
 	VkDescriptorSetLayout xDescriptorSetLayout;
 	VkDescriptorPool xDescriptorPool;
 	VkDescriptorSet axDescriptorSet[MAX_FRAMES_IN_FLIGHT];
-	struct xVkBuffer_t* apUniformBuffer[MAX_FRAMES_IN_FLIGHT];
+	struct xBuffer_t* apUniformBuffer[MAX_FRAMES_IN_FLIGHT];
 	VkPipelineLayout xPipelineLayout;
 	VkPipeline xGraphicsPipeline;
 	VkCommandBuffer axCommandBuffer[MAX_FRAMES_IN_FLIGHT];
@@ -31,13 +31,13 @@ struct xVkRenderer_t {
 	uint32_t nCurrentFrame;
 };
 
-static void VkRenderer_CreateUniformBuffer(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, uint64_t wSize) {
+static void VkRenderer_CreateUniformBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint64_t wSize) {
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		pxVkRenderer->apUniformBuffer[i] = VkUniformBuffer_Alloc(pxVkInstance, wSize);
+		pxRenderer->apUniformBuffer[i] = VkUniformBuffer_Alloc(pxInstance, wSize);
 	}
 }
 
-static void VkRenderer_CreateDescriptorSetLayout(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
+static void VkRenderer_CreateDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayoutBinding xDescriptorSetLayoutBinding;
 	memset(&xDescriptorSetLayoutBinding, 0, sizeof(xDescriptorSetLayoutBinding));
 	xDescriptorSetLayoutBinding.binding = 0;
@@ -52,10 +52,10 @@ static void VkRenderer_CreateDescriptorSetLayout(struct xVkRenderer_t* pxVkRende
 	xDescriptorSetLayoutCreateInfo.bindingCount = 1;
 	xDescriptorSetLayoutCreateInfo.pBindings = &xDescriptorSetLayoutBinding;
 
-	VK_CHECK(vkCreateDescriptorSetLayout(VkInstance_GetDevice(pxVkInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxVkRenderer->xDescriptorSetLayout));
+	VK_CHECK(vkCreateDescriptorSetLayout(VkInstance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xDescriptorSetLayout));
 }
 
-static void VkRenderer_CreateDescriptorPool(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
+static void VkRenderer_CreateDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorPoolSize xDescriptorPoolSize;
 	memset(&xDescriptorPoolSize, 0, sizeof(xDescriptorPoolSize));
 	xDescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -68,48 +68,48 @@ static void VkRenderer_CreateDescriptorPool(struct xVkRenderer_t* pxVkRenderer, 
 	xDescriptorPoolCreateInfo.pPoolSizes = &xDescriptorPoolSize;
 	xDescriptorPoolCreateInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
 
-	VK_CHECK(vkCreateDescriptorPool(VkInstance_GetDevice(pxVkInstance), &xDescriptorPoolCreateInfo, 0, &pxVkRenderer->xDescriptorPool));
+	VK_CHECK(vkCreateDescriptorPool(VkInstance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xDescriptorPool));
 }
 
-static void VkRenderer_CreateDescriptorSets(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, uint64_t wSize) {
+static void VkRenderer_CreateDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint64_t wSize) {
 	VkDescriptorSetLayout axDescriptorSetLayouts[MAX_FRAMES_IN_FLIGHT];
 
 	for (int32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		axDescriptorSetLayouts[i] = pxVkRenderer->xDescriptorSetLayout;
+		axDescriptorSetLayouts[i] = pxRenderer->xDescriptorSetLayout;
 	}
 
 	VkDescriptorSetAllocateInfo xDescriptorSetAllocateInfo;
 	memset(&xDescriptorSetAllocateInfo, 0, sizeof(xDescriptorSetAllocateInfo));
 	xDescriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	xDescriptorSetAllocateInfo.descriptorPool = pxVkRenderer->xDescriptorPool;
+	xDescriptorSetAllocateInfo.descriptorPool = pxRenderer->xDescriptorPool;
 	xDescriptorSetAllocateInfo.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
 	xDescriptorSetAllocateInfo.pSetLayouts = axDescriptorSetLayouts;
 
-	VK_CHECK(vkAllocateDescriptorSets(VkInstance_GetDevice(pxVkInstance), &xDescriptorSetAllocateInfo, pxVkRenderer->axDescriptorSet));
+	VK_CHECK(vkAllocateDescriptorSets(VkInstance_GetDevice(pxInstance), &xDescriptorSetAllocateInfo, pxRenderer->axDescriptorSet));
 
 	VkDescriptorBufferInfo xDescriptorBufferInfo;
 	VkWriteDescriptorSet xWriteDescriptorSet;
 
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		memset(&xDescriptorBufferInfo, 0, sizeof(xDescriptorBufferInfo));
-		xDescriptorBufferInfo.buffer = VkBuffer_GetBuffer(pxVkRenderer->apUniformBuffer[i]);
+		xDescriptorBufferInfo.buffer = VkBuffer_GetBuffer(pxRenderer->apUniformBuffer[i]);
 		xDescriptorBufferInfo.offset = 0;
 		xDescriptorBufferInfo.range = wSize;
 
 		memset(&xWriteDescriptorSet, 0, sizeof(xWriteDescriptorSet));
 		xWriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		xWriteDescriptorSet.dstSet = pxVkRenderer->axDescriptorSet[i];
+		xWriteDescriptorSet.dstSet = pxRenderer->axDescriptorSet[i];
 		xWriteDescriptorSet.dstBinding = 0;
 		xWriteDescriptorSet.dstArrayElement = 0;
 		xWriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		xWriteDescriptorSet.descriptorCount = 1;
 		xWriteDescriptorSet.pBufferInfo = &xDescriptorBufferInfo;
 
-		vkUpdateDescriptorSets(VkInstance_GetDevice(pxVkInstance), 1, &xWriteDescriptorSet, 0, 0);
+		vkUpdateDescriptorSets(VkInstance_GetDevice(pxInstance), 1, &xWriteDescriptorSet, 0, 0);
 	}
 }
 
-static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule) {
+static void VkRenderer_CreateGraphicsPipeline(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule) {
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
 	memset(&xVertShaderStageCreateInfo, 0, sizeof(xVertShaderStageCreateInfo));
 	xVertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -246,11 +246,11 @@ static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer
 	memset(&xPipelineLayoutCreateInfo, 0, sizeof(xPipelineLayoutCreateInfo));
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	xPipelineLayoutCreateInfo.setLayoutCount = 1;
-	xPipelineLayoutCreateInfo.pSetLayouts = &pxVkRenderer->xDescriptorSetLayout;
+	xPipelineLayoutCreateInfo.pSetLayouts = &pxRenderer->xDescriptorSetLayout;
 	xPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	xPipelineLayoutCreateInfo.pPushConstantRanges = 0;
 
-	VK_CHECK(vkCreatePipelineLayout(VkInstance_GetDevice(pxVkInstance), &xPipelineLayoutCreateInfo, 0, &pxVkRenderer->xPipelineLayout));
+	VK_CHECK(vkCreatePipelineLayout(VkInstance_GetDevice(pxInstance), &xPipelineLayoutCreateInfo, 0, &pxRenderer->xPipelineLayout));
 
 	VkGraphicsPipelineCreateInfo xPipelineCreateInfo;
 	memset(&xPipelineCreateInfo, 0, sizeof(xPipelineCreateInfo));
@@ -265,33 +265,33 @@ static void VkRenderer_CreateGraphicsPipeline(struct xVkRenderer_t* pxVkRenderer
 	xPipelineCreateInfo.pDepthStencilState = 0;
 	xPipelineCreateInfo.pColorBlendState = &xColorBlendCreateInfo;
 	xPipelineCreateInfo.pDynamicState = &xDynamicStateCreateInfo;
-	xPipelineCreateInfo.layout = pxVkRenderer->xPipelineLayout;
-	xPipelineCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxVkSwapChain);
+	xPipelineCreateInfo.layout = pxRenderer->xPipelineLayout;
+	xPipelineCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxSwapChain);
 	xPipelineCreateInfo.subpass = 0;
 	xPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	VK_CHECK(vkCreateGraphicsPipelines(VkInstance_GetDevice(pxVkInstance), VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &pxVkRenderer->xGraphicsPipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(VkInstance_GetDevice(pxInstance), VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &pxRenderer->xGraphicsPipeline));
 }
 
-static void VkRenderer_CreateCommandBuffers(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
+static void VkRenderer_CreateCommandBuffers(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkCommandBufferAllocateInfo xCommandBufferAllocCreateInfo;
 	memset(&xCommandBufferAllocCreateInfo, 0, sizeof(xCommandBufferAllocCreateInfo));
 	xCommandBufferAllocCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	xCommandBufferAllocCreateInfo.commandPool = VkInstance_GetCommandPool(pxVkInstance);
+	xCommandBufferAllocCreateInfo.commandPool = VkInstance_GetCommandPool(pxInstance);
 	xCommandBufferAllocCreateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	xCommandBufferAllocCreateInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxVkInstance), &xCommandBufferAllocCreateInfo, pxVkRenderer->axCommandBuffer));
+	VK_CHECK(vkAllocateCommandBuffers(VkInstance_GetDevice(pxInstance), &xCommandBufferAllocCreateInfo, pxRenderer->axCommandBuffer));
 }
 
-static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, struct xVkSwapChain_t* pxVkSwapChain, uint32_t nImageIndex, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
+static void VkRenderer_RecordCommandBuffer(struct xRenderer_t* pxRenderer, struct xSwapChain_t* pxSwapChain, uint32_t nImageIndex, struct xBuffer_t* pxVertexBuffer, struct xBuffer_t* pxIndexBuffer, uint32_t nIndexCount) {
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	xCommandBufferBeginInfo.flags = 0;
 	xCommandBufferBeginInfo.pInheritanceInfo = 0;
 
-	VK_CHECK(vkBeginCommandBuffer(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], &xCommandBufferBeginInfo));
+	VK_CHECK(vkBeginCommandBuffer(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], &xCommandBufferBeginInfo));
 
 	VkClearValue xClearColor;
 	memset(&xClearColor, 0, sizeof(xClearColor));
@@ -303,8 +303,8 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, s
 	VkRenderPassBeginInfo xRenderPassCreateInfo;
 	memset(&xRenderPassCreateInfo, 0, sizeof(xRenderPassCreateInfo));
 	xRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	xRenderPassCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxVkSwapChain);
-	xRenderPassCreateInfo.framebuffer = VkSwapChain_GetFrameBuffer(pxVkSwapChain, nImageIndex);
+	xRenderPassCreateInfo.renderPass = VkSwapChain_GetRenderPass(pxSwapChain);
+	xRenderPassCreateInfo.framebuffer = VkSwapChain_GetFrameBuffer(pxSwapChain, nImageIndex);
 	xRenderPassCreateInfo.renderArea.offset.x = 0;
 	xRenderPassCreateInfo.renderArea.offset.y = 0;
 	xRenderPassCreateInfo.renderArea.extent.width = NativeWindow_GetWidth();
@@ -312,9 +312,9 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, s
 	xRenderPassCreateInfo.clearValueCount = 1;
 	xRenderPassCreateInfo.pClearValues = &xClearColor;
 
-	vkCmdBeginRenderPass(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], &xRenderPassCreateInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], &xRenderPassCreateInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pxVkRenderer->xGraphicsPipeline);
+		vkCmdBindPipeline(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pxRenderer->xGraphicsPipeline);
 
 		VkViewport xViewport;
 		memset(&xViewport, 0, sizeof(xViewport));
@@ -324,7 +324,7 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, s
 		xViewport.height = (float)NativeWindow_GetHeight();
 		xViewport.minDepth = 0.0F;
 		xViewport.maxDepth = 1.0F;
-		vkCmdSetViewport(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], 0, 1, &xViewport);
+		vkCmdSetViewport(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], 0, 1, &xViewport);
 
 		VkRect2D xScissor;
 		memset(&xScissor, 0, sizeof(xScissor));
@@ -332,24 +332,24 @@ static void VkRenderer_RecordCommandBuffer(struct xVkRenderer_t* pxVkRenderer, s
 		xScissor.offset.y = 0;
 		xScissor.extent.width = NativeWindow_GetWidth();
 		xScissor.extent.height = NativeWindow_GetHeight();
-		vkCmdSetScissor(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], 0, 1, &xScissor);
+		vkCmdSetScissor(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], 0, 1, &xScissor);
 
-		VkBuffer axVertexBuffers[] = { VkBuffer_GetBuffer(pxVkVertexBuffer) };
+		VkBuffer axVertexBuffers[] = { VkBuffer_GetBuffer(pxVertexBuffer) };
 		uint64_t awOffsets[] = { 0 };
 
-		vkCmdBindVertexBuffers(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], 0, 1, axVertexBuffers, awOffsets);
-		vkCmdBindIndexBuffer(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], VkBuffer_GetBuffer(pxVkIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindVertexBuffers(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], 0, 1, axVertexBuffers, awOffsets);
+		vkCmdBindIndexBuffer(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], VkBuffer_GetBuffer(pxIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdBindDescriptorSets(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pxVkRenderer->xPipelineLayout, 0, 1, &pxVkRenderer->axDescriptorSet[pxVkRenderer->nCurrentFrame], 0, 0);
+		vkCmdBindDescriptorSets(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pxRenderer->xPipelineLayout, 0, 1, &pxRenderer->axDescriptorSet[pxRenderer->nCurrentFrame], 0, 0);
 
-		vkCmdDrawIndexed(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], nIndexCount, 1, 0, 0, 0);
+		vkCmdDrawIndexed(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], nIndexCount, 1, 0, 0, 0);
 
-	vkCmdEndRenderPass(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame]);
+	vkCmdEndRenderPass(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame]);
 
-	VK_CHECK(vkEndCommandBuffer(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame]));
+	VK_CHECK(vkEndCommandBuffer(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame]));
 }
 
-static void VkRenderer_CreatSyncObjects(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
+static void VkRenderer_CreatSyncObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkSemaphoreCreateInfo xSemaphoreCreateInfo;
 	memset(&xSemaphoreCreateInfo, 0, sizeof(xSemaphoreCreateInfo));
 	xSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -360,77 +360,77 @@ static void VkRenderer_CreatSyncObjects(struct xVkRenderer_t* pxVkRenderer, stru
 	xFenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		VK_CHECK(vkCreateSemaphore(VkInstance_GetDevice(pxVkInstance), &xSemaphoreCreateInfo, 0, &pxVkRenderer->axImageAvailableSemaphore[i]));
-		VK_CHECK(vkCreateSemaphore(VkInstance_GetDevice(pxVkInstance), &xSemaphoreCreateInfo, 0, &pxVkRenderer->axRenderFinishedSemaphore[i]));
+		VK_CHECK(vkCreateSemaphore(VkInstance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->axImageAvailableSemaphore[i]));
+		VK_CHECK(vkCreateSemaphore(VkInstance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->axRenderFinishedSemaphore[i]));
 
-		VK_CHECK(vkCreateFence(VkInstance_GetDevice(pxVkInstance), &xFenceCreateInfo, 0, &pxVkRenderer->axInFlightFence[i]));
+		VK_CHECK(vkCreateFence(VkInstance_GetDevice(pxInstance), &xFenceCreateInfo, 0, &pxRenderer->axInFlightFence[i]));
 	}
 }
 
-struct xVkRenderer_t* VkRenderer_Alloc(struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxSwapChain) {
-	struct xVkRenderer_t* pxVkRenderer = (struct xVkRenderer_t*)calloc(1, sizeof(struct xVkRenderer_t));
+struct xRenderer_t* VkRenderer_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain) {
+	struct xRenderer_t* pxRenderer = (struct xRenderer_t*)calloc(1, sizeof(struct xRenderer_t));
 
 	VkShaderModule xVertModule;
 	VkShaderModule xFragModule;
 
-	VkShader_Alloc(pxVkInstance, "../shaders/test.vert.spv", "../shaders/test.frag.spv", &xVertModule, &xFragModule);
+	VkShader_Alloc(pxInstance, "../shaders/test.vert.spv", "../shaders/test.frag.spv", &xVertModule, &xFragModule);
 
-	VkRenderer_CreateUniformBuffer(pxVkRenderer, pxVkInstance, sizeof(xModelViewProjection_t));
-	VkRenderer_CreateDescriptorSetLayout(pxVkRenderer, pxVkInstance);
-	VkRenderer_CreateDescriptorPool(pxVkRenderer, pxVkInstance);
-	VkRenderer_CreateDescriptorSets(pxVkRenderer, pxVkInstance, sizeof(xModelViewProjection_t));
-	VkRenderer_CreateGraphicsPipeline(pxVkRenderer, pxVkInstance, pxSwapChain, xVertModule, xFragModule);
-	VkRenderer_CreateCommandBuffers(pxVkRenderer, pxVkInstance);
-	VkRenderer_CreatSyncObjects(pxVkRenderer, pxVkInstance);
+	VkRenderer_CreateUniformBuffer(pxRenderer, pxInstance, sizeof(xModelViewProjection_t));
+	VkRenderer_CreateDescriptorSetLayout(pxRenderer, pxInstance);
+	VkRenderer_CreateDescriptorPool(pxRenderer, pxInstance);
+	VkRenderer_CreateDescriptorSets(pxRenderer, pxInstance, sizeof(xModelViewProjection_t));
+	VkRenderer_CreateGraphicsPipeline(pxRenderer, pxInstance, pxSwapChain, xVertModule, xFragModule);
+	VkRenderer_CreateCommandBuffers(pxRenderer, pxInstance);
+	VkRenderer_CreatSyncObjects(pxRenderer, pxInstance);
 
-	VkShader_Free(pxVkInstance, xVertModule, xFragModule);
+	VkShader_Free(pxInstance, xVertModule, xFragModule);
 
-	return pxVkRenderer;
+	return pxRenderer;
 }
 
-void VkRenderer_Free(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance) {
+void VkRenderer_Free(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		vkDestroyFence(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->axInFlightFence[i], 0);
+		vkDestroyFence(VkInstance_GetDevice(pxInstance), pxRenderer->axInFlightFence[i], 0);
 
-		vkDestroySemaphore(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->axRenderFinishedSemaphore[i], 0);
-		vkDestroySemaphore(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->axImageAvailableSemaphore[i], 0);
+		vkDestroySemaphore(VkInstance_GetDevice(pxInstance), pxRenderer->axRenderFinishedSemaphore[i], 0);
+		vkDestroySemaphore(VkInstance_GetDevice(pxInstance), pxRenderer->axImageAvailableSemaphore[i], 0);
 	}
 
-	vkDestroyPipeline(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xGraphicsPipeline, 0);
+	vkDestroyPipeline(VkInstance_GetDevice(pxInstance), pxRenderer->xGraphicsPipeline, 0);
 
-	vkDestroyPipelineLayout(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xPipelineLayout, 0);
+	vkDestroyPipelineLayout(VkInstance_GetDevice(pxInstance), pxRenderer->xPipelineLayout, 0);
 
 	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		VkBuffer_Free(pxVkRenderer->apUniformBuffer[i], pxVkInstance);
+		VkBuffer_Free(pxRenderer->apUniformBuffer[i], pxInstance);
 	}
 
-	vkDestroyDescriptorPool(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xDescriptorPool, 0);
+	vkDestroyDescriptorPool(VkInstance_GetDevice(pxInstance), pxRenderer->xDescriptorPool, 0);
 
-	vkDestroyDescriptorSetLayout(VkInstance_GetDevice(pxVkInstance), pxVkRenderer->xDescriptorSetLayout, 0);
+	vkDestroyDescriptorSetLayout(VkInstance_GetDevice(pxInstance), pxRenderer->xDescriptorSetLayout, 0);
 
-	free(pxVkRenderer);
+	free(pxRenderer);
 }
 
-void VkRenderer_UpdateModelViewProjection(struct xVkRenderer_t* pxVkRenderer, void* pData) {
-	VkBuffer_Copy(pxVkRenderer->apUniformBuffer[pxVkRenderer->nCurrentFrame], pData, sizeof(xModelViewProjection_t));
+void VkRenderer_UpdateModelViewProjection(struct xRenderer_t* pxRenderer, void* pData) {
+	VkBuffer_Copy(pxRenderer->apUniformBuffer[pxRenderer->nCurrentFrame], pData, sizeof(xModelViewProjection_t));
 }
 
-void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* pxVkInstance, struct xVkSwapChain_t* pxVkSwapChain, struct xVkBuffer_t* pxVkVertexBuffer, struct xVkBuffer_t* pxVkIndexBuffer, uint32_t nIndexCount) {
-	VK_CHECK(vkWaitForFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->axInFlightFence[pxVkRenderer->nCurrentFrame], VK_TRUE, UINT64_MAX));
+void VkRenderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xBuffer_t* pxVertexBuffer, struct xBuffer_t* pxIndexBuffer, uint32_t nIndexCount) {
+	VK_CHECK(vkWaitForFences(VkInstance_GetDevice(pxInstance), 1, &pxRenderer->axInFlightFence[pxRenderer->nCurrentFrame], VK_TRUE, UINT64_MAX));
 
 	uint32_t nImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(VkInstance_GetDevice(pxVkInstance), VkSwapChain_GetSwapChain(pxVkSwapChain), UINT64_MAX, pxVkRenderer->axImageAvailableSemaphore[pxVkRenderer->nCurrentFrame], VK_NULL_HANDLE, &nImageIndex));
+	VK_CHECK(vkAcquireNextImageKHR(VkInstance_GetDevice(pxInstance), VkSwapChain_GetSwapChain(pxSwapChain), UINT64_MAX, pxRenderer->axImageAvailableSemaphore[pxRenderer->nCurrentFrame], VK_NULL_HANDLE, &nImageIndex));
 
-	VK_CHECK(vkResetFences(VkInstance_GetDevice(pxVkInstance), 1, &pxVkRenderer->axInFlightFence[pxVkRenderer->nCurrentFrame]));
+	VK_CHECK(vkResetFences(VkInstance_GetDevice(pxInstance), 1, &pxRenderer->axInFlightFence[pxRenderer->nCurrentFrame]));
 
-	VK_CHECK(vkResetCommandBuffer(pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame], 0));
+	VK_CHECK(vkResetCommandBuffer(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], 0));
 
-	VkRenderer_RecordCommandBuffer(pxVkRenderer, pxVkSwapChain, nImageIndex, pxVkVertexBuffer, pxVkIndexBuffer, nIndexCount);
+	VkRenderer_RecordCommandBuffer(pxRenderer, pxSwapChain, nImageIndex, pxVertexBuffer, pxIndexBuffer, nIndexCount);
 
-	VkSemaphore axWaitSemaphores[] = { pxVkRenderer->axImageAvailableSemaphore[pxVkRenderer->nCurrentFrame] };
-	VkSemaphore axSignalSemaphores[] = { pxVkRenderer->axRenderFinishedSemaphore[pxVkRenderer->nCurrentFrame] };
+	VkSemaphore axWaitSemaphores[] = { pxRenderer->axImageAvailableSemaphore[pxRenderer->nCurrentFrame] };
+	VkSemaphore axSignalSemaphores[] = { pxRenderer->axRenderFinishedSemaphore[pxRenderer->nCurrentFrame] };
 	VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	VkSwapchainKHR axSwapChains[] = { VkSwapChain_GetSwapChain(pxVkSwapChain) };
+	VkSwapchainKHR axSwapChains[] = { VkSwapChain_GetSwapChain(pxSwapChain) };
 
 	VkSubmitInfo xSubmitInfo;
 	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
@@ -439,11 +439,11 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	xSubmitInfo.pWaitSemaphores = axWaitSemaphores;
 	xSubmitInfo.pWaitDstStageMask = axWaitStages;
 	xSubmitInfo.commandBufferCount = 1;
-	xSubmitInfo.pCommandBuffers = &pxVkRenderer->axCommandBuffer[pxVkRenderer->nCurrentFrame];
+	xSubmitInfo.pCommandBuffers = &pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame];
 	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
 	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
 
-	VK_CHECK(vkQueueSubmit(VkInstance_GetGraphicsQueue(pxVkInstance), 1, &xSubmitInfo, pxVkRenderer->axInFlightFence[pxVkRenderer->nCurrentFrame]));
+	VK_CHECK(vkQueueSubmit(VkInstance_GetGraphicsQueue(pxInstance), 1, &xSubmitInfo, pxRenderer->axInFlightFence[pxRenderer->nCurrentFrame]));
 
 	VkPresentInfoKHR xPresentInfo;
 	memset(&xPresentInfo, 0, sizeof(xPresentInfo));
@@ -454,7 +454,7 @@ void VkRenderer_Draw(struct xVkRenderer_t* pxVkRenderer, struct xVkInstance_t* p
 	xPresentInfo.pSwapchains = axSwapChains;
 	xPresentInfo.pImageIndices = &nImageIndex;
 
-	VK_CHECK(vkQueuePresentKHR(VkInstance_GetPresentQueue(pxVkInstance), &xPresentInfo));
+	VK_CHECK(vkQueuePresentKHR(VkInstance_GetPresentQueue(pxInstance), &xPresentInfo));
 
-	pxVkRenderer->nCurrentFrame = (pxVkRenderer->nCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	pxRenderer->nCurrentFrame = (pxRenderer->nCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
