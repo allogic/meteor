@@ -25,7 +25,7 @@
 #include <vulkan/image.h>
 #include <vulkan/imagevariance.h>
 
-xVertex_t axVertices[4] = {
+xDefaultVertex_t axVertices[4] = {
 	{ { -0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
 	{ {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
 	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
@@ -50,9 +50,9 @@ int32_t main(void) {
 
 	struct xInstance_t* pxInstance = Instance_Alloc();
 	struct xSwapChain_t* pxSwapChain = SwapChain_Alloc(pxInstance);
-	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4);
+	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xDefaultVertex_t) * 4);
 	struct xBuffer_t* pxIndexBuffer = IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6);
-	struct xImage_t* pxTextureImage = TextureImage_Alloc(pxInstance, "../test.bmp");
+	struct xImage_t* pxTextureImage = TextureImage_Alloc(pxInstance, "test.bmp");
 	struct xRenderer_t* pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain);
 
 	Timer_Start(pxTimer);

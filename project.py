@@ -16,17 +16,41 @@ def build_project(project, configuration):
 	os.system(f'cmake --build "{build_path}" --config {configuration} --parallel 8')
 
 def run_project(project):
-	build_path=f'projects/{project}/build'
-	os.chdir(build_path)
+	root_path=os.getcwd()
+	project_path=f'projects/{project}'
+	if platform.system() == 'Windows':
+		src_path=f'projects/{project}/build/{project}.exe'
+		dst_path=f'projects/{project}/{project}.exe'
+	elif platform.system() == 'Linux':
+		src_path=f'projects/{project}/build/{project}'
+		dst_path=f'projects/{project}/{project}'
+	if os.path.exists(dst_path):
+		os.remove(dst_path)
+	shutil.copy(src_path, dst_path)
+	os.chdir(project_path)
 	if platform.system() == 'Windows':
 		os.system(f'{project}')
 	elif platform.system() == 'Linux':
 		os.system(f'./{project}')
+	os.chdir(root_path)
+	os.remove(dst_path)
 
 def debug_project(project):
-	build_path=f'projects/{project}/build'
-	os.chdir(build_path)
+	root_path=os.getcwd()
+	project_path=f'projects/{project}'
+	if platform.system() == 'Windows':
+		src_path=f'projects/{project}/build/{project}.exe'
+		dst_path=f'projects/{project}/{project}.exe'
+	elif platform.system() == 'Linux':
+		src_path=f'projects/{project}/build/{project}'
+		dst_path=f'projects/{project}/{project}'
+	if os.path.exists(dst_path):
+		os.remove(dst_path)
+	shutil.copy(src_path, dst_path)
+	os.chdir(project_path)
 	os.system(f'lldb {project}')
+	os.chdir(root_path)
+	os.remove(dst_path)
 
 def build_shader(project):
 	shader_path=f'projects/{project}/shaders'
