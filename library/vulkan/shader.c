@@ -10,8 +10,8 @@
 #include <vulkan/shader.h>
 
 void Shader_Alloc(struct xInstance_t* pxInstance, const char* pcVertFilePath, const char* pcFragFilePath, VkShaderModule* pxVertModule, VkShaderModule* pxFragModule) {
-	char* pcVertShaderBytes;
-	char* pcFragShaderBytes;
+	uint8_t* pcVertShaderBytes;
+	uint8_t* pcFragShaderBytes;
 	
 	uint64_t wVertShaderSize;
 	uint64_t wFragShaderSize;

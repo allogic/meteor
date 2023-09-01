@@ -8,8 +8,8 @@
 #include <vulkan/image.h>
 #include <vulkan/vertex.h>
 
-struct xImage_t* TextureImage_Alloc(struct xInstance_t* pxInstance, char const* pcFilePath) {
-	char* pData;
+struct xImage_t* StandardImage_Alloc(struct xInstance_t* pxInstance, char const* pcFilePath) {
+	uint8_t* pData;
 	uint64_t wSize;
 	uint32_t nWidth;
 	uint32_t nHeight;
@@ -22,7 +22,7 @@ struct xImage_t* TextureImage_Alloc(struct xInstance_t* pxInstance, char const* 
 	Buffer_Copy(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
-	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL);
+	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_FILTER_NEAREST);
 
 	Image_LayoutTransition(pxImage, pxInstance, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	Buffer_CopyToImage(pxInstance, pxStagingBuffer, pxImage, nWidth, nHeight);

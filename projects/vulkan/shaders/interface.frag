@@ -4,10 +4,12 @@ layout(location = 0) in Vertex {
 	vec4 Position;
 	vec2 Uv;
 	vec4 Color;
-} vertex;
+} InputVertex;
+
+layout(binding = 1) uniform sampler2D UniformSampler;
 
 layout(location = 0) out vec4 OutputColor;
 
 void main() {
-	OutputColor = vertex.Color;
+	OutputColor = texture(UniformSampler, InputVertex.Uv);
 }

@@ -22,6 +22,6 @@ void View_LookAt(xVec3_t xEye, xVec3_t xCenter, xVec3_t xUp, xMat4_t xRes) {
 	xRes[3][0] = -Vector_Dot(xS, xEye);
 	xRes[3][1] = -Vector_Dot(xU, xEye);
 	xRes[3][2] = -Vector_Dot(xF, xEye);
-	xRes[0][3] = xRes[1][3] = xRes[2][3] = 0.0f;
-	xRes[3][3] = 1.0f;
+	xRes[0][3] = xRes[1][3] = xRes[2][3] = 0.0F;
+	xRes[3][3] = 1.0F;
 }

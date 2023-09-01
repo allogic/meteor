@@ -12,6 +12,7 @@ struct xImage_t;
 struct xBuffer_t* Buffer_Alloc(struct xInstance_t* pxInstance, uint64_t wSize, VkBufferUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties);
 void Buffer_Free(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance);
 
+uint64_t Buffer_GetSize(struct xBuffer_t* pxBuffer);
 VkBuffer Buffer_GetBuffer(struct xBuffer_t* pxBuffer);
 VkDeviceMemory Buffer_GetDeviceMemory(struct xBuffer_t* pxBuffer);
 void* Buffer_GetMappedData(struct xBuffer_t* pxBuffer);

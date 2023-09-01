@@ -11,13 +11,21 @@
 
 struct xImage_t {
 	uint64_t wSize;
+	uint32_t nWidth;
+	uint32_t nHeight;
 	VkImage xImage;
 	VkDeviceMemory xDeviceMemory;
+	VkImageView xImageView;
+	VkSampler xSampler;
 	void* pMappedData;
 };
 
-struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, uint32_t nHeight, VkImageUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties, VkFormat xFormat, VkImageTiling xTiling) {
+struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, uint32_t nHeight, VkImageUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties, VkFormat xFormat, VkImageTiling xTiling, VkFilter xFilter) {
 	struct xImage_t* pxImage = (struct xImage_t*)calloc(1, sizeof(struct xImage_t));
+
+	pxImage->wSize = nWidth * nHeight * 4;
+	pxImage->nWidth = nWidth;
+	pxImage->nHeight = nHeight;
 
 	VkImageCreateInfo xVkImageCreateInfo;
 	memset(&xVkImageCreateInfo, 0, sizeof(xVkImageCreateInfo));
@@ -49,6 +57,44 @@ struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, ui
 	VK_CHECK(vkAllocateMemory(Instance_GetDevice(pxInstance), &xMemoryAllocateInfo, 0, &pxImage->xDeviceMemory));
 	VK_CHECK(vkBindImageMemory(Instance_GetDevice(pxInstance), pxImage->xImage, pxImage->xDeviceMemory, 0));
 
+	VkImageViewCreateInfo xImageViewCreateInfo;
+	memset(&xImageViewCreateInfo, 0, sizeof(xImageViewCreateInfo));
+	xImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	xImageViewCreateInfo.image = pxImage->xImage;
+	xImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	xImageViewCreateInfo.format = xFormat;
+	xImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	xImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+	xImageViewCreateInfo.subresourceRange.levelCount = 1;
+	xImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+	xImageViewCreateInfo.subresourceRange.layerCount = 1;
+
+	VK_CHECK(vkCreateImageView(Instance_GetDevice(pxInstance), &xImageViewCreateInfo, 0, &pxImage->xImageView));
+
+	VkPhysicalDeviceProperties xPhysicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(Instance_GetPhysicalDevice(pxInstance), &xPhysicalDeviceProperties);
+
+	VkSamplerCreateInfo xSamplerCreateInfo;
+	memset(&xSamplerCreateInfo, 0, sizeof(xSamplerCreateInfo));
+	xSamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	xSamplerCreateInfo.magFilter = xFilter;
+	xSamplerCreateInfo.minFilter = xFilter;
+	xSamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	xSamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	xSamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	xSamplerCreateInfo.anisotropyEnable = VK_TRUE;
+	xSamplerCreateInfo.maxAnisotropy = xPhysicalDeviceProperties.limits.maxSamplerAnisotropy;
+	xSamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	xSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+	xSamplerCreateInfo.compareEnable = VK_FALSE;
+	xSamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	xSamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	xSamplerCreateInfo.mipLodBias = 0.0F;
+	xSamplerCreateInfo.minLod = 0.0F;
+	xSamplerCreateInfo.maxLod = 0.0F;
+
+	VK_CHECK(vkCreateSampler(Instance_GetDevice(pxInstance), &xSamplerCreateInfo, 0, &pxImage->xSampler));
+
 	return pxImage;
 }
 
@@ -57,10 +103,16 @@ void Image_Free(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
 		vkUnmapMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory);
 	}
 
+	vkDestroySampler(Instance_GetDevice(pxInstance), pxImage->xSampler, 0);
+	vkDestroyImageView(Instance_GetDevice(pxInstance), pxImage->xImageView, 0);
 	vkDestroyImage(Instance_GetDevice(pxInstance), pxImage->xImage, 0);
 	vkFreeMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory, 0);
 
 	free(pxImage);
+}
+
+uint64_t Image_GetSize(struct xImage_t* pxImage) {
+	return pxImage->wSize;
 }
 
 VkImage Image_GetImage(struct xImage_t* pxImage) {
@@ -69,6 +121,14 @@ VkImage Image_GetImage(struct xImage_t* pxImage) {
 
 VkDeviceMemory Image_GetDeviceMemory(struct xImage_t* pxImage) {
 	return pxImage->xDeviceMemory;
+}
+
+VkImageView Image_GetImageView(struct xImage_t* pxImage) {
+	return pxImage->xImageView;
+}
+
+VkSampler Image_GetSampler(struct xImage_t* pxImage) {
+	return pxImage->xSampler;
 }
 
 void* Image_GetMappedData(struct xImage_t* pxImage) {

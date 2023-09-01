@@ -26,10 +26,10 @@
 #include <vulkan/imagevariance.h>
 
 xDefaultVertex_t axVertices[4] = {
-	{ { -0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
+	{ { -0.5F, -0.5F, 0.0F }, { 1.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
 	{ {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
-	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
-	{ { -0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 1.0F, 1.0F, 1.0F, 1.0F } },
+	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 1.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
+	{ { -0.5F,  0.5F, 0.0F }, { 1.0F, 1.0F }, { 1.0F, 1.0F, 1.0F, 1.0F } },
 };
 
 uint32_t anIndices[6] = {
@@ -52,8 +52,8 @@ int32_t main(void) {
 	struct xSwapChain_t* pxSwapChain = SwapChain_Alloc(pxInstance);
 	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xDefaultVertex_t) * 4);
 	struct xBuffer_t* pxIndexBuffer = IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6);
-	struct xImage_t* pxTextureImage = TextureImage_Alloc(pxInstance, "test.bmp");
-	struct xRenderer_t* pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain);
+	struct xImage_t* pxStandardImage = StandardImage_Alloc(pxInstance, "test.bmp");
+	struct xRenderer_t* pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain, pxStandardImage);
 
 	Timer_Start(pxTimer);
 
@@ -69,7 +69,7 @@ int32_t main(void) {
 			SwapChain_Free(pxSwapChain, pxInstance);
 
 			pxSwapChain = SwapChain_Alloc(pxInstance);
-			pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain);
+			pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain, pxStandardImage);
 		}
 
 		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xMvp.xProjection);
@@ -83,13 +83,13 @@ int32_t main(void) {
 		Matrix_SetPosition(s_xMvp.xModel, xPosition);
 
 		Renderer_UpdateModelViewProjection(pxRenderer, &s_xMvp);
-		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6);
+		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6, pxStandardImage);
 	}
 
 	Instance_WaitIdle(pxInstance);
 
 	Renderer_Free(pxRenderer, pxInstance);
-	Image_Free(pxTextureImage, pxInstance);
+	Image_Free(pxStandardImage, pxInstance);
 	Buffer_Free(pxIndexBuffer, pxInstance);
 	Buffer_Free(pxVertexBuffer, pxInstance);
 	SwapChain_Free(pxSwapChain, pxInstance);

@@ -12,14 +12,14 @@ layout(binding = 0) uniform ModelViewProjection {
 layout(location = 0) out Vertex {
 	vec4 Position;
 	vec4 Color;
-} vertex;
+} OutputVertex;
 
 void main() {
 	vec4 position = mvp.Projection * mvp.View * mvp.Model * vec4(InputPosition, 1.0);
 	vec4 color = InputColor;
 
-	vertex.Position = position;
-	vertex.Color = color;
+	OutputVertex.Position = position;
+	OutputVertex.Color = color;
 
 	gl_Position = position;
 }

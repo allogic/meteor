@@ -3,51 +3,55 @@
 
 #include <filesystem/fileutil.h>
 
-void FileUtil_ReadBinary(char** ppcData, uint64_t* pwSize, const char* pcFilePath) {
+void FileUtil_ReadBinary(uint8_t** ppcData, uint64_t* pwSize, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "rb");
 
 	fseek(pxFile, 0, SEEK_END);
 	*pwSize = ftell(pxFile);
-	*ppcData = calloc(*pwSize, sizeof(char));
+	*ppcData = calloc(*pwSize, 1);
 	fseek(pxFile, 0, SEEK_SET);
 
-	fread(*ppcData, sizeof(char), *pwSize, pxFile);
+	fread(*ppcData, 1, *pwSize, pxFile);
 
 	fclose(pxFile);
 }
 
-void FileUtil_ReadText(char** ppcData, uint64_t* pwSize, const char* pcFilePath) {
+void FileUtil_ReadText(int8_t** ppcData, uint64_t* pwSize, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "r");
 
 	fseek(pxFile, 0, SEEK_END);
 	*pwSize = ftell(pxFile);
-	*ppcData = calloc((*pwSize) + 1, sizeof(char));
+	*ppcData = calloc((*pwSize) + 1, 1);
 	fseek(pxFile, 0, SEEK_SET);
 
-	fread(*ppcData, sizeof(char), *pwSize, pxFile);
+	fread(*ppcData, 1, *pwSize, pxFile);
 
 	fclose(pxFile);
 }
 
-void FileUtil_ReadBmp(char** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint32_t* pnHeight, const char* pcFilePath) {
+void FileUtil_ReadBmp(uint8_t** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint32_t* pnHeight, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "rb");
 
 #define BMP_HEADER_STRUCT { \
-		int16_t sSignature; \
-		int32_t nFileSize; \
-		int32_t nReserved; \
-		int32_t nDataOffset; \
-		int32_t nHeaderSize; \
-		int32_t nWidth; \
-		int32_t nHeight; \
-		int16_t sPlanes; \
-		int16_t sBitsPerPixel; \
-		int32_t nCompression; \
-		int32_t nDataSize; \
-		int32_t nHorizontalRes; \
-		int32_t nVerticalRes; \
-		int32_t nColors; \
-		int32_t nImportantColors; \
+		uint16_t sSignature; \
+		uint32_t nFileSize; \
+		uint32_t nReserved; \
+		uint32_t nDataOffset; \
+		uint32_t nHeaderSize; \
+		uint32_t nWidth; \
+		uint32_t nHeight; \
+		uint16_t sPlanes; \
+		uint16_t sBitsPerPixel; \
+		uint32_t nCompression; \
+		uint32_t nDataSize; \
+		uint32_t nHorizontalRes; \
+		uint32_t nVerticalRes; \
+		uint32_t nColors; \
+		uint32_t nImportantColors; \
+		uint32_t nRedMask; \
+		uint32_t nGreenMask; \
+		uint32_t nBlueMask; \
+		uint32_t nAlphaMask; \
 	}
 
 #ifdef OS_WINDOWS
@@ -63,31 +67,33 @@ void FileUtil_ReadBmp(char** ppcData, uint64_t* pwSize, uint32_t* pnWidth, uint3
 	struct xBmpHeader_t xBmpHeader;
 
 	fread(&xBmpHeader, sizeof(xBmpHeader), 1, pxFile);
+
 	*pwSize = xBmpHeader.nDataSize;
 	*pnWidth = xBmpHeader.nWidth;
 	*pnHeight = xBmpHeader.nHeight;
-	*ppcData = calloc(*pwSize, sizeof(char));
-	fread(*ppcData, sizeof(char), *pwSize, pxFile);
+	*ppcData = calloc(*pwSize, 1);
+
+	fread(*ppcData, 1, *pwSize, pxFile);	
 
 	fclose(pxFile);
 }
 
-void FileUtil_WriteBinary(const char* pcData, uint64_t pwSize, const char* pcFilePath) {
+void FileUtil_WriteBinary(uint8_t* pcData, uint64_t pwSize, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "wb");
 
 	fseek(pxFile, 0, SEEK_SET);
 
-	fwrite(pcData, sizeof(char), pwSize, pxFile);
+	fwrite(pcData, 1, pwSize, pxFile);
 
 	fclose(pxFile);
 }
 
-void FileUtil_WriteText(const char* pcData, uint64_t pwSize, const char* pcFilePath) {
+void FileUtil_WriteText(int8_t* pcData, uint64_t pwSize, const char* pcFilePath) {
 	FILE* pxFile = fopen(pcFilePath, "w");
 
 	fseek(pxFile, 0, SEEK_SET);
 
-	fwrite(pcData, sizeof(char), pwSize, pxFile);
+	fwrite(pcData, 1, pwSize, pxFile);
 
 	fclose(pxFile);
 }

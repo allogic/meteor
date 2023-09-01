@@ -14,15 +14,15 @@ layout(location = 0) out Vertex {
 	vec4 Position;
 	vec2 Uv;
 	vec4 Color;
-} vertex;
+} OutputVertex;
 
 void main() {
 	vec4 position = mvp.Projection * mvp.View * mvp.Model * vec4(InputPosition, 1.0);
 	vec4 color = InputColor;
 
-	vertex.Position = position;
-	vertex.Uv = InputUv;
-	vertex.Color = color;
+	OutputVertex.Position = position;
+	OutputVertex.Uv = InputUv;
+	OutputVertex.Color = color;
 
 	gl_Position = position;
 }

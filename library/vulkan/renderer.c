@@ -15,6 +15,7 @@
 #include <vulkan/uniform.h>
 #include <vulkan/buffer.h>
 #include <vulkan/buffervariance.h>
+#include <vulkan/image.h>
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -40,40 +41,55 @@ static void Renderer_CreateUniformBuffer(struct xRenderer_t* pxRenderer, struct 
 }
 
 static void Renderer_CreateDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorSetLayoutBinding xDescriptorSetLayoutBinding;
-	memset(&xDescriptorSetLayoutBinding, 0, sizeof(xDescriptorSetLayoutBinding));
-	xDescriptorSetLayoutBinding.binding = 0;
-	xDescriptorSetLayoutBinding.descriptorCount = 1;
-	xDescriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	xDescriptorSetLayoutBinding.pImmutableSamplers = 0;
-	xDescriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	VkDescriptorSetLayoutBinding xUniformLayoutBinding;
+	memset(&xUniformLayoutBinding, 0, sizeof(xUniformLayoutBinding));
+	xUniformLayoutBinding.binding = 0;
+	xUniformLayoutBinding.descriptorCount = 1;
+	xUniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	xUniformLayoutBinding.pImmutableSamplers = 0;
+	xUniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	VkDescriptorSetLayoutBinding xSamplerLayoutBinding;
+	memset(&xSamplerLayoutBinding, 0, sizeof(xSamplerLayoutBinding));
+	xSamplerLayoutBinding.binding = 1;
+	xSamplerLayoutBinding.descriptorCount = 1;
+	xSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	xSamplerLayoutBinding.pImmutableSamplers = 0;
+	xSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[2] = { xUniformLayoutBinding, xSamplerLayoutBinding };
 
 	VkDescriptorSetLayoutCreateInfo xDescriptorSetLayoutCreateInfo;
 	memset(&xDescriptorSetLayoutCreateInfo, 0, sizeof(xDescriptorSetLayoutCreateInfo));
 	xDescriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	xDescriptorSetLayoutCreateInfo.bindingCount = 1;
-	xDescriptorSetLayoutCreateInfo.pBindings = &xDescriptorSetLayoutBinding;
+	xDescriptorSetLayoutCreateInfo.bindingCount = ARRAY_LENGTH(axDescriptorSetLayoutBindings);
+	xDescriptorSetLayoutCreateInfo.pBindings = axDescriptorSetLayoutBindings;
+	//xDescriptorSetLayoutCreateInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT; // TODO
 
 	VK_CHECK(vkCreateDescriptorSetLayout(Instance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xDescriptorSetLayout));
 }
 
 static void Renderer_CreateDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorPoolSize xDescriptorPoolSize;
-	memset(&xDescriptorPoolSize, 0, sizeof(xDescriptorPoolSize));
-	xDescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	xDescriptorPoolSize.descriptorCount = MAX_FRAMES_IN_FLIGHT;
+	VkDescriptorPoolSize axDescriptorPoolSizes[2];
+
+	axDescriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	axDescriptorPoolSizes[0].descriptorCount = MAX_FRAMES_IN_FLIGHT;
+
+	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axDescriptorPoolSizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT;
 
 	VkDescriptorPoolCreateInfo xDescriptorPoolCreateInfo;
 	memset(&xDescriptorPoolCreateInfo, 0, sizeof(xDescriptorPoolCreateInfo));
 	xDescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	xDescriptorPoolCreateInfo.poolSizeCount = 1;
-	xDescriptorPoolCreateInfo.pPoolSizes = &xDescriptorPoolSize;
+	xDescriptorPoolCreateInfo.poolSizeCount = ARRAY_LENGTH(axDescriptorPoolSizes);
+	xDescriptorPoolCreateInfo.pPoolSizes = axDescriptorPoolSizes;
 	xDescriptorPoolCreateInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
+	//xDescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT; // TODO
 
 	VK_CHECK(vkCreateDescriptorPool(Instance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xDescriptorPool));
 }
 
-static void Renderer_CreateDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint64_t wSize) {
+static void Renderer_CreateDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayout axDescriptorSetsLayouts[MAX_FRAMES_IN_FLIGHT];
 
 	for (int32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
@@ -88,27 +104,41 @@ static void Renderer_CreateDescriptorSets(struct xRenderer_t* pxRenderer, struct
 	xDescriptorSetAllocateInfo.pSetLayouts = axDescriptorSetsLayouts;
 
 	VK_CHECK(vkAllocateDescriptorSets(Instance_GetDevice(pxInstance), &xDescriptorSetAllocateInfo, pxRenderer->axDescriptorSets));
+}
 
+static void Renderer_UpdateDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint32_t nImageIndex, struct xImage_t* pxImage) {
 	VkDescriptorBufferInfo xDescriptorBufferInfo;
-	VkWriteDescriptorSet xWriteDescriptorSet;
+	memset(&xDescriptorBufferInfo, 0, sizeof(xDescriptorBufferInfo));
+	xDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->apUniformBuffer[nImageIndex]);
+	xDescriptorBufferInfo.offset = 0;
+	xDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->apUniformBuffer[nImageIndex]);
 
-	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		memset(&xDescriptorBufferInfo, 0, sizeof(xDescriptorBufferInfo));
-		xDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->apUniformBuffer[i]);
-		xDescriptorBufferInfo.offset = 0;
-		xDescriptorBufferInfo.range = wSize;
+	VkDescriptorImageInfo xDescriptorImageInfo;
+	memset(&xDescriptorImageInfo, 0, sizeof(xDescriptorImageInfo));
+	xDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	xDescriptorImageInfo.imageView = Image_GetImageView(pxImage);
+	xDescriptorImageInfo.sampler = Image_GetSampler(pxImage);
 
-		memset(&xWriteDescriptorSet, 0, sizeof(xWriteDescriptorSet));
-		xWriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		xWriteDescriptorSet.dstSet = pxRenderer->axDescriptorSets[i];
-		xWriteDescriptorSet.dstBinding = 0;
-		xWriteDescriptorSet.dstArrayElement = 0;
-		xWriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		xWriteDescriptorSet.descriptorCount = 1;
-		xWriteDescriptorSet.pBufferInfo = &xDescriptorBufferInfo;
+	VkWriteDescriptorSet axWriteDescriptorSets[2];
+	memset(axWriteDescriptorSets, 0, sizeof(axWriteDescriptorSets));
 
-		vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), 1, &xWriteDescriptorSet, 0, 0);
-	}
+	axWriteDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	axWriteDescriptorSets[0].dstSet = pxRenderer->axDescriptorSets[nImageIndex];
+	axWriteDescriptorSets[0].dstBinding = 0;
+	axWriteDescriptorSets[0].dstArrayElement = 0;
+	axWriteDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	axWriteDescriptorSets[0].descriptorCount = 1;
+	axWriteDescriptorSets[0].pBufferInfo = &xDescriptorBufferInfo;
+
+	axWriteDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	axWriteDescriptorSets[1].dstSet = pxRenderer->axDescriptorSets[nImageIndex];
+	axWriteDescriptorSets[1].dstBinding = 1;
+	axWriteDescriptorSets[1].dstArrayElement = 0;
+	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axWriteDescriptorSets[1].descriptorCount = 1;
+	axWriteDescriptorSets[1].pImageInfo = &xDescriptorImageInfo;
+
+	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
 
 static void Renderer_CreateGraphicPipelines(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain) {
@@ -240,13 +270,15 @@ static void Renderer_CreatSyncObjects(struct xRenderer_t* pxRenderer, struct xIn
 	}
 }
 
-struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain) {
+struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xImage_t* pxImage) {
 	struct xRenderer_t* pxRenderer = (struct xRenderer_t*)calloc(1, sizeof(struct xRenderer_t));
 
 	Renderer_CreateUniformBuffer(pxRenderer, pxInstance, sizeof(xModelViewProjection_t));
 	Renderer_CreateDescriptorSetLayout(pxRenderer, pxInstance);
 	Renderer_CreateDescriptorPool(pxRenderer, pxInstance);
-	Renderer_CreateDescriptorSets(pxRenderer, pxInstance, sizeof(xModelViewProjection_t));
+	Renderer_CreateDescriptorSets(pxRenderer, pxInstance);
+	Renderer_UpdateDescriptorSets(pxRenderer, pxInstance, 0, pxImage);
+	Renderer_UpdateDescriptorSets(pxRenderer, pxInstance, 1, pxImage);
 	Renderer_CreateGraphicPipelines(pxRenderer, pxInstance, pxSwapChain);
 	Renderer_CreateCommandBuffers(pxRenderer, pxInstance);
 	Renderer_CreatSyncObjects(pxRenderer, pxInstance);
@@ -281,7 +313,7 @@ void Renderer_UpdateModelViewProjection(struct xRenderer_t* pxRenderer, void* pD
 	Buffer_Copy(pxRenderer->apUniformBuffer[pxRenderer->nCurrentFrame], pData, sizeof(xModelViewProjection_t));
 }
 
-void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xBuffer_t* pxVertexBuffer, struct xBuffer_t* pxIndexBuffer, uint32_t nIndexCount) {
+void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xBuffer_t* pxVertexBuffer, struct xBuffer_t* pxIndexBuffer, uint32_t nIndexCount, struct xImage_t* pxImage) {
 	VK_CHECK(vkWaitForFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->axInFlightFences[pxRenderer->nCurrentFrame], VK_TRUE, UINT64_MAX));
 
 	uint32_t nImageIndex;
@@ -291,6 +323,7 @@ void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstanc
 
 	VK_CHECK(vkResetCommandBuffer(pxRenderer->axCommandBuffer[pxRenderer->nCurrentFrame], 0));
 
+	//Renderer_UpdateDescriptorSets(pxRenderer, pxInstance, nImageIndex, pxImage);
 	Renderer_RecordCommandBuffer(pxRenderer, pxSwapChain, nImageIndex, pxVertexBuffer, pxIndexBuffer, nIndexCount);
 
 	VkSemaphore axWaitSemaphores[] = { pxRenderer->axImageAvailableSemaphores[pxRenderer->nCurrentFrame] };

@@ -161,7 +161,7 @@ static void Instance_FindPhysicalDevice(struct xInstance_t* pxInstance) {
 		vkGetPhysicalDeviceFeatures(pxPhysicalDevices[i], &xPhysicalDeviceFeatures);
 
 		if (xPhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-			if (xPhysicalDeviceFeatures.geometryShader) {
+			if (xPhysicalDeviceFeatures.geometryShader && xPhysicalDeviceFeatures.samplerAnisotropy) {
 				memcpy(&pxInstance->xPhysicalDevice, &pxPhysicalDevices[i], sizeof(pxInstance->xPhysicalDevice));
 				break;
 			}
@@ -238,7 +238,7 @@ static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 	printf("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
 #endif
 
-	float fQueuePriority = 1.0f;
+	float fQueuePriority = 1.0F;
 
 	VkDeviceQueueCreateInfo xQueueCreateInfos[2];
 	memset(&xQueueCreateInfos, 0, sizeof(xQueueCreateInfos));
@@ -255,6 +255,7 @@ static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 
 	VkPhysicalDeviceFeatures xPhysicalDeviceFeatures;
 	memset(&xPhysicalDeviceFeatures, 0, sizeof(xPhysicalDeviceFeatures));
+	xPhysicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	VkDeviceCreateInfo xDeviceCreateInfo;
 	memset(&xDeviceCreateInfo, 0, sizeof(xDeviceCreateInfo));

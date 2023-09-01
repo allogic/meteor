@@ -56,6 +56,10 @@ void Buffer_Free(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance) {
 	free(pxBuffer);
 }
 
+uint64_t Buffer_GetSize(struct xBuffer_t* pxBuffer) {
+	return pxBuffer->wSize;
+}
+
 VkBuffer Buffer_GetBuffer(struct xBuffer_t* pxBuffer) {
 	return pxBuffer->xBuffer;
 }
