@@ -9,7 +9,7 @@
 #include <vulkan/instance.h>
 #include <vulkan/shader.h>
 
-void VkShader_Alloc(struct xInstance_t* pxInstance, const char* pcVertFilePath, const char* pcFragFilePath, VkShaderModule* pxVertModule, VkShaderModule* pxFragModule) {
+void Shader_Alloc(struct xInstance_t* pxInstance, const char* pcVertFilePath, const char* pcFragFilePath, VkShaderModule* pxVertModule, VkShaderModule* pxFragModule) {
 	char* pcVertShaderBytes;
 	char* pcFragShaderBytes;
 	
@@ -31,14 +31,14 @@ void VkShader_Alloc(struct xInstance_t* pxInstance, const char* pcVertFilePath, 
 	xFragCreateInfo.codeSize = wFragShaderSize;
 	xFragCreateInfo.pCode = (const uint32_t*)pcFragShaderBytes;
 
-	VK_CHECK(vkCreateShaderModule(VkInstance_GetDevice(pxInstance), &xVertCreateInfo, 0, pxVertModule));
-	VK_CHECK(vkCreateShaderModule(VkInstance_GetDevice(pxInstance), &xFragCreateInfo, 0, pxFragModule));
+	VK_CHECK(vkCreateShaderModule(Instance_GetDevice(pxInstance), &xVertCreateInfo, 0, pxVertModule));
+	VK_CHECK(vkCreateShaderModule(Instance_GetDevice(pxInstance), &xFragCreateInfo, 0, pxFragModule));
 
     free(pcVertShaderBytes);
 	free(pcFragShaderBytes);
 }
 
-void VkShader_Free(struct xInstance_t* pxInstance, VkShaderModule xVertModule, VkShaderModule xFragModule) {
-	vkDestroyShaderModule(VkInstance_GetDevice(pxInstance), xVertModule, 0);
-	vkDestroyShaderModule(VkInstance_GetDevice(pxInstance), xFragModule, 0);
+void Shader_Free(struct xInstance_t* pxInstance, VkShaderModule xVertModule, VkShaderModule xFragModule) {
+	vkDestroyShaderModule(Instance_GetDevice(pxInstance), xVertModule, 0);
+	vkDestroyShaderModule(Instance_GetDevice(pxInstance), xFragModule, 0);
 }

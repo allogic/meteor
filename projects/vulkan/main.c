@@ -48,12 +48,12 @@ int32_t main(void) {
 
 	struct xTimer_t* pxTimer = Timer_Alloc();
 
-	struct xInstance_t* pxInstance = VkInstance_Alloc();
-	struct xSwapChain_t* pxSwapChain = VkSwapChain_Alloc(pxInstance);
-	struct xBuffer_t* pxVertexBuffer = VkVertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4);
-	struct xBuffer_t* pxIndexBuffer = VkIndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6);
-	struct xImage_t* pxTextureImage = VkTextureImage_Alloc(pxInstance, "../test.bmp");
-	struct xRenderer_t* pxRenderer = VkRenderer_Alloc(pxInstance, pxSwapChain);
+	struct xInstance_t* pxInstance = Instance_Alloc();
+	struct xSwapChain_t* pxSwapChain = SwapChain_Alloc(pxInstance);
+	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4);
+	struct xBuffer_t* pxIndexBuffer = IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6);
+	struct xImage_t* pxTextureImage = TextureImage_Alloc(pxInstance, "../test.bmp");
+	struct xRenderer_t* pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain);
 
 	Timer_Start(pxTimer);
 
@@ -63,13 +63,13 @@ int32_t main(void) {
 		Timer_Measure(pxTimer);
 
 		if (NativeWindow_HasResized()) {
-			VkInstance_WaitIdle(pxInstance);
+			Instance_WaitIdle(pxInstance);
 
-			VkRenderer_Free(pxRenderer, pxInstance);
-			VkSwapChain_Free(pxSwapChain, pxInstance);
+			Renderer_Free(pxRenderer, pxInstance);
+			SwapChain_Free(pxSwapChain, pxInstance);
 
-			pxSwapChain = VkSwapChain_Alloc(pxInstance);
-			pxRenderer = VkRenderer_Alloc(pxInstance, pxSwapChain);
+			pxSwapChain = SwapChain_Alloc(pxInstance);
+			pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain);
 		}
 
 		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xMvp.xProjection);
@@ -82,18 +82,18 @@ int32_t main(void) {
 		xVec3_t xPosition = { sinf(Timer_GetTime(pxTimer)), cosf(Timer_GetTime(pxTimer)), 0.0F };
 		Matrix_SetPosition(s_xMvp.xModel, xPosition);
 
-		VkRenderer_UpdateModelViewProjection(pxRenderer, &s_xMvp);
-		VkRenderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6);
+		Renderer_UpdateModelViewProjection(pxRenderer, &s_xMvp);
+		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6);
 	}
 
-	VkInstance_WaitIdle(pxInstance);
+	Instance_WaitIdle(pxInstance);
 
-	VkRenderer_Free(pxRenderer, pxInstance);
-	VkImage_Free(pxTextureImage, pxInstance);
-	VkBuffer_Free(pxIndexBuffer, pxInstance);
-	VkBuffer_Free(pxVertexBuffer, pxInstance);
-	VkSwapChain_Free(pxSwapChain, pxInstance);
-	VkInstance_Free(pxInstance);
+	Renderer_Free(pxRenderer, pxInstance);
+	Image_Free(pxTextureImage, pxInstance);
+	Buffer_Free(pxIndexBuffer, pxInstance);
+	Buffer_Free(pxVertexBuffer, pxInstance);
+	SwapChain_Free(pxSwapChain, pxInstance);
+	Instance_Free(pxInstance);
 
 	Timer_Free(pxTimer);
 

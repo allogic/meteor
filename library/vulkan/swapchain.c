@@ -19,31 +19,31 @@ struct xSwapChain_t {
 	VkFramebuffer* pxFrameBuffer;
 };
 
-static void VkSwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkInstance_GetPhysicalDevice(pxInstance), VkInstance_GetSurface(pxInstance), &xSurfaceCapabilities));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Instance_GetPhysicalDevice(pxInstance), Instance_GetSurface(pxInstance), &xSurfaceCapabilities));
 
 	uint32_t nMinImageCount = xSurfaceCapabilities.minImageCount + 1;
 
 	VkSwapchainCreateInfoKHR xSwapChaincreateInfo;
 	memset(&xSwapChaincreateInfo, 0, sizeof(xSwapChaincreateInfo));
 	xSwapChaincreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	xSwapChaincreateInfo.surface = VkInstance_GetSurface(pxInstance);
+	xSwapChaincreateInfo.surface = Instance_GetSurface(pxInstance);
 	xSwapChaincreateInfo.minImageCount = nMinImageCount;
-	xSwapChaincreateInfo.imageFormat = VkInstance_GetPreferedSurfaceFormat(pxInstance);
-	xSwapChaincreateInfo.imageColorSpace = VkInstance_GetPreferedSurfaceColorSpace(pxInstance);
+	xSwapChaincreateInfo.imageFormat = Instance_GetPreferedSurfaceFormat(pxInstance);
+	xSwapChaincreateInfo.imageColorSpace = Instance_GetPreferedSurfaceColorSpace(pxInstance);
 	xSwapChaincreateInfo.imageExtent.width = NativeWindow_GetWidth();
 	xSwapChaincreateInfo.imageExtent.height = NativeWindow_GetHeight();
 	xSwapChaincreateInfo.imageArrayLayers = 1;
 	xSwapChaincreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	xSwapChaincreateInfo.preTransform = xSurfaceCapabilities.currentTransform;
 	xSwapChaincreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	xSwapChaincreateInfo.presentMode = VkInstance_GetPreferedPresentMode(pxInstance);
+	xSwapChaincreateInfo.presentMode = Instance_GetPreferedPresentMode(pxInstance);
 	xSwapChaincreateInfo.clipped = VK_TRUE;
 	xSwapChaincreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	int32_t nGraphicsQueueIndex = VkInstance_GetGraphicsQueueIndex(pxInstance);
-	int32_t nPresentQueueIndex = VkInstance_GetPresentQueueIndex(pxInstance);
+	int32_t nGraphicsQueueIndex = Instance_GetGraphicsQueueIndex(pxInstance);
+	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);
 
 	if (nGraphicsQueueIndex == nPresentQueueIndex) {
 		xSwapChaincreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -57,14 +57,14 @@ static void VkSwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct
 		xSwapChaincreateInfo.pQueueFamilyIndices = anQueueFamilies;
 	}
 
-	VK_CHECK(vkCreateSwapchainKHR(VkInstance_GetDevice(pxInstance), &xSwapChaincreateInfo, 0, &pxSwapChain->xSwapChain));
+	VK_CHECK(vkCreateSwapchainKHR(Instance_GetDevice(pxInstance), &xSwapChaincreateInfo, 0, &pxSwapChain->xSwapChain));
 }
 
-static void VkSwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
-	VK_CHECK(vkGetSwapchainImagesKHR(VkInstance_GetDevice(pxInstance), pxSwapChain->xSwapChain, &pxSwapChain->nImageCount, 0));
+static void SwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+	VK_CHECK(vkGetSwapchainImagesKHR(Instance_GetDevice(pxInstance), pxSwapChain->xSwapChain, &pxSwapChain->nImageCount, 0));
 	pxSwapChain->pxImages = (VkImage*)malloc(sizeof(VkImage) * pxSwapChain->nImageCount);
 	pxSwapChain->pxImageViews = (VkImageView*)malloc(sizeof(VkImageView) * pxSwapChain->nImageCount);
-	VK_CHECK(vkGetSwapchainImagesKHR(VkInstance_GetDevice(pxInstance), pxSwapChain->xSwapChain, &pxSwapChain->nImageCount, pxSwapChain->pxImages));
+	VK_CHECK(vkGetSwapchainImagesKHR(Instance_GetDevice(pxInstance), pxSwapChain->xSwapChain, &pxSwapChain->nImageCount, pxSwapChain->pxImages));
 
 	VkImageViewCreateInfo xImageViewCreateInfo;
 
@@ -73,7 +73,7 @@ static void VkSwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struc
 		xImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		xImageViewCreateInfo.image = pxSwapChain->pxImages[i];
 		xImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		xImageViewCreateInfo.format = VkInstance_GetPreferedSurfaceFormat(pxInstance);
+		xImageViewCreateInfo.format = Instance_GetPreferedSurfaceFormat(pxInstance);
 		xImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		xImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		xImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -84,14 +84,14 @@ static void VkSwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struc
 		xImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 		xImageViewCreateInfo.subresourceRange.layerCount = 1;
 
-		VK_CHECK(vkCreateImageView(VkInstance_GetDevice(pxInstance), &xImageViewCreateInfo, 0, &pxSwapChain->pxImageViews[i]));
+		VK_CHECK(vkCreateImageView(Instance_GetDevice(pxInstance), &xImageViewCreateInfo, 0, &pxSwapChain->pxImageViews[i]));
 	}
 }
 
-static void VkSwapChain_CreateRenderPass(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_CreateRenderPass(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	VkAttachmentDescription xColorAttachmentDesc;
 	memset(&xColorAttachmentDesc, 0, sizeof(xColorAttachmentDesc));
-	xColorAttachmentDesc.format = VkInstance_GetPreferedSurfaceFormat(pxInstance);
+	xColorAttachmentDesc.format = Instance_GetPreferedSurfaceFormat(pxInstance);
 	xColorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 	xColorAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	xColorAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -130,10 +130,10 @@ static void VkSwapChain_CreateRenderPass(struct xSwapChain_t* pxSwapChain, struc
 	xRenderPassCreateInfo.dependencyCount = 1;
 	xRenderPassCreateInfo.pDependencies = &xSubpassDependency;
 
-	VK_CHECK(vkCreateRenderPass(VkInstance_GetDevice(pxInstance), &xRenderPassCreateInfo, 0, &pxSwapChain->xRenderPass));
+	VK_CHECK(vkCreateRenderPass(Instance_GetDevice(pxInstance), &xRenderPassCreateInfo, 0, &pxSwapChain->xRenderPass));
 }
 
-static void VkSwapChain_CreateFrameBuffers(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_CreateFrameBuffers(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	pxSwapChain->pxFrameBuffer = (VkFramebuffer*)malloc(sizeof(VkFramebuffer) * pxSwapChain->nImageCount);
 
 	for (uint32_t i = 0; i < pxSwapChain->nImageCount; ++i) {
@@ -149,54 +149,54 @@ static void VkSwapChain_CreateFrameBuffers(struct xSwapChain_t* pxSwapChain, str
 		xFramebufferCreateInfo.height = NativeWindow_GetHeight();
 		xFramebufferCreateInfo.layers = 1;
 
-		VK_CHECK(vkCreateFramebuffer(VkInstance_GetDevice(pxInstance), &xFramebufferCreateInfo, 0, &pxSwapChain->pxFrameBuffer[i]));
+		VK_CHECK(vkCreateFramebuffer(Instance_GetDevice(pxInstance), &xFramebufferCreateInfo, 0, &pxSwapChain->pxFrameBuffer[i]));
 	}
 }
 
-struct xSwapChain_t* VkSwapChain_Alloc(struct xInstance_t* pxInstance) {
+struct xSwapChain_t* SwapChain_Alloc(struct xInstance_t* pxInstance) {
 	struct xSwapChain_t* pxSwapChain = (struct xSwapChain_t*)calloc(1, sizeof(struct xSwapChain_t));
 
-	VkSwapChain_CreateSwapChain(pxSwapChain, pxInstance);
-	VkSwapChain_CreateImageViews(pxSwapChain, pxInstance);
-	VkSwapChain_CreateRenderPass(pxSwapChain, pxInstance);
-	VkSwapChain_CreateFrameBuffers(pxSwapChain, pxInstance);
+	SwapChain_CreateSwapChain(pxSwapChain, pxInstance);
+	SwapChain_CreateImageViews(pxSwapChain, pxInstance);
+	SwapChain_CreateRenderPass(pxSwapChain, pxInstance);
+	SwapChain_CreateFrameBuffers(pxSwapChain, pxInstance);
 
 	return pxSwapChain;
 }
 
-void VkSwapChain_Free(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
-	for (uint32_t i = 0; i < VkSwapChain_GetImageCount(pxSwapChain); ++i) {
-		vkDestroyFramebuffer(VkInstance_GetDevice(pxInstance), pxSwapChain->pxFrameBuffer[i], 0);
+void SwapChain_Free(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+	for (uint32_t i = 0; i < SwapChain_GetImageCount(pxSwapChain); ++i) {
+		vkDestroyFramebuffer(Instance_GetDevice(pxInstance), pxSwapChain->pxFrameBuffer[i], 0);
 	}
 
 	free(pxSwapChain->pxFrameBuffer);
 
-	vkDestroyRenderPass(VkInstance_GetDevice(pxInstance), pxSwapChain->xRenderPass, 0);
+	vkDestroyRenderPass(Instance_GetDevice(pxInstance), pxSwapChain->xRenderPass, 0);
 
 	for (uint32_t i = 0; i < pxSwapChain->nImageCount; ++i) {
-		vkDestroyImageView(VkInstance_GetDevice(pxInstance), pxSwapChain->pxImageViews[i], 0);
+		vkDestroyImageView(Instance_GetDevice(pxInstance), pxSwapChain->pxImageViews[i], 0);
 	}
 
 	free(pxSwapChain->pxImageViews);
 	free(pxSwapChain->pxImages);
 
-	vkDestroySwapchainKHR(VkInstance_GetDevice(pxInstance), pxSwapChain->xSwapChain, 0);
+	vkDestroySwapchainKHR(Instance_GetDevice(pxInstance), pxSwapChain->xSwapChain, 0);
 
 	free(pxSwapChain);
 }
 
-VkSwapchainKHR VkSwapChain_GetSwapChain(struct xSwapChain_t* pxSwapChain) {
+VkSwapchainKHR SwapChain_GetSwapChain(struct xSwapChain_t* pxSwapChain) {
 	return pxSwapChain->xSwapChain;
 }
 
-uint32_t VkSwapChain_GetImageCount(struct xSwapChain_t* pxSwapChain) {
+uint32_t SwapChain_GetImageCount(struct xSwapChain_t* pxSwapChain) {
 	return pxSwapChain->nImageCount;
 }
 
-VkRenderPass VkSwapChain_GetRenderPass(struct xSwapChain_t* pxSwapChain) {
+VkRenderPass SwapChain_GetRenderPass(struct xSwapChain_t* pxSwapChain) {
 	return pxSwapChain->xRenderPass;
 }
 
-VkFramebuffer VkSwapChain_GetFrameBuffer(struct xSwapChain_t* pxSwapChain, uint32_t nIndex) {
+VkFramebuffer SwapChain_GetFrameBuffer(struct xSwapChain_t* pxSwapChain, uint32_t nIndex) {
 	return pxSwapChain->pxFrameBuffer[nIndex];
 }

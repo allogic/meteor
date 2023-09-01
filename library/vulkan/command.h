@@ -5,7 +5,7 @@
 
 struct xInstance_t;
 
-VkCommandBuffer VkCommand_BeginSingleTimeCommands(struct xInstance_t* pxInstance);
-void VkCommand_EndSingleTimeCommands(struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer);
+VkCommandBuffer Command_BeginSingleTimeCommands(struct xInstance_t* pxInstance);
+void Command_EndSingleTimeCommands(struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer);
 
 #endif

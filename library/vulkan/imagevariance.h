@@ -8,6 +8,6 @@
 struct xInstance_t;
 struct xImage_t;
 
-struct xImage_t* VkTextureImage_Alloc(struct xInstance_t* pxInstance, char const* pcFilePath);
+struct xImage_t* TextureImage_Alloc(struct xInstance_t* pxInstance, char const* pcFilePath);
 
 #endif

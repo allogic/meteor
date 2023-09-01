@@ -87,7 +87,7 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 }
 #endif
 
-static void VkInstance_CreateInstance(struct xInstance_t* pxInstance) {
+static void Instance_CreateInstance(struct xInstance_t* pxInstance) {
 	VkApplicationInfo xAppInfo;
 	memset(&xAppInfo, 0, sizeof(xAppInfo));
 	xAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -124,7 +124,7 @@ static void VkInstance_CreateInstance(struct xInstance_t* pxInstance) {
 #endif
 }
 
-static void VkInstance_CreateSurface(struct xInstance_t* pxInstance) {
+static void Instance_CreateSurface(struct xInstance_t* pxInstance) {
 #ifdef OS_WINDOWS
 	VkWin32SurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
@@ -146,7 +146,7 @@ static void VkInstance_CreateSurface(struct xInstance_t* pxInstance) {
 #endif
 }
 
-static void VkInstance_FindPhysicalDevice(struct xInstance_t* pxInstance) {
+static void Instance_FindPhysicalDevice(struct xInstance_t* pxInstance) {
 	uint32_t nPhysicalDeviceCount;
 	VK_CHECK(vkEnumeratePhysicalDevices(pxInstance->xInstance, &nPhysicalDeviceCount, 0));
 
@@ -171,7 +171,7 @@ static void VkInstance_FindPhysicalDevice(struct xInstance_t* pxInstance) {
 	free(pxPhysicalDevices);
 }
 
-static void VkInstance_FindQueueFamilies(struct xInstance_t* pxInstance) {
+static void Instance_FindQueueFamilies(struct xInstance_t* pxInstance) {
 	uint32_t nQueueFamilyCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(pxInstance->xPhysicalDevice, &nQueueFamilyCount, 0);
 
@@ -200,7 +200,7 @@ static void VkInstance_FindQueueFamilies(struct xInstance_t* pxInstance) {
 	free(pxQueueFamilyProperties);
 }
 
-static void VkInstance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstance) {
+static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstance) {
 	uint32_t nAvailableDeviceExtensionCount;
 	VK_CHECK(vkEnumerateDeviceExtensionProperties(pxInstance->xPhysicalDevice, 0, &nAvailableDeviceExtensionCount, 0));
 
@@ -232,7 +232,7 @@ static void VkInstance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInsta
 	free(pxAvailableDeviceExtensions);
 }
 
-static void VkInstance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
+static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 #ifdef DEBUG
 	printf("GraphicsQueueIndex %d\n", pxInstance->nGraphicsQueueIndex);
 	printf("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
@@ -275,7 +275,7 @@ static void VkInstance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nPresentQueueIndex, 0, &pxInstance->xPresentQueue);
 }
 
-static void VkInstance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) {
+static void Instance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) {
 	uint32_t nSurfaceFormatCount;
 	uint32_t nPresentModeCount;
 
@@ -306,7 +306,7 @@ static void VkInstance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) 
 	free(pxPresentModes);
 }
 
-static void VkInstance_CreateCommandPool(struct xInstance_t* pxInstance) {
+static void Instance_CreateCommandPool(struct xInstance_t* pxInstance) {
 	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
 	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
 	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -316,25 +316,25 @@ static void VkInstance_CreateCommandPool(struct xInstance_t* pxInstance) {
 	VK_CHECK(vkCreateCommandPool(pxInstance->xDevice, &xCommandPoolCreateInfo, 0, &pxInstance->xCommandPool));
 }
 
-struct xInstance_t* VkInstance_Alloc(void) {
+struct xInstance_t* Instance_Alloc(void) {
 	struct xInstance_t* pxInstance = (struct xInstance_t*)calloc(1, sizeof(struct xInstance_t));
 
 	pxInstance->nGraphicsQueueIndex = -1;
 	pxInstance->nPresentQueueIndex = -1;
 
-	VkInstance_CreateInstance(pxInstance);
-	VkInstance_CreateSurface(pxInstance);
-	VkInstance_FindPhysicalDevice(pxInstance);
-	VkInstance_FindQueueFamilies(pxInstance);
-	VkInstance_CheckPhysicalDeviceExtensions(pxInstance);
-	VkInstance_CreateLogicalDevice(pxInstance);
-	VkInstance_CheckSurfaceCapabilities(pxInstance);
-	VkInstance_CreateCommandPool(pxInstance);
+	Instance_CreateInstance(pxInstance);
+	Instance_CreateSurface(pxInstance);
+	Instance_FindPhysicalDevice(pxInstance);
+	Instance_FindQueueFamilies(pxInstance);
+	Instance_CheckPhysicalDeviceExtensions(pxInstance);
+	Instance_CreateLogicalDevice(pxInstance);
+	Instance_CheckSurfaceCapabilities(pxInstance);
+	Instance_CreateCommandPool(pxInstance);
 
 	return pxInstance;
 }
 
-void VkInstance_Free(struct xInstance_t* pxInstance) {
+void Instance_Free(struct xInstance_t* pxInstance) {
 	vkDestroyCommandPool(pxInstance->xDevice, pxInstance->xCommandPool, 0);
 
 	vkDestroyDevice(pxInstance->xDevice, 0);
@@ -350,55 +350,55 @@ void VkInstance_Free(struct xInstance_t* pxInstance) {
 	free(pxInstance);
 }
 
-VkPhysicalDevice VkInstance_GetPhysicalDevice(struct xInstance_t* pxInstance) {
+VkPhysicalDevice Instance_GetPhysicalDevice(struct xInstance_t* pxInstance) {
 	return pxInstance->xPhysicalDevice;
 }
 
-VkDevice VkInstance_GetDevice(struct xInstance_t* pxInstance) {
+VkDevice Instance_GetDevice(struct xInstance_t* pxInstance) {
 	return pxInstance->xDevice;
 }
 
-VkSurfaceKHR VkInstance_GetSurface(struct xInstance_t* pxInstance) {
+VkSurfaceKHR Instance_GetSurface(struct xInstance_t* pxInstance) {
 	return pxInstance->xSurface;
 }
 
-VkFormat VkInstance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance) {
+VkFormat Instance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance) {
 	return pxInstance->xPreferedSurfaceFormat.format;
 }
 
-VkColorSpaceKHR VkInstance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance) {
+VkColorSpaceKHR Instance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance) {
 	return pxInstance->xPreferedSurfaceFormat.colorSpace;
 }
 
-VkPresentModeKHR VkInstance_GetPreferedPresentMode(struct xInstance_t* pxInstance) {
+VkPresentModeKHR Instance_GetPreferedPresentMode(struct xInstance_t* pxInstance) {
 	return pxInstance->xPreferedPresentMode;
 }
 
-uint32_t VkInstance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance) {
+uint32_t Instance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance) {
 	return pxInstance->nGraphicsQueueIndex;
 }
 
-uint32_t VkInstance_GetPresentQueueIndex(struct xInstance_t* pxInstance) {
+uint32_t Instance_GetPresentQueueIndex(struct xInstance_t* pxInstance) {
 	return pxInstance->nPresentQueueIndex;
 }
 
-VkQueue VkInstance_GetGraphicsQueue(struct xInstance_t* pxInstance) {
+VkQueue Instance_GetGraphicsQueue(struct xInstance_t* pxInstance) {
 	return pxInstance->xGraphicsQueue;
 }
 
-VkQueue VkInstance_GetPresentQueue(struct xInstance_t* pxInstance) {
+VkQueue Instance_GetPresentQueue(struct xInstance_t* pxInstance) {
 	return pxInstance->xPresentQueue;
 }
 
-VkCommandPool VkInstance_GetCommandPool(struct xInstance_t* pxInstance) {
+VkCommandPool Instance_GetCommandPool(struct xInstance_t* pxInstance) {
 	return pxInstance->xCommandPool;
 }
 
-void VkInstance_WaitIdle(struct xInstance_t* pxInstance) {
+void Instance_WaitIdle(struct xInstance_t* pxInstance) {
 	VK_CHECK(vkDeviceWaitIdle(pxInstance->xDevice));
 }
 
-int32_t VkInstance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
+int32_t Instance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags) {
 	VkPhysicalDeviceMemoryProperties xPhysicalDeviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(pxInstance->xPhysicalDevice, &xPhysicalDeviceMemoryProperties);
 

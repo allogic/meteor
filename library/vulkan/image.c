@@ -16,7 +16,7 @@ struct xImage_t {
 	void* pMappedData;
 };
 
-struct xImage_t* VkImage_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, uint32_t nHeight, VkImageUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties, VkFormat xFormat, VkImageTiling xTiling) {
+struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, uint32_t nHeight, VkImageUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties, VkFormat xFormat, VkImageTiling xTiling) {
 	struct xImage_t* pxImage = (struct xImage_t*)calloc(1, sizeof(struct xImage_t));
 
 	VkImageCreateInfo xVkImageCreateInfo;
@@ -35,61 +35,61 @@ struct xImage_t* VkImage_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, 
 	xVkImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	xVkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VK_CHECK(vkCreateImage(VkInstance_GetDevice(pxInstance), &xVkImageCreateInfo, 0, &pxImage->xImage));
+	VK_CHECK(vkCreateImage(Instance_GetDevice(pxInstance), &xVkImageCreateInfo, 0, &pxImage->xImage));
 
 	VkMemoryRequirements xMemoryRequirements;
-	vkGetImageMemoryRequirements(VkInstance_GetDevice(pxInstance), pxImage->xImage, &xMemoryRequirements);
+	vkGetImageMemoryRequirements(Instance_GetDevice(pxInstance), pxImage->xImage, &xMemoryRequirements);
 
 	VkMemoryAllocateInfo xMemoryAllocateInfo;
 	memset(&xMemoryAllocateInfo, 0, sizeof(xMemoryAllocateInfo));
 	xMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	xMemoryAllocateInfo.allocationSize = xMemoryRequirements.size;
-	xMemoryAllocateInfo.memoryTypeIndex = VkInstance_CheckMemoryType(pxInstance, xMemoryRequirements.memoryTypeBits, xMemoryProperties);
+	xMemoryAllocateInfo.memoryTypeIndex = Instance_CheckMemoryType(pxInstance, xMemoryRequirements.memoryTypeBits, xMemoryProperties);
 
-	VK_CHECK(vkAllocateMemory(VkInstance_GetDevice(pxInstance), &xMemoryAllocateInfo, 0, &pxImage->xDeviceMemory));
-	VK_CHECK(vkBindImageMemory(VkInstance_GetDevice(pxInstance), pxImage->xImage, pxImage->xDeviceMemory, 0));
+	VK_CHECK(vkAllocateMemory(Instance_GetDevice(pxInstance), &xMemoryAllocateInfo, 0, &pxImage->xDeviceMemory));
+	VK_CHECK(vkBindImageMemory(Instance_GetDevice(pxInstance), pxImage->xImage, pxImage->xDeviceMemory, 0));
 
 	return pxImage;
 }
 
-void VkImage_Free(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
+void Image_Free(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
 	if (pxImage->pMappedData) {
-		vkUnmapMemory(VkInstance_GetDevice(pxInstance), pxImage->xDeviceMemory);
+		vkUnmapMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory);
 	}
 
-	vkDestroyImage(VkInstance_GetDevice(pxInstance), pxImage->xImage, 0);
-	vkFreeMemory(VkInstance_GetDevice(pxInstance), pxImage->xDeviceMemory, 0);
+	vkDestroyImage(Instance_GetDevice(pxInstance), pxImage->xImage, 0);
+	vkFreeMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory, 0);
 
 	free(pxImage);
 }
 
-VkImage VkImage_GetImage(struct xImage_t* pxImage) {
+VkImage Image_GetImage(struct xImage_t* pxImage) {
 	return pxImage->xImage;
 }
 
-VkDeviceMemory VkImage_GetDeviceMemory(struct xImage_t* pxImage) {
+VkDeviceMemory Image_GetDeviceMemory(struct xImage_t* pxImage) {
 	return pxImage->xDeviceMemory;
 }
 
-void* VkImage_GetMappedData(struct xImage_t* pxImage) {
+void* Image_GetMappedData(struct xImage_t* pxImage) {
 	return pxImage->pMappedData;
 }
 
-void* VkImage_GetMappedDataRef(struct xImage_t* pxImage) {
+void* Image_GetMappedDataRef(struct xImage_t* pxImage) {
 	return &pxImage->pMappedData;
 }
 
-void VkImage_Map(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
-	VK_CHECK(vkMapMemory(VkInstance_GetDevice(pxInstance), pxImage->xDeviceMemory, 0, pxImage->wSize, 0, &pxImage->pMappedData));
+void Image_Map(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
+	VK_CHECK(vkMapMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory, 0, pxImage->wSize, 0, &pxImage->pMappedData));
 }
 
-void VkImage_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
-	vkUnmapMemory(VkInstance_GetDevice(pxInstance), pxImage->xDeviceMemory);
+void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
+	vkUnmapMemory(Instance_GetDevice(pxInstance), pxImage->xDeviceMemory);
 	pxImage->pMappedData = 0;
 }
 
-void VkImage_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
-	VkCommandBuffer xCommandBuffer = VkCommand_BeginSingleTimeCommands(pxInstance);
+void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
+	VkCommandBuffer xCommandBuffer = Command_BeginSingleTimeCommands(pxInstance);
 
 	VkImageMemoryBarrier xImageMemoryBarrier;
 	memset(&xImageMemoryBarrier, 0, sizeof(xImageMemoryBarrier));
@@ -109,5 +109,5 @@ void VkImage_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxIn
 
 	vkCmdPipelineBarrier(xCommandBuffer, 0, 0, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
 
-	VkCommand_EndSingleTimeCommands(pxInstance, xCommandBuffer);
+	Command_EndSingleTimeCommands(pxInstance, xCommandBuffer);
 }

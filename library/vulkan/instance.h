@@ -7,22 +7,22 @@
 
 struct xInstance_t;
 
-struct xInstance_t* VkInstance_Alloc(void);
-void VkInstance_Free(struct xInstance_t* pxInstance);
+struct xInstance_t* Instance_Alloc(void);
+void Instance_Free(struct xInstance_t* pxInstance);
 
-VkPhysicalDevice VkInstance_GetPhysicalDevice(struct xInstance_t* pxInstance);
-VkDevice VkInstance_GetDevice(struct xInstance_t* pxInstance);
-VkSurfaceKHR VkInstance_GetSurface(struct xInstance_t* pxInstance);
-VkFormat VkInstance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance);
-VkColorSpaceKHR VkInstance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance);
-VkPresentModeKHR VkInstance_GetPreferedPresentMode(struct xInstance_t* pxInstance);
-uint32_t VkInstance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance);
-uint32_t VkInstance_GetPresentQueueIndex(struct xInstance_t* pxInstance);
-VkQueue VkInstance_GetGraphicsQueue(struct xInstance_t* pxInstance);
-VkQueue VkInstance_GetPresentQueue(struct xInstance_t* pxInstance);
-VkCommandPool VkInstance_GetCommandPool(struct xInstance_t* pxInstance);
+VkPhysicalDevice Instance_GetPhysicalDevice(struct xInstance_t* pxInstance);
+VkDevice Instance_GetDevice(struct xInstance_t* pxInstance);
+VkSurfaceKHR Instance_GetSurface(struct xInstance_t* pxInstance);
+VkFormat Instance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance);
+VkColorSpaceKHR Instance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance);
+VkPresentModeKHR Instance_GetPreferedPresentMode(struct xInstance_t* pxInstance);
+uint32_t Instance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance);
+uint32_t Instance_GetPresentQueueIndex(struct xInstance_t* pxInstance);
+VkQueue Instance_GetGraphicsQueue(struct xInstance_t* pxInstance);
+VkQueue Instance_GetPresentQueue(struct xInstance_t* pxInstance);
+VkCommandPool Instance_GetCommandPool(struct xInstance_t* pxInstance);
 
-void VkInstance_WaitIdle(struct xInstance_t* pxInstance);
-int32_t VkInstance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags);
+void Instance_WaitIdle(struct xInstance_t* pxInstance);
+int32_t Instance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags);
 
 #endif
