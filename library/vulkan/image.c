@@ -167,7 +167,24 @@ void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInst
 	xImageMemoryBarrier.srcAccessMask = 0;
 	xImageMemoryBarrier.dstAccessMask = 0;
 
-	vkCmdPipelineBarrier(xCommandBuffer, 0, 0, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
+	VkPipelineStageFlags xPipelineSourceStageFlags = VK_PIPELINE_STAGE_NONE;
+	VkPipelineStageFlags xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_NONE;
+
+	if ((xOldLayout == VK_IMAGE_LAYOUT_UNDEFINED) && (xNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)) {
+		xImageMemoryBarrier.srcAccessMask = 0;
+		xImageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		xImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+
+	vkCmdPipelineBarrier(xCommandBuffer, xPipelineSourceStageFlags, xPipelineDestinationStageFlags, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
 
 	Command_EndSingleTimeCommands(pxInstance, xCommandBuffer);
 }
