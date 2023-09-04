@@ -16,9 +16,11 @@ VkSurfaceKHR Instance_GetSurface(struct xInstance_t* pxInstance);
 VkFormat Instance_GetPreferedSurfaceFormat(struct xInstance_t* pxInstance);
 VkColorSpaceKHR Instance_GetPreferedSurfaceColorSpace(struct xInstance_t* pxInstance);
 VkPresentModeKHR Instance_GetPreferedPresentMode(struct xInstance_t* pxInstance);
-uint32_t Instance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance);
+uint32_t Instance_GetGraphicQueueIndex(struct xInstance_t* pxInstance);
+uint32_t Instance_GetComputeQueueIndex(struct xInstance_t* pxInstance);
 uint32_t Instance_GetPresentQueueIndex(struct xInstance_t* pxInstance);
-VkQueue Instance_GetGraphicsQueue(struct xInstance_t* pxInstance);
+VkQueue Instance_GetGraphicQueue(struct xInstance_t* pxInstance);
+VkQueue Instance_GetComputeQueue(struct xInstance_t* pxInstance);
 VkQueue Instance_GetPresentQueue(struct xInstance_t* pxInstance);
 VkCommandPool Instance_GetCommandPool(struct xInstance_t* pxInstance);
 

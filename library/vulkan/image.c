@@ -149,7 +149,7 @@ void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
 }
 
 void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
-	VkCommandBuffer xCommandBuffer = Command_BeginSingleTimeCommands(pxInstance);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
 	VkImageMemoryBarrier xImageMemoryBarrier;
 	memset(&xImageMemoryBarrier, 0, sizeof(xImageMemoryBarrier));
@@ -186,5 +186,5 @@ void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInst
 
 	vkCmdPipelineBarrier(xCommandBuffer, xPipelineSourceStageFlags, xPipelineDestinationStageFlags, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
 
-	Command_EndSingleTimeCommands(pxInstance, xCommandBuffer);
+	Command_EndSingle(pxInstance, xCommandBuffer);
 }

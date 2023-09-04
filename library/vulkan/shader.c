@@ -9,36 +9,27 @@
 #include <vulkan/instance.h>
 #include <vulkan/shader.h>
 
-void Shader_Alloc(struct xInstance_t* pxInstance, const char* pcVertFilePath, const char* pcFragFilePath, VkShaderModule* pxVertModule, VkShaderModule* pxFragModule) {
-	uint8_t* pcVertShaderBytes;
-	uint8_t* pcFragShaderBytes;
-	
-	uint64_t wVertShaderSize;
-	uint64_t wFragShaderSize;
+VkShaderModule Shader_Alloc(struct xInstance_t* pxInstance, const char* pcFilePath) {
+	VkShaderModule xShaderModule;
 
-	FileUtil_ReadBinary(&pcVertShaderBytes, &wVertShaderSize, pcVertFilePath);
-	FileUtil_ReadBinary(&pcFragShaderBytes, &wFragShaderSize, pcFragFilePath);
+	uint8_t* pcShaderBytes;	
+	uint64_t wShaderSize;
 
-	VkShaderModuleCreateInfo xVertCreateInfo;
-	memset(&xVertCreateInfo, 0, sizeof(xVertCreateInfo));
-	xVertCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	xVertCreateInfo.codeSize = wVertShaderSize;
-	xVertCreateInfo.pCode = (const uint32_t*)pcVertShaderBytes;
+	FileUtil_ReadBinary(&pcShaderBytes, &wShaderSize, pcFilePath);
 
-	VkShaderModuleCreateInfo xFragCreateInfo;
-	memset(&xFragCreateInfo, 0, sizeof(xFragCreateInfo));
-	xFragCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	xFragCreateInfo.codeSize = wFragShaderSize;
-	xFragCreateInfo.pCode = (const uint32_t*)pcFragShaderBytes;
+	VkShaderModuleCreateInfo xShaderModuleCreateInfo;
+	memset(&xShaderModuleCreateInfo, 0, sizeof(xShaderModuleCreateInfo));
+	xShaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	xShaderModuleCreateInfo.codeSize = wShaderSize;
+	xShaderModuleCreateInfo.pCode = (const uint32_t*)pcShaderBytes;
 
-	VK_CHECK(vkCreateShaderModule(Instance_GetDevice(pxInstance), &xVertCreateInfo, 0, pxVertModule));
-	VK_CHECK(vkCreateShaderModule(Instance_GetDevice(pxInstance), &xFragCreateInfo, 0, pxFragModule));
+	VK_CHECK(vkCreateShaderModule(Instance_GetDevice(pxInstance), &xShaderModuleCreateInfo, 0, &xShaderModule));
 
-    free(pcVertShaderBytes);
-	free(pcFragShaderBytes);
+    free(pcShaderBytes);
+
+	return xShaderModule;
 }
 
-void Shader_Free(struct xInstance_t* pxInstance, VkShaderModule xVertModule, VkShaderModule xFragModule) {
-	vkDestroyShaderModule(Instance_GetDevice(pxInstance), xVertModule, 0);
-	vkDestroyShaderModule(Instance_GetDevice(pxInstance), xFragModule, 0);
+void Shader_Free(struct xInstance_t* pxInstance, VkShaderModule xShaderModule) {
+	vkDestroyShaderModule(Instance_GetDevice(pxInstance), xShaderModule, 0);
 }

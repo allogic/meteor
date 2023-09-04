@@ -5,25 +5,22 @@
 
 #include <vulkan/vulkan.h>
 
-typedef struct {
-    xVec3_t Position;
-    xVec2_t Uv;
-    xVec4_t Color;
-} xDefaultVertex_t;
+#define VERTEX_STRUCT { \
+    xVec3_t xPosition; \
+    xVec2_t xUv; \
+    xVec4_t xColor; \
+}
 
-typedef struct {
-    xVec3_t Position;
-    xVec4_t Color;
-} xDebugVertex_t;
+#ifdef OS_WINDOWS
+#pragma pack(push, 1)
+	typedef struct VERTEX_STRUCT xVertex_t;
+#pragma pack(pop)
+#endif
 
-typedef struct {
-    xVec3_t Position;
-    xVec2_t Uv;
-    xVec4_t Color;
-} xInterfaceVertex_t;
+#ifdef OS_LINUX
+	typedef struct __attribute__((packed)) VERTEX_STRUCT xVertex_t;
+#endif
 
-void Vertex_DefaultDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
-void Vertex_DebugDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
-void Vertex_InterfaceDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
+void Vertex_CreateDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
 
 #endif

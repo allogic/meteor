@@ -42,7 +42,7 @@ static void SwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct x
 	xSwapChaincreateInfo.clipped = VK_TRUE;
 	xSwapChaincreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	int32_t nGraphicsQueueIndex = Instance_GetGraphicsQueueIndex(pxInstance);
+	int32_t nGraphicsQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
 	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);
 
 	if (nGraphicsQueueIndex == nPresentQueueIndex) {

@@ -86,18 +86,18 @@ void Buffer_UnMap(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance) {
 }
 
 void Buffer_CopyToBuffer(struct xInstance_t* pxInstance, struct xBuffer_t* pxSourceBuffer, struct xBuffer_t* pxDestinationBuffer, uint64_t wSize) {
-	VkCommandBuffer xCommandBuffer = Command_BeginSingleTimeCommands(pxInstance);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
 	VkBufferCopy xBufferCopy;
 	memset(&xBufferCopy, 0, sizeof(xBufferCopy));
 	xBufferCopy.size = wSize;
 	vkCmdCopyBuffer(xCommandBuffer, pxSourceBuffer->xBuffer, pxDestinationBuffer->xBuffer, 1, &xBufferCopy);
 
-	Command_EndSingleTimeCommands(pxInstance, xCommandBuffer);
+	Command_EndSingle(pxInstance, xCommandBuffer);
 }
 
 void Buffer_CopyToImage(struct xInstance_t* pxInstance, struct xBuffer_t* pxBuffer, struct xImage_t* pxImage, uint32_t nWidth, uint32_t nHeight) {
-	VkCommandBuffer xCommandBuffer = Command_BeginSingleTimeCommands(pxInstance);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
 	VkBufferImageCopy xBufferImageCopy;
 	memset(&xBufferImageCopy, 0, sizeof(xBufferImageCopy));
@@ -117,7 +117,7 @@ void Buffer_CopyToImage(struct xInstance_t* pxInstance, struct xBuffer_t* pxBuff
 
 	vkCmdCopyBufferToImage(xCommandBuffer, pxBuffer->xBuffer, Image_GetImage(pxImage), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &xBufferImageCopy);
 
-	Command_EndSingleTimeCommands(pxInstance, xCommandBuffer);
+	Command_EndSingle(pxInstance, xCommandBuffer);
 }
 
 void Buffer_Copy(struct xBuffer_t* pxBuffer, void* pData, uint64_t wSize) {

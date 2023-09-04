@@ -29,6 +29,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 set(PROJECT_DIR ".")
+set(PARENT_DIR "..")
 set(LIBRARY_DIR "../../library")
 set(COMMON_DIR "../../library/common")
 set(DEBUG_DIR "../../library/debug")
@@ -39,6 +40,7 @@ set(PLATFORM_DIR "../../library/platform")
 set(VULKAN_DIR "../../library/vulkan")
 
 include_directories(${PROJECT_DIR})
+include_directories(${PARENT_DIR})
 include_directories(${LIBRARY_DIR})
 
 add_compile_definitions("_CRT_SECURE_NO_WARNINGS")

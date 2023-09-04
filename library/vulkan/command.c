@@ -6,7 +6,7 @@
 #include <vulkan/instance.h>
 #include <vulkan/command.h>
 
-VkCommandBuffer Command_BeginSingleTimeCommands(struct xInstance_t* pxInstance) {
+VkCommandBuffer Command_BeginSingle(struct xInstance_t* pxInstance) {
 	VkCommandBufferAllocateInfo xCommandBufferAllocateInfo;
 	memset(&xCommandBufferAllocateInfo, 0, sizeof(xCommandBufferAllocateInfo));
 	xCommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -27,7 +27,7 @@ VkCommandBuffer Command_BeginSingleTimeCommands(struct xInstance_t* pxInstance) 
 	return xCommandBuffer;
 }
 
-void Command_EndSingleTimeCommands(struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer) {
+void Command_EndSingle(struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer) {
 	VK_CHECK(vkEndCommandBuffer(xCommandBuffer));
 
 	VkSubmitInfo xSubmitInfo;
@@ -36,8 +36,8 @@ void Command_EndSingleTimeCommands(struct xInstance_t* pxInstance, VkCommandBuff
 	xSubmitInfo.commandBufferCount = 1;
 	xSubmitInfo.pCommandBuffers = &xCommandBuffer;
 
-	VK_CHECK(vkQueueSubmit(Instance_GetGraphicsQueue(pxInstance), 1, &xSubmitInfo, VK_NULL_HANDLE));
-	VK_CHECK(vkQueueWaitIdle(Instance_GetGraphicsQueue(pxInstance)));
+	VK_CHECK(vkQueueSubmit(Instance_GetGraphicQueue(pxInstance), 1, &xSubmitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueWaitIdle(Instance_GetGraphicQueue(pxInstance)));
 
 	vkFreeCommandBuffers(Instance_GetDevice(pxInstance), Instance_GetCommandPool(pxInstance), 1, &xCommandBuffer);
 }

@@ -44,3 +44,19 @@ struct xBuffer_t* UniformBuffer_Alloc(struct xInstance_t* pxInstance, uint64_t w
 
 	return pxUniformBuffer;
 }
+
+struct xBuffer_t* StorageBuffer_Alloc(struct xInstance_t* pxInstance, void* pData, uint64_t wSize) {
+	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	Buffer_Map(pxStagingBuffer, pxInstance);
+	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_UnMap(pxStagingBuffer, pxInstance);
+
+	struct xBuffer_t* pxStorageBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	Buffer_CopyToBuffer(pxInstance, pxStagingBuffer, pxStorageBuffer, wSize);
+
+	Buffer_Free(pxStagingBuffer, pxInstance);
+
+	return pxStorageBuffer;
+}

@@ -1,5 +1,5 @@
-#ifndef SCENE_H
-#define SCENE_H
+#ifndef SANDSIM_SCENE_H
+#define SANDSIM_SCENE_H
 
 struct xScene_t;
 

@@ -29,9 +29,10 @@ struct xInstance_t {
 	VkSurfaceFormatKHR xPreferedSurfaceFormat;
 	VkPresentModeKHR xPreferedPresentMode;
 	VkDevice xDevice;
-	int32_t nGraphicsQueueIndex;
+	int32_t nGraphicAndComputeQueueIndex;
 	int32_t nPresentQueueIndex;
-	VkQueue xGraphicsQueue;
+	VkQueue xGraphicQueue;
+	VkQueue xComputeQueue;
 	VkQueue xPresentQueue;
 	VkCommandPool xCommandPool;
 };
@@ -179,20 +180,22 @@ static void Instance_FindQueueFamilies(struct xInstance_t* pxInstance) {
 	vkGetPhysicalDeviceQueueFamilyProperties(pxInstance->xPhysicalDevice, &nQueueFamilyCount, pxQueueFamilyProperties);
 
 	for (uint32_t i = 0; i < nQueueFamilyCount; ++i) {
-		uint32_t nGraphicsSupport = 0;
+		uint32_t nGraphicSupport = 0;
+		uint32_t nComputeSupport = 0;
 		uint32_t nPresentSupport = 0;
 
-		nGraphicsSupport = pxQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT;
+		nGraphicSupport = pxQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT;
+		nComputeSupport = pxQueueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT;
 
 		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(pxInstance->xPhysicalDevice, i, pxInstance->xSurface, &nPresentSupport));
 
-		if (nGraphicsSupport && (pxInstance->nGraphicsQueueIndex == -1)) {
-			pxInstance->nGraphicsQueueIndex = i;
+		if (nGraphicSupport && nComputeSupport && (pxInstance->nGraphicAndComputeQueueIndex == -1)) {
+			pxInstance->nGraphicAndComputeQueueIndex = i;
 		} else if (nPresentSupport && (pxInstance->nPresentQueueIndex == -1)) {
 			pxInstance->nPresentQueueIndex = i;
 		}
 
-		if ((pxInstance->nGraphicsQueueIndex != -1) && (pxInstance->nPresentQueueIndex != -1)) {
+		if ((pxInstance->nGraphicAndComputeQueueIndex != -1) && (pxInstance->nPresentQueueIndex != -1)) {
 			break;
 		}
 	}
@@ -234,7 +237,7 @@ static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstanc
 
 static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 #ifdef DEBUG
-	printf("GraphicsQueueIndex %d\n", pxInstance->nGraphicsQueueIndex);
+	printf("GraphicAndComputeQueueIndex %d\n", pxInstance->nGraphicAndComputeQueueIndex);
 	printf("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
 #endif
 
@@ -244,7 +247,7 @@ static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 	memset(&xQueueCreateInfos, 0, sizeof(xQueueCreateInfos));
 
 	xQueueCreateInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	xQueueCreateInfos[0].queueFamilyIndex = pxInstance->nGraphicsQueueIndex;
+	xQueueCreateInfos[0].queueFamilyIndex = pxInstance->nGraphicAndComputeQueueIndex;
 	xQueueCreateInfos[0].queueCount = 1;
 	xQueueCreateInfos[0].pQueuePriorities = &fQueuePriority;
 
@@ -272,7 +275,8 @@ static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
 
 	VK_CHECK(vkCreateDevice(pxInstance->xPhysicalDevice, &xDeviceCreateInfo, 0, &pxInstance->xDevice));
 
-	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nGraphicsQueueIndex, 0, &pxInstance->xGraphicsQueue);
+	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nGraphicAndComputeQueueIndex, 0, &pxInstance->xGraphicQueue);
+	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nGraphicAndComputeQueueIndex, 0, &pxInstance->xComputeQueue);
 	vkGetDeviceQueue(pxInstance->xDevice, pxInstance->nPresentQueueIndex, 0, &pxInstance->xPresentQueue);
 }
 
@@ -312,7 +316,7 @@ static void Instance_CreateCommandPool(struct xInstance_t* pxInstance) {
 	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
 	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	xCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	xCommandPoolCreateInfo.queueFamilyIndex = pxInstance->nGraphicsQueueIndex;
+	xCommandPoolCreateInfo.queueFamilyIndex = pxInstance->nGraphicAndComputeQueueIndex;
 
 	VK_CHECK(vkCreateCommandPool(pxInstance->xDevice, &xCommandPoolCreateInfo, 0, &pxInstance->xCommandPool));
 }
@@ -320,7 +324,7 @@ static void Instance_CreateCommandPool(struct xInstance_t* pxInstance) {
 struct xInstance_t* Instance_Alloc(void) {
 	struct xInstance_t* pxInstance = (struct xInstance_t*)calloc(1, sizeof(struct xInstance_t));
 
-	pxInstance->nGraphicsQueueIndex = -1;
+	pxInstance->nGraphicAndComputeQueueIndex = -1;
 	pxInstance->nPresentQueueIndex = -1;
 
 	Instance_CreateInstance(pxInstance);
@@ -375,16 +379,24 @@ VkPresentModeKHR Instance_GetPreferedPresentMode(struct xInstance_t* pxInstance)
 	return pxInstance->xPreferedPresentMode;
 }
 
-uint32_t Instance_GetGraphicsQueueIndex(struct xInstance_t* pxInstance) {
-	return pxInstance->nGraphicsQueueIndex;
+uint32_t Instance_GetGraphicQueueIndex(struct xInstance_t* pxInstance) {
+	return pxInstance->nGraphicAndComputeQueueIndex;
+}
+
+uint32_t Instance_GetComputeQueueIndex(struct xInstance_t* pxInstance) {
+	return pxInstance->nGraphicAndComputeQueueIndex;
 }
 
 uint32_t Instance_GetPresentQueueIndex(struct xInstance_t* pxInstance) {
 	return pxInstance->nPresentQueueIndex;
 }
 
-VkQueue Instance_GetGraphicsQueue(struct xInstance_t* pxInstance) {
-	return pxInstance->xGraphicsQueue;
+VkQueue Instance_GetGraphicQueue(struct xInstance_t* pxInstance) {
+	return pxInstance->xGraphicQueue;
+}
+
+VkQueue Instance_GetComputeQueue(struct xInstance_t* pxInstance) {
+	return pxInstance->xComputeQueue;
 }
 
 VkQueue Instance_GetPresentQueue(struct xInstance_t* pxInstance) {

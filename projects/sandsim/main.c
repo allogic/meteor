@@ -17,7 +17,6 @@
 
 #include <vulkan/instance.h>
 #include <vulkan/swapchain.h>
-#include <vulkan/renderer.h>
 #include <vulkan/uniform.h>
 #include <vulkan/vertex.h>
 #include <vulkan/buffer.h>
@@ -25,7 +24,9 @@
 #include <vulkan/image.h>
 #include <vulkan/imagevariance.h>
 
-xDefaultVertex_t axVertices[4] = {
+#include <sandsim/renderer.h>
+
+xVertex_t axVertices[4] = {
 	{ { -0.5F, -0.5F, 0.0F }, { 1.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
 	{ {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
 	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 1.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
@@ -36,7 +37,8 @@ uint32_t anIndices[6] = {
 	0, 1, 2, 2, 3, 0,
 };
 
-static xModelViewProjection_t s_xMvp = { MAT4_IDENTITY, MAT4_IDENTITY, MAT4_IDENTITY };
+static xTimeInfo_t s_xTimeInfo = { 0.0F, 0.0F };
+static xModelViewProjection_t s_xModelViewProjection = { MAT4_IDENTITY, MAT4_IDENTITY, MAT4_IDENTITY };
 
 int32_t main(void) {
 
@@ -50,7 +52,7 @@ int32_t main(void) {
 
 	struct xInstance_t* pxInstance = Instance_Alloc();
 	struct xSwapChain_t* pxSwapChain = SwapChain_Alloc(pxInstance);
-	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xDefaultVertex_t) * 4);
+	struct xBuffer_t* pxVertexBuffer = VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4);
 	struct xBuffer_t* pxIndexBuffer = IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6);
 	struct xImage_t* pxStandardImage = StandardImage_Alloc(pxInstance, "test.bmp");
 	struct xRenderer_t* pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain, pxStandardImage);
@@ -72,18 +74,18 @@ int32_t main(void) {
 			pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain, pxStandardImage);
 		}
 
-		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xMvp.xProjection);
+		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xModelViewProjection.xProjection);
 
 		xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
 		xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
 		xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
-		View_LookAt(xEye, xCenter, xUp, s_xMvp.xView);
+		View_LookAt(xEye, xCenter, xUp, s_xModelViewProjection.xView);
 
 		xVec3_t xPosition = { sinf(Timer_GetTime(pxTimer)), cosf(Timer_GetTime(pxTimer)), 0.0F };
-		Matrix_SetPosition(s_xMvp.xModel, xPosition);
+		Matrix_SetPosition(s_xModelViewProjection.xModel, xPosition);
 
-		Renderer_UpdateModelViewProjection(pxRenderer, &s_xMvp);
-		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6, pxStandardImage);
+		Renderer_UpdateModelViewProjection(pxRenderer, &s_xModelViewProjection); // TODO
+		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6, pxStandardImage, &s_xTimeInfo);
 	}
 
 	Instance_WaitIdle(pxInstance);
