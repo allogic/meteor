@@ -236,11 +236,6 @@ static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstanc
 }
 
 static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
-#ifdef DEBUG
-	printf("GraphicAndComputeQueueIndex %d\n", pxInstance->nGraphicAndComputeQueueIndex);
-	printf("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
-#endif
-
 	float fQueuePriority = 1.0F;
 
 	VkDeviceQueueCreateInfo xQueueCreateInfos[2];

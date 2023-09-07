@@ -46,7 +46,7 @@ int32_t main(void) {
 	StackTrace_Alloc();
 #endif
 
-	NativeWindow_Alloc(WINDOW_NAME, 800, 600);
+	NativeWindow_Alloc(WINDOW_NAME, 1200, 1200);
 
 	struct xTimer_t* pxTimer = Timer_Alloc();
 
@@ -74,7 +74,7 @@ int32_t main(void) {
 			pxRenderer = Renderer_Alloc(pxInstance, pxSwapChain, pxStandardImage);
 		}
 
-		Orthographic_Projection(-2.0F, 2.0F, -2.0F, 2.0F, 0.001F, 100.0F, s_xModelViewProjection.xProjection);
+		Orthographic_Projection(-50.0F, 50.0F, -50.0F, 50.0F, 0.001F, 100.0F, s_xModelViewProjection.xProjection);
 
 		xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
 		xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
@@ -85,6 +85,10 @@ int32_t main(void) {
 		Matrix_SetPosition(s_xModelViewProjection.xModel, xPosition);
 
 		Renderer_UpdateModelViewProjection(pxRenderer, &s_xModelViewProjection); // TODO
+		
+		s_xTimeInfo.fTime = Timer_GetTime(pxTimer);
+		s_xTimeInfo.fDeltaTime = Timer_GetDeltaTime(pxTimer);
+
 		Renderer_Draw(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, 6, pxStandardImage, &s_xTimeInfo);
 	}
 

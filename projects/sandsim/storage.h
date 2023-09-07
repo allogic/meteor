@@ -4,9 +4,8 @@
 #include <math/vector.h>
 
 #define PARTICLE_STRUCT { \
-	xVec2_t xPosition; \
-	xVec2_t xVelocity; \
-    xVec4_t xColor; \
+	xVec3_t xPosition; \
+	xVec3_t xVelocity; \
 }
 
 #ifdef OS_WINDOWS

@@ -1,22 +1,21 @@
 #version 450 core
 
 struct Particle {
-    vec2 Position;
-	vec2 Velocity;
-	vec4 Color;
+    vec3 position;
+	vec3 velocity;
 };
 
 layout(binding = 0) uniform TimeInfo {
-	float Time;
-	float DeltaTime;
+	float time;
+	float deltaTime;
 } timeInfo;
 
 layout(std430, binding = 1) readonly buffer BufferInputParticle {
-	Particle InputParticles[];
+	Particle inputParticles[];
 };
 
 layout(std430, binding = 2) buffer BufferOutputParticle {
-	Particle OutputParticles[];
+	Particle outputParticles[];
 };
 
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -24,16 +23,16 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main() {
 	uint index = gl_GlobalInvocationID.x;
 
-	Particle inputParticle = InputParticles[index];
+	Particle inputParticle = inputParticles[index];
 
-	OutputParticles[index].Position = inputParticle.Position + inputParticle.Velocity * timeInfo.DeltaTime;
-	OutputParticles[index].Velocity = inputParticle.Velocity;
+	outputParticles[index].position = inputParticle.position + inputParticle.velocity * timeInfo.deltaTime;
+	outputParticles[index].velocity = inputParticle.velocity;
 
-	if ((OutputParticles[index].Position.x <= -1.0) || (OutputParticles[index].Position.x >= 1.0)) {
-		OutputParticles[index].Velocity.x = -OutputParticles[index].Velocity.x;
+	if ((outputParticles[index].position.x <= -50.0) || (outputParticles[index].position.x >= 50.0)) {
+		outputParticles[index].velocity.x = -outputParticles[index].velocity.x;
 	}
 
-	if ((OutputParticles[index].Position.y <= -1.0) || (OutputParticles[index].Position.y >= 1.0)) {
-		OutputParticles[index].Velocity.y = -OutputParticles[index].Velocity.y;
+	if ((outputParticles[index].position.y <= -50.0) || (outputParticles[index].position.y >= 50.0)) {
+		outputParticles[index].velocity.y = -outputParticles[index].velocity.y;
 	}
 }

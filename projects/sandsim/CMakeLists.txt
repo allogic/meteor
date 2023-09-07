@@ -8,7 +8,7 @@ include("../../cmake/vulkan.cmake")
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 list(APPEND SOURCES "${PROJECT_DIR}/renderer.c")
 
-list(APPEND SOURCES "${COMMON_DIR}/random.c")
+list(APPEND SOURCES "${COMMON_DIR}/xorshift128.c")
 list(APPEND SOURCES "${COMMON_DIR}/timer.c")
 
 list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")

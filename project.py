@@ -73,6 +73,10 @@ if 'b' in cmd:
 	configuration = sys.argv[3]
 	build_project(project, configuration)
 
+if 's' in cmd:
+	project = sys.argv[2]
+	build_shader(project)
+
 if 'r' in cmd:
 	project = sys.argv[2]
 	run_project(project)
@@ -80,7 +84,3 @@ if 'r' in cmd:
 if 'd' in cmd:
 	project = sys.argv[2]
 	debug_project(project)
-
-if 's' in cmd:
-	project = sys.argv[2]
-	build_shader(project)

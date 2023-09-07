@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <common/macros.h>
+#include <common/xorshift128.h>
 
 #include <platform/nativewindow.h>
 
@@ -42,7 +43,7 @@ struct xRenderer_t {
 };
 
 static void Renderer_CreateGraphicDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[2];
+	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[3];
 
 	axDescriptorSetLayoutBindings[0].binding = 0;
 	axDescriptorSetLayoutBindings[0].descriptorCount = 1;
@@ -52,9 +53,15 @@ static void Renderer_CreateGraphicDescriptorSetLayout(struct xRenderer_t* pxRend
 
 	axDescriptorSetLayoutBindings[1].binding = 1;
 	axDescriptorSetLayoutBindings[1].descriptorCount = 1;
-	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	axDescriptorSetLayoutBindings[1].pImmutableSamplers = 0;
-	axDescriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	axDescriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	axDescriptorSetLayoutBindings[2].binding = 2;
+	axDescriptorSetLayoutBindings[2].descriptorCount = 1;
+	axDescriptorSetLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axDescriptorSetLayoutBindings[2].pImmutableSamplers = 0;
+	axDescriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutCreateInfo xDescriptorSetLayoutCreateInfo;
 	memset(&xDescriptorSetLayoutCreateInfo, 0, sizeof(xDescriptorSetLayoutCreateInfo));
@@ -98,13 +105,16 @@ static void Renderer_CreateComputeDescriptorSetLayout(struct xRenderer_t* pxRend
 }
 
 static void Renderer_CreateGraphicDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorPoolSize axDescriptorPoolSizes[2];
+	VkDescriptorPoolSize axDescriptorPoolSizes[3];
 
 	axDescriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	axDescriptorPoolSizes[0].descriptorCount = 1;
 
-	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	axDescriptorPoolSizes[1].descriptorCount = 1;
+
+	axDescriptorPoolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axDescriptorPoolSizes[2].descriptorCount = 1;
 
 	VkDescriptorPoolCreateInfo xDescriptorPoolCreateInfo;
 	memset(&xDescriptorPoolCreateInfo, 0, sizeof(xDescriptorPoolCreateInfo));
@@ -170,13 +180,19 @@ static void Renderer_UpdateGraphicDescriptorSets(struct xRenderer_t* pxRenderer,
 	xModelViewProjectionDescriptorBufferInfo.offset = 0;
 	xModelViewProjectionDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxUniformModelViewProjection);
 
+	VkDescriptorBufferInfo xParticleDescriptorBufferInfo;
+	memset(&xParticleDescriptorBufferInfo, 0, sizeof(xParticleDescriptorBufferInfo));
+	xParticleDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->pxStorageParticles);
+	xParticleDescriptorBufferInfo.offset = 0;
+	xParticleDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxStorageParticles);
+
 	VkDescriptorImageInfo xImageDescriptorImageInfo;
 	memset(&xImageDescriptorImageInfo, 0, sizeof(xImageDescriptorImageInfo));
 	xImageDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	xImageDescriptorImageInfo.imageView = Image_GetImageView(pxImage);
 	xImageDescriptorImageInfo.sampler = Image_GetSampler(pxImage);
 
-	VkWriteDescriptorSet axWriteDescriptorSets[2];
+	VkWriteDescriptorSet axWriteDescriptorSets[3];
 
 	axWriteDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	axWriteDescriptorSets[0].pNext = 0;
@@ -194,11 +210,22 @@ static void Renderer_UpdateGraphicDescriptorSets(struct xRenderer_t* pxRenderer,
 	axWriteDescriptorSets[1].dstSet = pxRenderer->xGraphicDescriptorSet;
 	axWriteDescriptorSets[1].dstBinding = 1;
 	axWriteDescriptorSets[1].dstArrayElement = 0;
-	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	axWriteDescriptorSets[1].descriptorCount = 1;
-	axWriteDescriptorSets[1].pImageInfo = &xImageDescriptorImageInfo;
-	axWriteDescriptorSets[1].pBufferInfo = 0;
+	axWriteDescriptorSets[1].pImageInfo = 0;
+	axWriteDescriptorSets[1].pBufferInfo = &xParticleDescriptorBufferInfo;
 	axWriteDescriptorSets[1].pTexelBufferView = 0;
+
+	axWriteDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	axWriteDescriptorSets[2].pNext = 0;
+	axWriteDescriptorSets[2].dstSet = pxRenderer->xGraphicDescriptorSet;
+	axWriteDescriptorSets[2].dstBinding = 2;
+	axWriteDescriptorSets[2].dstArrayElement = 0;
+	axWriteDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	axWriteDescriptorSets[2].descriptorCount = 1;
+	axWriteDescriptorSets[2].pImageInfo = &xImageDescriptorImageInfo;
+	axWriteDescriptorSets[2].pBufferInfo = 0;
+	axWriteDescriptorSets[2].pTexelBufferView = 0;
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
@@ -263,7 +290,7 @@ static void Renderer_CreateGraphicPipeline(struct xRenderer_t* pxRenderer, struc
 
 	Vertex_CreateDescription(&xVertexInputBindingDescription, axVertexInputAttributeDescriptions);
 
-	pxRenderer->pxGraphicPipeline = GraphicPipeline_Alloc(pxInstance, pxSwapChain, xVertModule, xFragModule, xVertexInputBindingDescription, axVertexInputAttributeDescriptions, 3, pxRenderer->xGraphicDescriptorSetLayout);
+	pxRenderer->pxGraphicPipeline = GraphicPipeline_Alloc(pxInstance, pxSwapChain, xVertModule, xFragModule, xVertexInputBindingDescription, axVertexInputAttributeDescriptions, ARRAY_LENGTH(axVertexInputAttributeDescriptions), pxRenderer->xGraphicDescriptorSetLayout);
 
 	Shader_Free(pxInstance, xVertModule);
 	Shader_Free(pxInstance, xFragModule);
@@ -358,7 +385,7 @@ static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 
 		vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxGraphicPipeline), 0, 1, &pxRenderer->xGraphicDescriptorSet, 0, 0);
 
-		vkCmdDrawIndexed(pxRenderer->xGraphicCommandBuffer, nIndexCount, 1, 0, 0, 0);
+		vkCmdDrawIndexed(pxRenderer->xGraphicCommandBuffer, nIndexCount, 200000, 0, 0, 0);
 
 	vkCmdEndRenderPass(pxRenderer->xGraphicCommandBuffer);
 
@@ -378,7 +405,7 @@ static void Renderer_RecordComputeCommandBuffer(struct xRenderer_t* pxRenderer) 
 
 	vkCmdBindDescriptorSets(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipelineLayout(pxRenderer->pxComputePipeline), 0, 1, &pxRenderer->xComputeDescriptorSet, 0, 0);
 
-	vkCmdDispatch(pxRenderer->xComputeCommandBuffer, 256, 1, 1); // TODO
+	vkCmdDispatch(pxRenderer->xComputeCommandBuffer, 200000, 1, 1); // TODO
 
 	VK_CHECK(vkEndCommandBuffer(pxRenderer->xComputeCommandBuffer));
 }
@@ -415,16 +442,6 @@ static void Renderer_CreateComputeSyncObjects(struct xRenderer_t* pxRenderer, st
 }
 
 static void Renderer_SubmitCompute(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, xTimeInfo_t* pxTimeInfo) {
-	VkSemaphore axSignalSemaphores[] = { pxRenderer->xComputeFinishedSemaphore };
-
-	VkSubmitInfo xSubmitInfo;
-	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
-	xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	xSubmitInfo.commandBufferCount = 1;
-	xSubmitInfo.pCommandBuffers = &pxRenderer->xComputeCommandBuffer;
-	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
-	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
-
 	VK_CHECK(vkWaitForFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xComputeInFlightFence, VK_TRUE, UINT64_MAX));
 
 	Buffer_Copy(pxRenderer->pxUniformTimeInfo, pxTimeInfo, sizeof(xTimeInfo_t)); // TODO
@@ -434,6 +451,16 @@ static void Renderer_SubmitCompute(struct xRenderer_t* pxRenderer, struct xInsta
 	VK_CHECK(vkResetCommandBuffer(pxRenderer->xComputeCommandBuffer, 0));
 
 	Renderer_RecordComputeCommandBuffer(pxRenderer);
+
+	VkSemaphore axSignalSemaphores[] = { pxRenderer->xComputeFinishedSemaphore };
+
+	VkSubmitInfo xSubmitInfo;
+	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
+	xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	xSubmitInfo.commandBufferCount = 1;
+	xSubmitInfo.pCommandBuffers = &pxRenderer->xComputeCommandBuffer;
+	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
 
 	VK_CHECK(vkQueueSubmit(Instance_GetComputeQueue(pxInstance), 1, &xSubmitInfo, pxRenderer->xComputeInFlightFence));
 }
@@ -454,7 +481,7 @@ static void Renderer_SubmitGraphic(struct xRenderer_t* pxRenderer, struct xInsta
 
 	VkSemaphore axWaitSemaphores[] = { pxRenderer->xComputeFinishedSemaphore, pxRenderer->xImageAvailableSemaphore };
 	VkSemaphore axSignalSemaphores[] = { pxRenderer->xGraphicFinishedSemaphore };
-	VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSwapchainKHR axSwapChains[] = { SwapChain_GetSwapChain(pxSwapChain) };
 
 	VkSubmitInfo xSubmitInfo;
@@ -473,11 +500,11 @@ static void Renderer_SubmitGraphic(struct xRenderer_t* pxRenderer, struct xInsta
 	VkPresentInfoKHR xPresentInfo;
 	memset(&xPresentInfo, 0, sizeof(xPresentInfo));
 	xPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	xPresentInfo.waitSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
-	xPresentInfo.pWaitSemaphores = axSignalSemaphores;
 	xPresentInfo.swapchainCount = ARRAY_LENGTH(axSwapChains);
 	xPresentInfo.pSwapchains = axSwapChains;
 	xPresentInfo.pImageIndices = &nImageIndex;
+	xPresentInfo.waitSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+	xPresentInfo.pWaitSemaphores = axSignalSemaphores;
 
 	VK_CHECK(vkQueuePresentKHR(Instance_GetPresentQueue(pxInstance), &xPresentInfo));
 }
@@ -488,9 +515,20 @@ struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapC
 	pxRenderer->pxUniformTimeInfo = UniformBuffer_Alloc(pxInstance, sizeof(xTimeInfo_t));
 	pxRenderer->pxUniformModelViewProjection = UniformBuffer_Alloc(pxInstance, sizeof(xModelViewProjection_t));
 
-	xParticle_t axParticles[256]; // TODO
+	xParticle_t* pxParticles = (xParticle_t*)calloc(200000, sizeof(xParticle_t));
 
-	pxRenderer->pxStorageParticles = StorageBuffer_Alloc(pxInstance, axParticles, sizeof(axParticles)); // TODO
+	XorShift128_Init(0x42);
+
+	for (uint32_t i = 0; i < 200000; ++i) {
+		pxParticles[i].xPosition[0] = XorShift128_Float(-5.0F, 5.0F);
+		pxParticles[i].xPosition[1] = XorShift128_Float(-5.0F, 5.0F);
+		pxParticles[i].xVelocity[0] = XorShift128_Float(-30.0F, 30.0F);
+		pxParticles[i].xVelocity[1] = XorShift128_Float(-10.0F, 10.0F);
+	}
+
+	pxRenderer->pxStorageParticles = StorageBuffer_Alloc(pxInstance, pxParticles, sizeof(xParticle_t) * 200000);
+
+	free(pxParticles);
 
 	Renderer_CreateGraphicDescriptorSetLayout(pxRenderer, pxInstance);
 	Renderer_CreateComputeDescriptorSetLayout(pxRenderer, pxInstance);	
@@ -550,5 +588,5 @@ void Renderer_UpdateModelViewProjection(struct xRenderer_t* pxRenderer, xModelVi
 
 void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xBuffer_t* pxVertexBuffer, struct xBuffer_t* pxIndexBuffer, uint32_t nIndexCount, struct xImage_t* pxImage, xTimeInfo_t* pxTimeInfo) {
 	Renderer_SubmitCompute(pxRenderer, pxInstance, pxTimeInfo);
-	//Renderer_SubmitGraphic(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, nIndexCount, pxImage);
+	Renderer_SubmitGraphic(pxRenderer, pxInstance, pxSwapChain, pxVertexBuffer, pxIndexBuffer, nIndexCount, pxImage);
 }
