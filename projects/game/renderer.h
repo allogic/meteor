@@ -15,7 +15,7 @@ struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapC
 void Renderer_Free(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance);
 
 xTimeInfo_t* Renderer_GetTimeInfo(struct xRenderer_t* pxRenderer);
-xModelViewProjection_t* Renderer_GetModelViewProjection(struct xRenderer_t* pxRenderer);
+xViewProjection_t* Renderer_GetViewProjection(struct xRenderer_t* pxRenderer);
 
 void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xList_t* pxEntities);
 

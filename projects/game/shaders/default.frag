@@ -1,15 +1,23 @@
 #version 450 core
 
+#define TEXTURE_COUNT 32
+
 layout(location = 0) in Vertex {
 	vec4 position;
 	vec2 uv;
 	vec4 color;
 } inputVertex;
 
-layout(binding = 1) uniform sampler2D uniformSampler;
+layout(push_constant) uniform PerObjectData {
+	mat4 model;
+	uint textureIndex;
+} perObjectData;
+
+layout(binding = 1) uniform sampler texSampler;
+layout(binding = 2) uniform texture2D Textures[TEXTURE_COUNT];
 
 layout(location = 0) out vec4 outputColor;
 
 void main() {
-	outputColor = texture(uniformSampler, inputVertex.uv);
+	outputColor = texture(sampler2D(Textures[perObjectData.textureIndex], texSampler), inputVertex.uv);
 }

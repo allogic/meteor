@@ -17,9 +17,8 @@
 #include <vulkan/vertex.h>
 #include <vulkan/buffer.h>
 #include <vulkan/buffervariance.h>
-#include <vulkan/image.h>
-#include <vulkan/imagevariance.h>
 
+#include <game/assets.h>
 #include <game/scene.h>
 #include <game/entity.h>
 #include <game/component.h>
@@ -48,6 +47,10 @@ int32_t main(void) {
 
 	struct xInstance_t* pxInstance = Instance_Alloc();
 
+	Assets_Alloc();
+
+	Assets_CreateImageForName(pxInstance, "Test", "test.bmp");
+
 	uint32_t nParticleCount = 10000;
 
 	xParticle_t* pxParticles = (xParticle_t*)calloc(nParticleCount, sizeof(xParticle_t));
@@ -65,7 +68,7 @@ int32_t main(void) {
 		VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4),
 		IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6),
 		6,
-		StandardImage_Alloc(pxInstance, "test.bmp"),
+		0,
 	};
 
 	xParticleSystem_t xParticleSystem = {
@@ -119,9 +122,10 @@ int32_t main(void) {
 
 	Buffer_Free(xParticleSystem.pxParticleBuffer, pxInstance);
 
-	Image_Free(xSharedQuad.pxAlbedoImage, pxInstance);
 	Buffer_Free(xSharedQuad.pxIndexBuffer, pxInstance);
 	Buffer_Free(xSharedQuad.pxVertexBuffer, pxInstance);
+
+	Assets_Free(pxInstance);
 
 	Instance_Free(pxInstance);
 

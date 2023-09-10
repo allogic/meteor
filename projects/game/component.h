@@ -47,7 +47,7 @@ typedef struct {
 	struct xBuffer_t* pxVertexBuffer;
 	struct xBuffer_t* pxIndexBuffer;
 	uint32_t nIndexCount;
-	struct xImage_t* pxAlbedoImage;
+	uint32_t nTextureIndex;
 } xRenderable_t;
 
 typedef struct {

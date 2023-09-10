@@ -9,13 +9,17 @@ layout(location = 0) in vec3 inputPosition;
 layout(location = 1) in vec2 inputUv;
 layout(location = 2) in vec4 inputColor;
 
-layout(binding = 0) uniform UniformModelViewProjection {
+layout(push_constant) uniform PerObjectData {
 	mat4 model;
+	uint textureIndex;
+} perObjectData;
+
+layout(binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
-} mvp;
+} vp;
 
-layout(std430, binding = 1) readonly buffer BufferInputParticle {
+layout(std430, binding = 1) readonly buffer InputParticle {
 	Particle particles[];
 };
 
@@ -30,7 +34,7 @@ void main() {
 
 	vec3 instancePosition = particles[index].position;
 
-	vec4 position = mvp.projection * mvp.view * mvp.model * vec4(inputPosition + instancePosition, 1.0);
+	vec4 position = vp.projection * vp.view * perObjectData.model * vec4(inputPosition + instancePosition, 1.0);
 	vec4 color = inputColor;
 
 	outputVertex.position = position;

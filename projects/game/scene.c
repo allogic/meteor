@@ -67,20 +67,17 @@ void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 
 void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct xTimer_t* pxTimer) {
 	xTimeInfo_t* pxTimeInfo = Renderer_GetTimeInfo(pxScene->pxRenderer);
-	xModelViewProjection_t* pxModelViewProjection = Renderer_GetModelViewProjection(pxScene->pxRenderer);
+	xViewProjection_t* pxViewProjection = Renderer_GetViewProjection(pxScene->pxRenderer);
 
 	pxTimeInfo->fTime = Timer_GetTime(pxTimer);
 	pxTimeInfo->fDeltaTime = Timer_GetDeltaTime(pxTimer);
 
-	Orthographic_Projection(-50.0F, 50.0F, -50.0F, 50.0F, 0.001F, 100.0F, pxModelViewProjection->xProjection);
+	Orthographic_Projection(-50.0F, 50.0F, -50.0F, 50.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
 
 	xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
 	xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
 	xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
-	View_LookAt(xEye, xCenter, xUp, pxModelViewProjection->xView);
-
-	xVec3_t xPosition = { 0.0F, 0.0F, 0.0F };
-	Matrix_SetPosition(pxModelViewProjection->xModel, xPosition);
+	View_LookAt(xEye, xCenter, xUp, pxViewProjection->xView);
 
 	Renderer_Draw(pxScene->pxRenderer, pxInstance, pxScene->pxSwapChain, pxScene->pxEntities);
 }

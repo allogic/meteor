@@ -9,6 +9,7 @@ list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 list(APPEND SOURCES "${PROJECT_DIR}/renderer.c")
 list(APPEND SOURCES "${PROJECT_DIR}/entity.c")
 list(APPEND SOURCES "${PROJECT_DIR}/scene.c")
+list(APPEND SOURCES "${PROJECT_DIR}/assets.c")
 
 list(APPEND SOURCES "${COMMON_DIR}/timer.c")
 

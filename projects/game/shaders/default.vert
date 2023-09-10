@@ -4,8 +4,12 @@ layout(location = 0) in vec3 inputPosition;
 layout(location = 1) in vec2 inputUv;
 layout(location = 2) in vec4 inputColor;
 
-layout(binding = 0) uniform UniformModelViewProjection {
+layout(push_constant) uniform PerObjectData {
 	mat4 model;
+	uint textureIndex;
+} perObjectData;
+
+layout(binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
 } mvp;
@@ -17,7 +21,7 @@ layout(location = 0) out Vertex {
 } outputVertex;
 
 void main() {
-	vec4 position = mvp.projection * mvp.view * mvp.model * vec4(inputPosition, 1.0);
+	vec4 position = mvp.projection * mvp.view * perObjectData.model * vec4(inputPosition, 1.0);
 	vec4 color = inputColor;
 
 	outputVertex.position = position;

@@ -7,10 +7,10 @@
 
 #include <standard/list.h>
 
-#define ENTITY_MAX_NAME_LENGTH 32
+#define ENTITY_NAME_LENGTH 32
 
 struct xEntity_t {
-	char acName[ENTITY_MAX_NAME_LENGTH];
+	char acName[ENTITY_NAME_LENGTH];
 	struct xEntity_t* pxParent;
 	struct xList_t* pxChildren;
 	uint64_t wMask;
@@ -21,8 +21,9 @@ struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent) {
 	struct xEntity_t* pxEntity = (struct xEntity_t*)calloc(1, sizeof(struct xEntity_t));
 
 	uint32_t nNameLength = strlen(pcName);
-	memcpy(pxEntity->acName, pcName, MIN(ENTITY_MAX_NAME_LENGTH - 1, nNameLength));
-	pxEntity->acName[ENTITY_MAX_NAME_LENGTH - 1] = 0;
+	memcpy(pxEntity->acName, pcName, MIN(ENTITY_NAME_LENGTH - 1, nNameLength));
+	
+	pxEntity->acName[ENTITY_NAME_LENGTH - 1] = 0;
 	pxEntity->pxParent = pxParent;
 	pxEntity->pxChildren = List_Alloc();
 
@@ -84,10 +85,10 @@ xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity) {
 }
 
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
-	memset(pxEntity->acName, 0, ENTITY_MAX_NAME_LENGTH);
+	memset(pxEntity->acName, 0, ENTITY_NAME_LENGTH);
 	uint32_t nNameLength = strlen(pcName);
-	memcpy(pxEntity->acName, pcName, MIN(ENTITY_MAX_NAME_LENGTH - 1, nNameLength));
-	pxEntity->acName[ENTITY_MAX_NAME_LENGTH - 1] = 0;
+	memcpy(pxEntity->acName, pcName, MIN(ENTITY_NAME_LENGTH - 1, nNameLength));
+	pxEntity->acName[ENTITY_NAME_LENGTH - 1] = 0;
 }
 
 void Entity_SetTransform(struct xEntity_t* pxEntity, xTransform_t* pxTransform) {
