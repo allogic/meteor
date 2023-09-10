@@ -19,6 +19,14 @@
 #	include <vulkan/vulkan_wayland.h>
 #endif
 
+#include <config.h>
+
+#ifdef ENABLE_VULKAN_INSTANCE_DEBUG
+#	define LOG(...) printf(__VA_ARGS__)
+#else
+#	define LOG(...)
+#endif
+
 struct xInstance_t {
 	VkInstance xInstance;
 #ifdef DEBUG
@@ -82,7 +90,7 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 	UNUSED(xMessageType);
 	UNUSED(pUserData);
 
-	printf("%s\n", pxCallbackData->pMessage);
+	LOG("%s\n", pxCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -201,6 +209,9 @@ static void Instance_FindQueueFamilies(struct xInstance_t* pxInstance) {
 	}
 
 	free(pxQueueFamilyProperties);
+
+	LOG("GraphicAndComputeQueueIndex %d\n", pxInstance->nGraphicAndComputeQueueIndex);
+	LOG("PresentQueueIndex %d\n", pxInstance->nPresentQueueIndex);
 }
 
 static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstance) {
@@ -215,18 +226,16 @@ static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstanc
 
 		for (uint32_t j = 0; j < nAvailableDeviceExtensionCount; ++j) {
 			if (strcmp(s_apDeviceExtensions[i], pxAvailableDeviceExtensions[j].extensionName) == 0) {
-#ifdef DEBUG
-				printf("Found %s\n", s_apDeviceExtensions[i]);
-#endif
+				LOG("Found %s\n", s_apDeviceExtensions[i]);
+
 				nDeviceExtensionsAvailable = true;
+
 				break;
 			}
 		}
 
 		if (!nDeviceExtensionsAvailable) {
-#ifdef DEBUG
-			printf("Missing %s\n", s_apDeviceExtensions[i]);
-#endif
+			LOG("Missing %s\n", s_apDeviceExtensions[i]);
 
 			break;
 		}

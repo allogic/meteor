@@ -9,6 +9,7 @@ struct xList_t* List_Alloc(void);
 void List_Free(struct xList_t* pxList);
 
 void List_Push(struct xList_t* pxList, void* pData, uint32_t nSize);
+void List_Pop(struct xList_t* pxList);
 
 uint32_t List_Count(struct xList_t* pxList);
 

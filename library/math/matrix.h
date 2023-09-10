@@ -19,6 +19,7 @@ void Matrix_SetPosition(xMat4_t xMat, xVec3_t xVec);
 
 void Matrix_Zero(xMat4_t xMat);
 void Matrix_Copy(xMat4_t xMat, xMat4_t xRes);
+void Matrix_Identity(xMat4_t xMat);
 
 void Matrix_Mul(xMat4_t xMatA, xMat4_t xMatB, xMat4_t xRes);
 

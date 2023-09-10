@@ -13,6 +13,7 @@ struct xImage_t {
 	uint64_t wSize;
 	uint32_t nWidth;
 	uint32_t nHeight;
+	VkFormat xFormat;
 	VkImage xImage;
 	VkDeviceMemory xDeviceMemory;
 	VkImageView xImageView;
@@ -26,6 +27,7 @@ struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, ui
 	pxImage->wSize = nWidth * nHeight * 4;
 	pxImage->nWidth = nWidth;
 	pxImage->nHeight = nHeight;
+	pxImage->xFormat = xFormat;
 
 	VkImageCreateInfo xVkImageCreateInfo;
 	memset(&xVkImageCreateInfo, 0, sizeof(xVkImageCreateInfo));
@@ -115,6 +117,18 @@ uint64_t Image_GetSize(struct xImage_t* pxImage) {
 	return pxImage->wSize;
 }
 
+uint32_t Image_GetWidth(struct xImage_t* pxImage) {
+	return pxImage->nWidth;
+}
+
+uint32_t Image_GetHeight(struct xImage_t* pxImage) {
+	return pxImage->nHeight;
+}
+
+VkFormat Image_GetFormat(struct xImage_t* pxImage) {
+	return pxImage->xFormat;
+}
+
 VkImage Image_GetImage(struct xImage_t* pxImage) {
 	return pxImage->xImage;
 }
@@ -149,6 +163,8 @@ void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
 }
 
 void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
+	UNUSED(xFormat);
+
 	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
 	VkImageMemoryBarrier xImageMemoryBarrier;

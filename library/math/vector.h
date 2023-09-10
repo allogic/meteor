@@ -7,6 +7,8 @@
 #define VEC3_ZERO { 0.0F, 0.0F, 0.0F }
 #define VEC4_ZERO { 0.0F, 0.0F, 0.0F, 0.0F }
 
+void Vector_Set(xVec3_t xVec, float fX, float fY, float fZ);
+
 void Vector_Sub(xVec3_t xVecA, xVec3_t xVecB, xVec3_t xRes);
 void Vector_MulAdd(xVec4_t xVec, float fScalar, xVec4_t xRes);
 void Vector_Scale(xVec3_t xVec, float fScale, xVec3_t xRes);

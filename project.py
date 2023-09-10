@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import platform
+import time
 
 def configure_project(project, configuration):
 	project_path=f'projects/{project}'
@@ -50,6 +51,7 @@ def debug_project(project):
 	os.chdir(project_path)
 	os.system(f'lldb {project}')
 	os.chdir(root_path)
+	time.sleep(2);
 	os.remove(dst_path)
 
 def build_shader(project):

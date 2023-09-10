@@ -20,6 +20,13 @@ void Matrix_Zero(xMat4_t xMat) {
 	xMat[3][0] = xMat[3][1] = xMat[3][2] = xMat[3][3] = 0.0F;
 }
 
+void Matrix_Identity(xMat4_t xMat) {
+	xMat[0][0] = 1.0F; xMat[0][1] = 0.0F; xMat[0][2] = 0.0F; xMat[0][3] = 0.0F;
+	xMat[1][0] = 0.0F; xMat[1][1] = 1.0F; xMat[1][2] = 0.0F; xMat[1][3] = 0.0F;
+	xMat[2][0] = 0.0F; xMat[2][1] = 0.0F; xMat[2][2] = 1.0F; xMat[2][3] = 0.0F;
+	xMat[3][0] = 0.0F; xMat[3][1] = 0.0F; xMat[3][2] = 0.0F; xMat[3][3] = 1.0F;
+}
+
 void Matrix_Copy(xMat4_t xMat, xMat4_t xRes) {
 	xRes[0][0] = xMat[0][0]; xRes[1][0] = xMat[1][0];
 	xRes[0][1] = xMat[0][1]; xRes[1][1] = xMat[1][1];

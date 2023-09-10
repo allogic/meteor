@@ -37,6 +37,7 @@ set(FILESYSTEM_DIR "../../library/filesystem")
 set(MATH_DIR "../../library/math")
 set(STANDARD_DIR "../../library/standard")
 set(PLATFORM_DIR "../../library/platform")
+set(RANDOM_DIR "../../library/random")
 set(VULKAN_DIR "../../library/vulkan")
 
 include_directories(${PROJECT_DIR})

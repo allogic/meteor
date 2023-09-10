@@ -51,6 +51,10 @@ void List_Push(struct xList_t* pxList, void* pData, uint32_t nSize) {
 	pxList->nCount++;
 }
 
+void List_Pop(struct xList_t* pxList) {
+#warning "Not yet implemented!"
+}
+
 uint32_t List_Count(struct xList_t* pxList) {
 	return pxList->nCount;
 }

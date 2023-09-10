@@ -1,0 +1,6 @@
+#ifndef GAME_CONFIG_H
+#define GAME_CONFIG_H
+
+#define ENABLE_VULKAN_INSTANCE_DEBUG
+
+#endif

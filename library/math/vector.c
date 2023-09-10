@@ -2,6 +2,12 @@
 
 #include <math/vector.h>
 
+void Vector_Set(xVec3_t xVec, float fX, float fY, float fZ) {
+	xVec[0] = fX;
+	xVec[1] = fY;
+	xVec[2] = fZ;
+}
+
 void Vector_Sub(xVec3_t xVecA, xVec3_t xVecB, xVec3_t xRes) {
 	xRes[0] = xVecA[0] - xVecB[0];
 	xRes[1] = xVecA[1] - xVecB[1];

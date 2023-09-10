@@ -1,7 +1,7 @@
 #version 450 core
 
 struct Particle {
-    vec3 position;
+	vec3 position;
 	vec3 velocity;
 };
 

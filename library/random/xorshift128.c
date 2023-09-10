@@ -1,4 +1,4 @@
-#include <common/xorshift128.h>
+#include <random/xorshift128.h>
 
 #define U64_TO_DOUBLE(X) ((X >> 11) * 0x1.0p-53)
 

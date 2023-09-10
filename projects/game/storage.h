@@ -1,5 +1,5 @@
-#ifndef SANDSIM_STORAGE_H
-#define SANDSIM_STORAGE_H
+#ifndef GAME_STORAGE_H
+#define GAME_STORAGE_H
 
 #include <math/vector.h>
 
