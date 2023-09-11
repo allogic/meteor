@@ -10,11 +10,11 @@ layout(binding = 0) uniform TimeInfo {
 	float deltaTime;
 } timeInfo;
 
-layout(std430, binding = 1) readonly buffer BufferInputParticle {
+layout(std430, binding = 1) readonly buffer InputParticle {
 	Particle inputParticles[];
 };
 
-layout(std430, binding = 2) buffer BufferOutputParticle {
+layout(std430, binding = 2) buffer OutputParticle {
 	Particle outputParticles[];
 };
 

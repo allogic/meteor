@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <common/macros.h>
 #include <common/timer.h>
 
 #include <debug/stacktrace.h>
@@ -24,14 +25,18 @@
 #include <game/component.h>
 #include <game/storage.h>
 
-xVertex_t axVertices[4] = {
+ASSET_IMAGE_ARRAY_BEGIN
+	ASSET_IMAGE_ARRAY_ENTRY("test", "test.bmp")
+ASSET_IMAGE_ARRAY_END
+
+static xVertex_t s_axVertices[4] = {
 	{ { -0.5F, -0.5F, 0.0F }, { 1.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
 	{ {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
 	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 1.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
 	{ { -0.5F,  0.5F, 0.0F }, { 1.0F, 1.0F }, { 1.0F, 1.0F, 1.0F, 1.0F } },
 };
 
-uint32_t anIndices[6] = {
+static uint32_t s_anIndices[6] = {
 	0, 1, 2, 2, 3, 0,
 };
 
@@ -47,9 +52,7 @@ int32_t main(void) {
 
 	struct xInstance_t* pxInstance = Instance_Alloc();
 
-	Assets_Alloc();
-
-	Assets_CreateImageForName(pxInstance, "Test", "test.bmp");
+	Assets_Alloc(pxInstance);
 
 	uint32_t nParticleCount = 10000;
 
@@ -65,8 +68,8 @@ int32_t main(void) {
 	}
 
 	xRenderable_t xSharedQuad = {
-		VertexBuffer_Alloc(pxInstance, axVertices, sizeof(xVertex_t) * 4),
-		IndexBuffer_Alloc(pxInstance, anIndices, sizeof(uint32_t) * 6),
+		VertexBuffer_Alloc(pxInstance, s_axVertices, sizeof(xVertex_t) * 4),
+		IndexBuffer_Alloc(pxInstance, s_anIndices, sizeof(uint32_t) * 6),
 		6,
 		0,
 	};
