@@ -6,10 +6,10 @@
 #include <common/macros.h>
 #include <common/stringutil.h>
 
-#include <debug/stacktrace.h>
+#include <container/list.h>
+#include <container/queue.h>
 
-#include <standard/list.h>
-#include <standard/queue.h>
+#include <debug/stacktrace.h>
 
 #include <filesystem/filelist.h>
 #include <filesystem/fileutil.h>
@@ -23,19 +23,18 @@ printf("\n");
 static void List_Test(void) {
 	PRINT_TEST_BEGIN(List_Test);
 
-	struct xList_t* pxList = List_Alloc();
+	struct xList_t* pxList = List_Alloc(sizeof(uint32_t), 8);
 
-	for (int32_t i = 0; i < 8; ++i) {
-		List_Push(pxList, &i, sizeof(i));
+	for (uint32_t i = 0; i < 8; ++i) {
+		List_Push(pxList, &i);
 	}
 
-	void* pData = List_Begin(pxList);
-	while (pData) {
-		printf("%d\n", *(int32_t*)pData);
+	uint32_t* pnData = List_Begin(pxList);
+	while (pnData) {
+		printf("%d\n", *pnData);
 
-		pData = List_Next(pxList);
+		pnData = List_Next(pxList);
 	}
-
 	printf("\n");
 
 	List_Free(pxList);
@@ -44,30 +43,34 @@ static void List_Test(void) {
 static void Queue_Test(void) {
 	PRINT_TEST_BEGIN(Queue_Test);
 
-	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 4);
+	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 16);
 
+	printf("Enqueue\n");
 	for (uint32_t i = 0; i < 8; ++i) {
-		printf("Push:%u ReadIndex:%u WriteIndex:%u ReadOffset:%u WriteOffset:%u\n",
-			i,
-			Queue_GetReadIndex(pxQueue),
-			Queue_GetWriteIndex(pxQueue),
-			Queue_GetReadOffset(pxQueue),
-			Queue_GetWriteOffset(pxQueue));
 		Queue_Push(pxQueue, &i);
 	}
-
 	printf("\n");
 
-	Queue_Dump(pxQueue);
-
-	printf("\n");
-
+	printf("Dequeue\n");
 	while (!Queue_Empty(pxQueue)) {
 		uint32_t i;
 		Queue_Pop(pxQueue, &i);
 		printf("Pop:%u\n", i);
 	}
+	printf("\n");
 
+	printf("Enqueue\n");
+	for (uint32_t i = 0; i < 26; ++i) {
+		Queue_Push(pxQueue, &i);
+	}
+	printf("\n");
+
+	printf("Dequeue\n");
+	while (!Queue_Empty(pxQueue)) {
+		uint32_t i;
+		Queue_Pop(pxQueue, &i);
+		printf("Pop:%u\n", i);
+	}
 	printf("\n");
 }
 

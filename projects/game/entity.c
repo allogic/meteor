@@ -3,9 +3,9 @@
 
 #include <common/macros.h>
 
-#include <game/entity.h>
+#include <container/list.h>
 
-#include <standard/list.h>
+#include <game/entity.h>
 
 #define ENTITY_NAME_LENGTH 32
 

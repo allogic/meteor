@@ -4,9 +4,9 @@
 
 #include <common/macros.h>
 
-#include <math/matrix.h>
+#include <container/list.h>
 
-#include <standard/list.h>
+#include <math/matrix.h>
 
 #include <platform/nativewindow.h>
 
@@ -89,7 +89,6 @@ static void Renderer_CreateDefaultGraphicDescriptorSetLayout(struct xRenderer_t*
 
 	VK_CHECK(vkCreateDescriptorSetLayout(Instance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xDefaultGraphicDescriptorSetLayout));
 }
-
 static void Renderer_CreateParticleGraphicDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[4];
 
@@ -125,7 +124,6 @@ static void Renderer_CreateParticleGraphicDescriptorSetLayout(struct xRenderer_t
 
 	VK_CHECK(vkCreateDescriptorSetLayout(Instance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xParticleGraphicDescriptorSetLayout));
 }
-
 static void Renderer_CreateParticleComputeDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[3];
 
@@ -177,7 +175,6 @@ static void Renderer_CreateDefaultGraphicDescriptorPool(struct xRenderer_t* pxRe
 
 	VK_CHECK(vkCreateDescriptorPool(Instance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xDefaultGraphicDescriptorPool));
 }
-
 static void Renderer_CreateParticleGraphicDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorPoolSize axDescriptorPoolSizes[4];
 
@@ -202,7 +199,6 @@ static void Renderer_CreateParticleGraphicDescriptorPool(struct xRenderer_t* pxR
 
 	VK_CHECK(vkCreateDescriptorPool(Instance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xParticleGraphicDescriptorPool));
 }
-
 static void Renderer_CreateParticleComputeDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorPoolSize axDescriptorPoolSizes[2];
 
@@ -234,7 +230,6 @@ static void Renderer_CreateDefaultGraphicDescriptorSets(struct xRenderer_t* pxRe
 
 	VK_CHECK(vkAllocateDescriptorSets(Instance_GetDevice(pxInstance), &xDescriptorSetAllocateInfo, &pxRenderer->xDefaultGraphicDescriptorSet));
 }
-
 static void Renderer_CreateParticleGraphicDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayout axDescriptorSetsLayouts[] = { pxRenderer->xParticleGraphicDescriptorSetLayout };
 
@@ -247,7 +242,6 @@ static void Renderer_CreateParticleGraphicDescriptorSets(struct xRenderer_t* pxR
 
 	VK_CHECK(vkAllocateDescriptorSets(Instance_GetDevice(pxInstance), &xDescriptorSetAllocateInfo, &pxRenderer->xParticleGraphicDescriptorSet));
 }
-
 static void Renderer_CreateParticleComputeDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorSetLayout axDescriptorSetsLayouts[] = { pxRenderer->xParticleComputeDescriptorSetLayout };
 
@@ -286,7 +280,6 @@ static void Renderer_CreateDefaultGraphicSampler(struct xRenderer_t* pxRenderer,
 
 	VK_CHECK(vkCreateSampler(Instance_GetDevice(pxInstance), &xSamplerCreateInfo, 0, &pxRenderer->axDefaultGraphicSampler));
 }
-
 static void Renderer_CreateParticleGraphicSampler(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkPhysicalDeviceProperties xPhysicalDeviceProperties;
 	vkGetPhysicalDeviceProperties(Instance_GetPhysicalDevice(pxInstance), &xPhysicalDeviceProperties);
@@ -372,7 +365,6 @@ static void Renderer_UpdateDefaultGraphicDescriptorSets(struct xRenderer_t* pxRe
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
-
 static void Renderer_UpdateParticleGraphicDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorBufferInfo xViewProjectionDescriptorBufferInfo;
 	memset(&xViewProjectionDescriptorBufferInfo, 0, sizeof(xViewProjectionDescriptorBufferInfo));
@@ -449,7 +441,6 @@ static void Renderer_UpdateParticleGraphicDescriptorSets(struct xRenderer_t* pxR
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
-
 static void Renderer_UpdateParticleComputeDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkDescriptorBufferInfo xTimeInfoDescriptorBufferInfo;
 	memset(&xTimeInfoDescriptorBufferInfo, 0, sizeof(xTimeInfoDescriptorBufferInfo));
@@ -509,7 +500,6 @@ static void Renderer_CreateDefaultPushConstants(struct xRenderer_t* pxRenderer) 
 	pxRenderer->axDefaultGraphicPushConstantRanges[0].size = sizeof(xPerObjectData_t);
 	pxRenderer->axDefaultGraphicPushConstantRanges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 }
-
 static void Renderer_CreateParticlePushConstants(struct xRenderer_t* pxRenderer) {
 	// TODO: Split push constant into model and textureIndex
 	// TODO: And also rename it to xPerEntityData_t
@@ -543,7 +533,6 @@ static void Renderer_CreateDefaultGraphicPipeline(struct xRenderer_t* pxRenderer
 	Shader_Free(pxInstance, xVertModule);
 	Shader_Free(pxInstance, xFragModule);
 }
-
 static void Renderer_CreateParticleGraphicPipeline(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain) {
 	VkShaderModule xVertModule = Shader_Alloc(pxInstance, "shaders/particle.vert.spv");
 	VkShaderModule xFragModule = Shader_Alloc(pxInstance, "shaders/particle.frag.spv");
@@ -568,7 +557,6 @@ static void Renderer_CreateParticleGraphicPipeline(struct xRenderer_t* pxRendere
 	Shader_Free(pxInstance, xVertModule);
 	Shader_Free(pxInstance, xFragModule);
 }
-
 static void Renderer_CreateParticleComputePipeline(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkShaderModule xCompModule = Shader_Alloc(pxInstance, "shaders/particle.comp.spv");
 
@@ -590,7 +578,6 @@ static void Renderer_CreateGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 
 	VK_CHECK(vkAllocateCommandBuffers(Instance_GetDevice(pxInstance), &xCommandBufferAllocCreateInfo, &pxRenderer->xGraphicCommandBuffer));
 }
-
 static void Renderer_CreateComputeCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkCommandBufferAllocateInfo xCommandBufferAllocCreateInfo;
 	memset(&xCommandBufferAllocCreateInfo, 0, sizeof(xCommandBufferAllocCreateInfo));
@@ -727,7 +714,6 @@ static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 
 	VK_CHECK(vkEndCommandBuffer(pxRenderer->xGraphicCommandBuffer));
 }
-
 static void Renderer_RecordComputeCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
@@ -774,7 +760,6 @@ static void Renderer_CreateGraphicSyncObjects(struct xRenderer_t* pxRenderer, st
 
 	VK_CHECK(vkCreateFence(Instance_GetDevice(pxInstance), &xFenceCreateInfo, 0, &pxRenderer->xGraphicInFlightFence));
 }
-
 static void Renderer_CreateComputeSyncObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkSemaphoreCreateInfo xSemaphoreCreateInfo;
 	memset(&xSemaphoreCreateInfo, 0, sizeof(xSemaphoreCreateInfo));
@@ -833,7 +818,6 @@ static void Renderer_SubmitGraphic(struct xRenderer_t* pxRenderer, struct xInsta
 
 	VK_CHECK(vkQueuePresentKHR(Instance_GetPresentQueue(pxInstance), &xPresentInfo));
 }
-
 static void Renderer_SubmitCompute(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
 	VK_CHECK(vkWaitForFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xComputeInFlightFence, VK_TRUE, UINT64_MAX));
 

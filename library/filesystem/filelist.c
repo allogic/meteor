@@ -7,7 +7,7 @@
 #include <common/macros.h>
 #include <common/stringutil.h>
 
-#include <standard/list.h>
+#include <container/list.h>
 
 #include <filesystem/fs.h>
 #include <filesystem/filelist.h>
@@ -29,7 +29,7 @@ struct xFile_t {
 };
 
 struct xList_t* FileList_Alloc(const char* pcFilePath) {
-	struct xList_t* pxList = List_Alloc();
+	struct xList_t* pxList = List_Alloc(sizeof(struct xFile_t), 16);
 
 #ifdef OS_WINDOWS
 	uint64_t wNormFilePathLength;
@@ -52,7 +52,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = xFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 
-		List_Push(pxList, &xFile, sizeof(xFile));
+		List_Push(pxList, &xFile);
 	} while (FindNextFile(hFile, &xFindData) != 0);
 
 	FindClose(hFile);
@@ -77,7 +77,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = pxEntry->d_type == DT_DIR;
 
-		List_Push(pxList, &xFile, sizeof(xFile));
+		List_Push(pxList, &xFile);
 
 		pxEntry = readdir(pxDir);
 	}
