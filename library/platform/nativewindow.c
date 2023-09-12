@@ -169,8 +169,8 @@ void NativeWindow_Free(void) {
 #endif
 }
 
-bool NativeWindow_ShouldNotClose(void) {
-	return !s_xNativeWindow.bShouldClose;
+bool NativeWindow_ShouldClose(void) {
+	return s_xNativeWindow.bShouldClose;
 }
 
 bool NativeWindow_HasResized(void) {

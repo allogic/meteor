@@ -9,11 +9,20 @@
 #include <debug/stacktrace.h>
 
 #include <standard/list.h>
+#include <standard/queue.h>
 
 #include <filesystem/filelist.h>
 #include <filesystem/fileutil.h>
 
+#define PRINT_TEST_BEGIN(NAME) \
+printf("///////////////////////////////////////////\n"); \
+printf("// %s\n", #NAME); \
+printf("///////////////////////////////////////////\n"); \
+printf("\n");
+
 static void List_Test(void) {
+	PRINT_TEST_BEGIN(List_Test);
+
 	struct xList_t* pxList = List_Alloc();
 
 	for (int32_t i = 0; i < 8; ++i) {
@@ -32,7 +41,39 @@ static void List_Test(void) {
 	List_Free(pxList);
 }
 
+static void Queue_Test(void) {
+	PRINT_TEST_BEGIN(Queue_Test);
+
+	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 4);
+
+	for (uint32_t i = 0; i < 8; ++i) {
+		printf("Push:%u ReadIndex:%u WriteIndex:%u ReadOffset:%u WriteOffset:%u\n",
+			i,
+			Queue_GetReadIndex(pxQueue),
+			Queue_GetWriteIndex(pxQueue),
+			Queue_GetReadOffset(pxQueue),
+			Queue_GetWriteOffset(pxQueue));
+		Queue_Push(pxQueue, &i);
+	}
+
+	printf("\n");
+
+	Queue_Dump(pxQueue);
+
+	printf("\n");
+
+	while (!Queue_Empty(pxQueue)) {
+		uint32_t i;
+		Queue_Pop(pxQueue, &i);
+		printf("Pop:%u\n", i);
+	}
+
+	printf("\n");
+}
+
 static void FileList_Test(void) {
+	PRINT_TEST_BEGIN(FileList_Test);
+
 	struct xList_t* pxList = FileList_Alloc("./");
 
 	struct xFile_t* pxFile = FileList_Begin(pxList);
@@ -51,6 +92,8 @@ static void FileList_Test(void) {
 }
 
 static void StringUtil_Test(void) {
+	PRINT_TEST_BEGIN(StringUtil_Test);
+
 	uint64_t wLength;
 
 	char* pcPath0 = StringUtil_NormalizePath(".", 0, 0);
@@ -89,6 +132,7 @@ int32_t main(void) {
 #endif
 
 	List_Test();
+	Queue_Test();
 	FileList_Test();
 	StringUtil_Test();
 	

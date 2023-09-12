@@ -105,7 +105,7 @@ int32_t main(void) {
 
 	Timer_Start(pxTimer);
 
-	while (NativeWindow_ShouldNotClose()) {
+	while (!NativeWindow_ShouldClose()) {
 		NativeWindow_PollEvents();
 
 		Timer_Measure(pxTimer);

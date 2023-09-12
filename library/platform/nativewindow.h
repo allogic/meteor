@@ -7,7 +7,7 @@
 void NativeWindow_Alloc(const char* pcTitle, uint32_t nWidth, uint32_t nHeight);
 void NativeWindow_Free(void);
 
-bool NativeWindow_ShouldNotClose(void);
+bool NativeWindow_ShouldClose(void);
 bool NativeWindow_HasResized(void);
 void NativeWindow_PollEvents(void);
 
