@@ -15,6 +15,4 @@ void Queue_Pop(struct xQueue_t* pxQueue, void* pData);
 bool Queue_Empty(struct xQueue_t* pxQueue);
 uint32_t Queue_Count(struct xQueue_t* pxQueue);
 
-void Queue_Dump(struct xQueue_t* pxQueue);
-
 #endif

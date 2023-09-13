@@ -91,14 +91,3 @@ bool Queue_Empty(struct xQueue_t* pxQueue) {
 uint32_t Queue_Count(struct xQueue_t* pxQueue) {
 	return (pxQueue->nWriteIndex + pxQueue->nBufferCount - pxQueue->nReadIndex) % pxQueue->nBufferCount;
 }
-
-void Queue_Dump(struct xQueue_t* pxQueue) {
-	printf("nValueSize:%u\n", pxQueue->nValueSize);
-	printf("nRelocCount:%u\n", pxQueue->nRelocCount);
-	printf("nBufferSize:%u\n", pxQueue->nBufferSize);
-	printf("nBufferCount:%u\n", pxQueue->nBufferCount);
-	printf("nWriteIndex:%u\n", pxQueue->nWriteIndex);
-	printf("nWriteOffset:%u\n", pxQueue->nWriteOffset);
-	printf("nReadIndex:%u\n", pxQueue->nReadIndex);
-	printf("nReadOffset:%u\n", pxQueue->nReadOffset);
-}
