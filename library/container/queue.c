@@ -22,11 +22,11 @@ static void Queue_Expand(struct xQueue_t* pxQueue) {
 
 	pxQueue->pBuffer = realloc(pxQueue->pBuffer, nNextBufferSize);
 
-	uint8_t* pnSrc = ((uint8_t*)pxQueue->pBuffer) + pxQueue->nBufferSize - 1;
-	uint8_t* pnDst = ((uint8_t*)pxQueue->pBuffer) + nNextBufferSize - 1;
+	uint8_t* pcSrc = ((uint8_t*)pxQueue->pBuffer) + pxQueue->nBufferSize - 1;
+	uint8_t* pcDst = ((uint8_t*)pxQueue->pBuffer) + nNextBufferSize - 1;
 
 	for (uint32_t i = 0; i < (pxQueue->nBufferSize - pxQueue->nReadOffset); ++i) {
-		*(pnDst - i) = *(pnSrc - i);
+		*(pcDst - i) = *(pcSrc - i);
 	}
 
 	pxQueue->nReadIndex += pxQueue->nBufferCount;
