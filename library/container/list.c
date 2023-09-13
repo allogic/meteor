@@ -5,100 +5,120 @@
 #include <container/list.h>
 
 struct xNode_t {
+	struct xNode_t* pxPrev;
 	struct xNode_t* pxNext;
-	uint32_t nIndex;
 	void* pBuffer;
 };
 
 struct xList_t {
-	uint32_t nValueSize;
-	uint32_t nRelocCount;
-	uint32_t nBufferSize;
-	uint32_t nBufferCount;
-	struct xNode_t* pxBuffer;
-	uint32_t nBufferIndex;
 	struct xNode_t* pxHead;
 	struct xNode_t* pxCurr;
 	struct xNode_t* pxTail;
-	uint32_t nCount;
+	uint32_t nValueSize;
+	uint32_t nNodeCount;
 };
 
-static void List_Reloc(struct xList_t* pxList) {
-	struct xNode_t* pxStagingBuffer = (struct xNode_t*)calloc(pxList->nBufferCount + pxList->nRelocCount, sizeof(struct xList_t));
-
-	for (uint32_t i = 0; i < pxList->nRelocCount; ++i) {
-		pxStagingBuffer[pxList->nBufferCount + i].pBuffer = malloc(pxList->nValueSize);
-	}
-
-	memcpy(pxStagingBuffer, pxList->pxBuffer, pxList->nBufferCount);
-
-	free(pxList->pxBuffer);
-
-	pxList->pxBuffer = pxStagingBuffer;
-
-	pxList->nBufferSize += pxList->nRelocCount * sizeof(struct xNode_t);
-	pxList->nBufferCount += pxList->nRelocCount;
-}
-
-struct xList_t* List_Alloc(uint32_t nValueSize, uint32_t nRelocCount) {
+struct xList_t* List_Alloc(uint32_t nValueSize) {
 	struct xList_t* pxList = (struct xList_t*)calloc(1, sizeof(struct xList_t));
 
 	pxList->nValueSize = nValueSize;
-	pxList->nRelocCount = nRelocCount;
-	pxList->nBufferSize = nRelocCount * sizeof(struct xNode_t);
-	pxList->nBufferCount = nRelocCount;
-	pxList->pxBuffer = (struct xNode_t*)calloc(nRelocCount, sizeof(struct xNode_t));
-
-	for (uint32_t i = 0; i < nRelocCount; ++i) {
-		pxList->pxBuffer[i].pBuffer = malloc(nValueSize);
-	}
 
 	return pxList;
 }
 
 void List_Free(struct xList_t* pxList) {
-	//if (pxList->pxHead) {
-	//	pxList->pxCurr = pxList->pxHead;
-	//	struct xNode_t* next;
-	//	while (pxList->pxCurr != pxList->pxTail) {
-	//		next = pxList->pxCurr->pxNext;
-	//		free(pxList->pxCurr->pData);
-	//		free(pxList->pxCurr);
-	//		pxList->pxCurr = next;
-	//	}
-	//	free(pxList->pxTail->pData);
-	//	free(pxList->pxTail);
-	//}
-	//free(pxList);
+	pxList->pxCurr = pxList->pxHead;
+
+	struct xNode_t* pxNext;
+	while (pxList->pxCurr) {
+		pxNext = pxList->pxCurr->pxNext;
+
+		free(pxList->pxCurr->pBuffer);
+		free(pxList->pxCurr);
+
+		pxList->pxCurr = pxNext;
+	}
+
+	free(pxList);
 }
 
-void List_Push(struct xList_t* pxList, void* pData) {
-	struct xNode_t* pxNode = &pxList->pxBuffer[pxList->nBufferIndex];
+void* List_Add(struct xList_t* pxList, void* pData) {
+	struct xNode_t* pxNode = (struct xNode_t*)calloc(1, sizeof(struct xNode_t));
+
+	pxNode->pBuffer = malloc(pxList->nValueSize);
 	memcpy(pxNode->pBuffer, pData, pxList->nValueSize);
 
-	if (pxList->pxHead == 0) {
-		pxList->pxHead = pxNode;
-		pxList->pxTail = pxList->pxHead;
-	} else {
+	if (pxList->pxHead) {
+		pxNode->pxPrev = pxList->pxTail;
+
 		pxList->pxTail->pxNext = pxNode;
-		pxList->pxTail = pxList->pxTail->pxNext;
+		pxList->pxTail = pxNode;
+	} else {
+		pxList->pxHead = pxNode;
+		pxList->pxTail = pxNode;
 	}
 
-	pxList->nBufferIndex += 1;
-	pxList->nCount += 1;
+	pxList->nNodeCount += 1;
 
-	if (pxList->nBufferIndex >= pxList->nBufferCount) {
-		printf("Reloc push\n");
-		List_Reloc(pxList);
-	}
+	return pxNode;
 }
 
-void List_Pop(struct xList_t* pxList) {
-#warning "Not yet implemented!"
+void* List_Remove(struct xList_t* pxList, void* pIter) {
+	if (pxList->pxHead == pIter) {
+		struct xNode_t* pxNext = pxList->pxHead->pxNext;
+
+		free(pxList->pxHead->pBuffer);
+		free(pxList->pxHead);
+
+		pxList->pxHead = pxNext;
+
+		pxList->nNodeCount -= 1;
+
+		return pxList->pxHead;
+	} else if (pxList->pxTail == pIter) {
+		struct xNode_t* pxPrev = pxList->pxTail->pxPrev;
+
+		pxPrev->pxNext = 0;
+
+		free(pxList->pxTail->pBuffer);
+		free(pxList->pxTail);
+
+		pxList->pxTail = pxPrev;
+
+		pxList->nNodeCount -= 1;
+
+		return pxList->pxTail;
+	} else {
+		pxList->pxCurr = pxList->pxHead->pxNext;
+
+		struct xNode_t* pxNext;
+		while (pxList->pxCurr) {
+			pxNext = pxList->pxCurr->pxNext;
+
+			if (pxList->pxCurr == pIter) {
+				pxList->pxCurr->pxPrev->pxNext = pxNext;
+
+				free(pxList->pxCurr->pBuffer);
+				free(pxList->pxCurr);
+
+				pxList->nNodeCount -= 1;
+
+				return pxNext;
+			}
+
+			pxList->pxCurr = pxNext;
+		}
+	}
+
+	return pxList->pxTail;
+}
+
+bool List_Empty(struct xList_t* pxList) {
+	return pxList->nNodeCount == 0;
 }
 
 uint32_t List_Count(struct xList_t* pxList) {
-	return pxList->nCount;
+	return pxList->nNodeCount;
 }
 
 void* List_Begin(struct xList_t* pxList) {

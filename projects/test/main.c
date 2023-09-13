@@ -7,6 +7,7 @@
 #include <common/stringutil.h>
 
 #include <container/list.h>
+#include <container/vector.h>
 #include <container/queue.h>
 
 #include <debug/stacktrace.h>
@@ -23,31 +24,119 @@ printf("\n");
 static void List_Test(void) {
 	PRINT_TEST_BEGIN(List_Test);
 
-	struct xList_t* pxList = List_Alloc(sizeof(uint32_t), 8);
+	{
+		struct xList_t* pxList = List_Alloc(sizeof(uint32_t));
 
-	for (uint32_t i = 0; i < 8; ++i) {
-		List_Push(pxList, &i);
+		printf("Insert\n");
+		for (uint32_t i = 0; i < 8; ++i) {
+			List_Add(pxList, &i);
+			printf("%u\n", i);
+		}
+		printf("\n");
+
+		printf("Iterate\n");
+		uint32_t* pnData = List_Begin(pxList);
+		while (pnData) {
+			printf("%u\n", *pnData);
+			pnData = List_Next(pxList);
+		}
+		printf("\n");
+
+		List_Free(pxList);
 	}
 
-	uint32_t* pnData = List_Begin(pxList);
-	while (pnData) {
-		printf("%d\n", *pnData);
+	{
+		struct xList_t* pxList = List_Alloc(sizeof(uint32_t));
 
-		pnData = List_Next(pxList);
+		printf("Insert\n");
+		uint32_t i42 = 42;
+		void* pIter42 = List_Add(pxList, &i42);
+		printf("%u\n", i42);
+		printf("\n");
+
+		printf("Remove\n");
+		List_Remove(pxList, pIter42);
+		printf("%u at %p\n", i42, pIter42);
+		printf("\n");
+
+		printf("Iterate\n");
+		uint32_t* pnData = List_Begin(pxList);
+		while (pnData) {
+			printf("%u\n", *pnData);
+			pnData = List_Next(pxList);
+		}
+		printf("\n");
+
+		List_Free(pxList);
+	}
+
+	{
+		struct xList_t* pxList = List_Alloc(sizeof(uint32_t));
+
+		printf("Insert\n");
+		uint32_t i42 = 42;
+		uint32_t i43 = 43;
+		uint32_t i44 = 44;
+		void* pIter42 = List_Add(pxList, &i42);
+		void* pIter43 = List_Add(pxList, &i43);
+		void* pIter44 = List_Add(pxList, &i44);
+		printf("%u\n", i42);
+		printf("%u\n", i43);
+		printf("%u\n", i44);
+		printf("\n");
+
+		printf("Remove\n");
+		List_Remove(pxList, pIter44);
+		List_Remove(pxList, pIter43);
+		List_Remove(pxList, pIter42);
+		printf("%u at %p\n", i44, pIter44);
+		printf("%u at %p\n", i43, pIter43);
+		printf("%u at %p\n", i42, pIter42);
+		printf("\n");
+
+		printf("Iterate\n");
+		uint32_t* pnData = List_Begin(pxList);
+		while (pnData) {
+			printf("%u\n", *pnData);
+			pnData = List_Next(pxList);
+		}
+		printf("\n");
+
+		List_Free(pxList);
+	}
+}
+
+static void Vector_Test(void) {
+	PRINT_TEST_BEGIN(Vector_Test);
+
+	struct xVector_t* pxVector = Vector_Alloc(sizeof(uint32_t), 4);
+
+	printf("Insert\n");
+	for (uint32_t i = 0; i < 29; ++i) {
+		Vector_Push(pxVector, &i);
+		printf("%u\n", i);
 	}
 	printf("\n");
 
-	List_Free(pxList);
+	printf("Iterate\n");
+	uint32_t* pnData = Vector_Data(pxVector);
+	for (uint32_t i = 0; i < Vector_Count(pxVector); ++i) {
+		printf("%u\n", pnData[i]);
+	}
+	printf("\n");
+
+	Vector_Free(pxVector);
 }
 
 static void Queue_Test(void) {
 	PRINT_TEST_BEGIN(Queue_Test);
 
-	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 16);
+	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 4);
 
 	printf("Enqueue\n");
 	for (uint32_t i = 0; i < 8; ++i) {
 		Queue_Push(pxQueue, &i);
+		printf("%u\n", i);
 	}
 	printf("\n");
 
@@ -55,13 +144,14 @@ static void Queue_Test(void) {
 	while (!Queue_Empty(pxQueue)) {
 		uint32_t i;
 		Queue_Pop(pxQueue, &i);
-		printf("Pop:%u\n", i);
+		printf("%u\n", i);
 	}
 	printf("\n");
 
 	printf("Enqueue\n");
-	for (uint32_t i = 0; i < 26; ++i) {
+	for (uint32_t i = 0; i < 33; ++i) {
 		Queue_Push(pxQueue, &i);
+		printf("%u\n", i);
 	}
 	printf("\n");
 
@@ -69,9 +159,11 @@ static void Queue_Test(void) {
 	while (!Queue_Empty(pxQueue)) {
 		uint32_t i;
 		Queue_Pop(pxQueue, &i);
-		printf("Pop:%u\n", i);
+		printf("%u\n", i);
 	}
 	printf("\n");
+
+	Queue_Free(pxQueue);
 }
 
 static void FileList_Test(void) {
@@ -135,6 +227,7 @@ int32_t main(void) {
 #endif
 
 	List_Test();
+	Vector_Test();
 	Queue_Test();
 	FileList_Test();
 	StringUtil_Test();

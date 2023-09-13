@@ -29,7 +29,7 @@ struct xFile_t {
 };
 
 struct xList_t* FileList_Alloc(const char* pcFilePath) {
-	struct xList_t* pxList = List_Alloc(sizeof(struct xFile_t), 16);
+	struct xList_t* pxList = List_Alloc(sizeof(struct xFile_t));
 
 #ifdef OS_WINDOWS
 	uint64_t wNormFilePathLength;
@@ -52,7 +52,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = xFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 
-		List_Push(pxList, &xFile);
+		List_Add(pxList, &xFile);
 	} while (FindNextFile(hFile, &xFindData) != 0);
 
 	FindClose(hFile);
@@ -77,7 +77,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = pxEntry->d_type == DT_DIR;
 
-		List_Push(pxList, &xFile);
+		List_Add(pxList, &xFile);
 
 		pxEntry = readdir(pxDir);
 	}
