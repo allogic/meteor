@@ -18,13 +18,8 @@ static void Vector_Expand(struct xVector_t* pxVector) {
 	uint32_t nNextBufferCount = pxVector->nBufferCount * 2;
 	uint32_t nNextBufferSize = pxVector->nBufferSize * 2;
 
-	void* pStagingBuffer = malloc(nNextBufferSize);
+	pxVector->pBuffer = realloc(pxVector->pBuffer, nNextBufferSize);
 
-	memcpy(pStagingBuffer, pxVector->pBuffer, pxVector->nBufferSize);
-
-	free(pxVector->pBuffer);
-
-	pxVector->pBuffer = pStagingBuffer;
 	pxVector->nBufferCount = nNextBufferCount;
 	pxVector->nBufferSize = nNextBufferSize;
 }

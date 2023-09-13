@@ -20,18 +20,12 @@ static void Queue_Expand(struct xQueue_t* pxQueue) {
 	uint32_t nNextBufferCount = pxQueue->nBufferCount * 2;
 	uint32_t nNextBufferSize = pxQueue->nBufferSize * 2;
 
-	void* pStagingBuffer = malloc(nNextBufferSize);
+	pxQueue->pBuffer = realloc(pxQueue->pBuffer, nNextBufferSize);
 
-	memcpy(pStagingBuffer, pxQueue->pBuffer, pxQueue->nBufferSize);
+	uint8_t* pnSrc = ((uint8_t*)pxQueue->pBuffer) + pxQueue->nBufferSize - 1;
+	uint8_t* pnDst = ((uint8_t*)pxQueue->pBuffer) + nNextBufferSize - 1;
 
-	free(pxQueue->pBuffer);
-
-	pxQueue->pBuffer = pStagingBuffer;
-
-	uint32_t* pnSrc = ((uint32_t*)pxQueue->pBuffer) + pxQueue->nBufferCount - 1;
-	uint32_t* pnDst = ((uint32_t*)pxQueue->pBuffer) + nNextBufferCount - 1;
-
-	for (uint32_t i = 0; i < (pxQueue->nBufferCount - pxQueue->nReadIndex); ++i) {
+	for (uint32_t i = 0; i < (pxQueue->nBufferSize - pxQueue->nReadOffset); ++i) {
 		*(pnDst - i) = *(pnSrc - i);
 	}
 
