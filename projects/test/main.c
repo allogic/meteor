@@ -112,7 +112,7 @@ static void Vector_Test(void) {
 	struct xVector_t* pxVector = Vector_Alloc(sizeof(uint32_t), 4);
 
 	printf("Insert\n");
-	for (uint32_t i = 0; i < 29; ++i) {
+	for (uint32_t i = 0; i < 33; ++i) {
 		Vector_Push(pxVector, &i);
 		printf("%u\n", i);
 	}

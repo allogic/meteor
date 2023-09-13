@@ -6,7 +6,7 @@
 
 struct xVector_t;
 
-struct xVector_t* Vector_Alloc(uint32_t nValueSize, uint32_t nRelocCount);
+struct xVector_t* Vector_Alloc(uint32_t nValueSize, uint32_t nCapacity);
 void Vector_Free(struct xVector_t* pxVector);
 
 uint32_t Vector_Push(struct xVector_t* pxVector, void* pData);

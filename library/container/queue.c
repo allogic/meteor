@@ -6,7 +6,7 @@
 
 struct xQueue_t {
 	uint32_t nValueSize;
-	uint32_t nRelocCount;
+	uint32_t nCapacity;
 	uint32_t nBufferSize;
 	uint32_t nBufferCount;
 	void* pBuffer;
@@ -17,7 +17,10 @@ struct xQueue_t {
 };
 
 static void Queue_Expand(struct xQueue_t* pxQueue) {
-	void* pStagingBuffer = malloc((pxQueue->nBufferCount + pxQueue->nRelocCount) * pxQueue->nValueSize);
+	uint32_t nNextBufferCount = pxQueue->nBufferCount * 2;
+	uint32_t nNextBufferSize = pxQueue->nBufferSize * 2;
+
+	void* pStagingBuffer = malloc(nNextBufferSize);
 
 	memcpy(pStagingBuffer, pxQueue->pBuffer, pxQueue->nBufferSize);
 
@@ -26,27 +29,26 @@ static void Queue_Expand(struct xQueue_t* pxQueue) {
 	pxQueue->pBuffer = pStagingBuffer;
 
 	uint32_t* pnSrc = ((uint32_t*)pxQueue->pBuffer) + pxQueue->nBufferCount - 1;
-	uint32_t* pnDst = ((uint32_t*)pxQueue->pBuffer) + pxQueue->nBufferCount + pxQueue->nRelocCount - 1;
+	uint32_t* pnDst = ((uint32_t*)pxQueue->pBuffer) + nNextBufferCount - 1;
 
 	for (uint32_t i = 0; i < (pxQueue->nBufferCount - pxQueue->nReadIndex); ++i) {
 		*(pnDst - i) = *(pnSrc - i);
 	}
 
-	pxQueue->nReadIndex += pxQueue->nRelocCount;
-	pxQueue->nReadOffset += pxQueue->nRelocCount * pxQueue->nValueSize;
-
-	pxQueue->nBufferCount += pxQueue->nRelocCount;
-	pxQueue->nBufferSize += pxQueue->nRelocCount * pxQueue->nValueSize;
+	pxQueue->nReadIndex += pxQueue->nBufferCount;
+	pxQueue->nReadOffset += pxQueue->nBufferSize;
+	pxQueue->nBufferCount = nNextBufferCount;
+	pxQueue->nBufferSize = nNextBufferSize;
 }
 
-struct xQueue_t* Queue_Alloc(uint32_t nValueSize, uint32_t nRelocCount) {
+struct xQueue_t* Queue_Alloc(uint32_t nValueSize, uint32_t nCapacity) {
 	struct xQueue_t* pxQueue = (struct xQueue_t*)calloc(1, sizeof(struct xQueue_t));
 
 	pxQueue->nValueSize = nValueSize;
-	pxQueue->nRelocCount = nRelocCount;
-	pxQueue->nBufferSize = nRelocCount * nValueSize;
-	pxQueue->nBufferCount = nRelocCount;
-	pxQueue->pBuffer = malloc(nRelocCount * nValueSize);
+	pxQueue->nCapacity = nCapacity;
+	pxQueue->nBufferSize = nCapacity * nValueSize;
+	pxQueue->nBufferCount = nCapacity;
+	pxQueue->pBuffer = malloc(nCapacity * nValueSize);
 
 	return pxQueue;
 }

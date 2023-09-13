@@ -6,7 +6,7 @@
 
 struct xQueue_t;
 
-struct xQueue_t* Queue_Alloc(uint32_t nValueSize, uint32_t nRelocCount);
+struct xQueue_t* Queue_Alloc(uint32_t nValueSize, uint32_t nCapacity);
 void Queue_Free(struct xQueue_t* pxQueue);
 
 void Queue_Push(struct xQueue_t* pxQueue, void* pData);
