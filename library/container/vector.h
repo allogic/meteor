@@ -11,6 +11,9 @@ void Vector_Free(struct xVector_t* pxVector);
 
 uint32_t Vector_Push(struct xVector_t* pxVector, void* pData);
 
+void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount);
+
+void* Vector_At(struct xVector_t* pxVector, uint32_t nIndex);
 void* Vector_Data(struct xVector_t* pxVector);
 
 bool Vector_Empty(struct xVector_t* pxVector);

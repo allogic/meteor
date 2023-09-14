@@ -71,7 +71,7 @@ int32_t main(void) {
 		VertexBuffer_Alloc(pxInstance, s_axVertices, sizeof(xVertex_t) * 4),
 		IndexBuffer_Alloc(pxInstance, s_anIndices, sizeof(uint32_t) * 6),
 		6,
-		0,
+		Assets_GetImageByName("test"),
 	};
 
 	xParticleSystem_t xParticleSystem = {
@@ -83,9 +83,9 @@ int32_t main(void) {
 
 	struct xScene_t* pxScene = Scene_Alloc(pxInstance);
 
-	struct xEntity_t* pxEntityA = Scene_CreateEntity(pxScene, "EntityA", 0);
-	struct xEntity_t* pxEntityB = Scene_CreateEntity(pxScene, "EntityB", 0);
-	struct xEntity_t* pxEntityC = Scene_CreateEntity(pxScene, "EntityC", 0);
+	struct xEntity_t* pxEntityA = Scene_AllocEntity(pxScene, "EntityA", 0);
+	struct xEntity_t* pxEntityB = Scene_AllocEntity(pxScene, "EntityB", 0);
+	struct xEntity_t* pxEntityC = Scene_AllocEntity(pxScene, "EntityC", 0);
 
 	Entity_SetTransform(pxEntityA, 0);
 	Entity_SetTransform(pxEntityB, 0);
@@ -94,6 +94,8 @@ int32_t main(void) {
 	Entity_SetRenderable(pxEntityA, &xSharedQuad);
 	Entity_SetRenderable(pxEntityB, &xSharedQuad);
 	Entity_SetRenderable(pxEntityC, &xSharedQuad);
+
+	Scene_CommitEntities(pxScene, pxInstance);
 
 	xTransform_t* pxTransformA = Entity_GetTransform(pxEntityA);
 	xTransform_t* pxTransformB = Entity_GetTransform(pxEntityB);
@@ -117,9 +119,15 @@ int32_t main(void) {
 		}
 
 		Scene_Draw(pxScene, pxInstance, pxTimer);
+
+		break;
 	}
 
 	Instance_WaitIdle(pxInstance);
+
+	Scene_FreeEntity(pxScene, pxEntityA);
+	Scene_FreeEntity(pxScene, pxEntityB);
+	Scene_FreeEntity(pxScene, pxEntityC);
 
 	Scene_Free(pxScene, pxInstance);
 

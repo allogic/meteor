@@ -25,7 +25,7 @@ struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent) {
 	
 	pxEntity->acName[ENTITY_NAME_LENGTH - 1] = 0;
 	pxEntity->pxParent = pxParent;
-	pxEntity->pxChildren = List_Alloc();
+	pxEntity->pxChildren = List_Alloc(sizeof(struct xEntity_t*));
 
 	return pxEntity;
 }

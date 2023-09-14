@@ -9,8 +9,9 @@ struct xFile_t;
 struct xList_t* FileList_Alloc(const char* pcFilePath);
 void FileList_Free(struct xList_t* pxList);
 
-struct xFile_t* FileList_Begin(struct xList_t* pxList);
-struct xFile_t* FileList_Next(struct xList_t* pxList);
+void* FileList_Begin(struct xList_t* pxList);
+struct xFile_t* FileList_Value(void* pIter);
+void* FileList_Next(void* pIter);
 
 const char* FileList_FilePath(struct xFile_t* pxFile);
 const char* FileList_FileName(struct xFile_t* pxFile);

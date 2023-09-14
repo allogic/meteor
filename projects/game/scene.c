@@ -28,7 +28,7 @@ struct xScene_t {
 struct xScene_t* Scene_Alloc(struct xInstance_t* pxInstance) {
 	struct xScene_t* pxScene = (struct xScene_t*)calloc(1, sizeof(struct xScene_t));
 
-	pxScene->pxEntities = List_Alloc();
+	pxScene->pxEntities = List_Alloc(sizeof(struct xEntity_t*));
 	pxScene->pxSwapChain = SwapChain_Alloc(pxInstance);
 	pxScene->pxRenderer = Renderer_Alloc(pxInstance, pxScene->pxSwapChain);
 
@@ -45,16 +45,24 @@ void Scene_Free(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 	free(pxScene);
 }
 
-struct xEntity_t* Scene_CreateEntity(struct xScene_t* pxScene, const char* pcName, struct xEntity_t* pxParent) {
+struct xEntity_t* Scene_AllocEntity(struct xScene_t* pxScene, const char* pcName, struct xEntity_t* pxParent) {
 	struct xEntity_t* pxEntity = Entity_Alloc(pcName, pxParent);
 
-	List_Push(pxScene->pxEntities, &pxEntity, sizeof(struct xEntity_t*));
+	List_Add(pxScene->pxEntities, &pxEntity);
 
 	return pxEntity;
 }
 
-void Scene_DestroyEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity) {
+void Scene_FreeEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity) {
+	//List_Remove(pxScene->pxEntities, pxEntity);
 
+	Entity_Free(pxEntity);
+
+#warning "This does not work currently.."
+}
+
+void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
+	Renderer_RebuildEnitityDescriptorSets(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
 }
 
 void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {

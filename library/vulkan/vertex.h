@@ -21,6 +21,6 @@
 	typedef struct __attribute__((packed)) VERTEX_STRUCT xVertex_t;
 #endif
 
-void Vertex_CreateDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
+void Vertex_AllocDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
 
 #endif

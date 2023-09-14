@@ -94,12 +94,16 @@ void FileList_Free(struct xList_t* pxList) {
 	List_Free(pxList);
 }
 
-struct xFile_t* FileList_Begin(struct xList_t* pxList) {
+void* FileList_Begin(struct xList_t* pxList) {
 	return List_Begin(pxList);
 }
 
-struct xFile_t* FileList_Next(struct xList_t* pxList) {
-	return List_Next(pxList);
+struct xFile_t* FileList_Value(void* pIter) {
+	return List_Value(pIter);
+}
+
+void* FileList_Next(void* pIter) {
+	return List_Next(pIter);
 }
 
 const char* FileList_FilePath(struct xFile_t* pxFile) {

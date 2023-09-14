@@ -19,7 +19,7 @@ struct xSwapChain_t {
 	VkFramebuffer* pxFrameBuffer;
 };
 
-static void SwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_AllocSwapChain(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	VkSurfaceCapabilitiesKHR xSurfaceCapabilities;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Instance_GetPhysicalDevice(pxInstance), Instance_GetSurface(pxInstance), &xSurfaceCapabilities));
 
@@ -60,7 +60,7 @@ static void SwapChain_CreateSwapChain(struct xSwapChain_t* pxSwapChain, struct x
 	VK_CHECK(vkCreateSwapchainKHR(Instance_GetDevice(pxInstance), &xSwapChaincreateInfo, 0, &pxSwapChain->xSwapChain));
 }
 
-static void SwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_AllocImageViews(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	VK_CHECK(vkGetSwapchainImagesKHR(Instance_GetDevice(pxInstance), pxSwapChain->xSwapChain, &pxSwapChain->nImageCount, 0));
 	pxSwapChain->pxImages = (VkImage*)malloc(sizeof(VkImage) * pxSwapChain->nImageCount);
 	pxSwapChain->pxImageViews = (VkImageView*)malloc(sizeof(VkImageView) * pxSwapChain->nImageCount);
@@ -88,7 +88,7 @@ static void SwapChain_CreateImageViews(struct xSwapChain_t* pxSwapChain, struct 
 	}
 }
 
-static void SwapChain_CreateRenderPass(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_AllocRenderPass(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	VkAttachmentDescription xColorAttachmentDesc;
 	memset(&xColorAttachmentDesc, 0, sizeof(xColorAttachmentDesc));
 	xColorAttachmentDesc.format = Instance_GetPreferedSurfaceFormat(pxInstance);
@@ -133,7 +133,7 @@ static void SwapChain_CreateRenderPass(struct xSwapChain_t* pxSwapChain, struct 
 	VK_CHECK(vkCreateRenderPass(Instance_GetDevice(pxInstance), &xRenderPassCreateInfo, 0, &pxSwapChain->xRenderPass));
 }
 
-static void SwapChain_CreateFrameBuffers(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
+static void SwapChain_AllocFrameBuffers(struct xSwapChain_t* pxSwapChain, struct xInstance_t* pxInstance) {
 	pxSwapChain->pxFrameBuffer = (VkFramebuffer*)malloc(sizeof(VkFramebuffer) * pxSwapChain->nImageCount);
 
 	for (uint32_t i = 0; i < pxSwapChain->nImageCount; ++i) {
@@ -156,10 +156,10 @@ static void SwapChain_CreateFrameBuffers(struct xSwapChain_t* pxSwapChain, struc
 struct xSwapChain_t* SwapChain_Alloc(struct xInstance_t* pxInstance) {
 	struct xSwapChain_t* pxSwapChain = (struct xSwapChain_t*)calloc(1, sizeof(struct xSwapChain_t));
 
-	SwapChain_CreateSwapChain(pxSwapChain, pxInstance);
-	SwapChain_CreateImageViews(pxSwapChain, pxInstance);
-	SwapChain_CreateRenderPass(pxSwapChain, pxInstance);
-	SwapChain_CreateFrameBuffers(pxSwapChain, pxInstance);
+	SwapChain_AllocSwapChain(pxSwapChain, pxInstance);
+	SwapChain_AllocImageViews(pxSwapChain, pxInstance);
+	SwapChain_AllocRenderPass(pxSwapChain, pxInstance);
+	SwapChain_AllocFrameBuffers(pxSwapChain, pxInstance);
 
 	return pxSwapChain;
 }

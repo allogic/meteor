@@ -11,7 +11,6 @@ layout(location = 2) in vec4 inputColor;
 
 layout(push_constant) uniform PerObjectData {
 	mat4 model;
-	uint textureIndex;
 } perObjectData;
 
 layout(binding = 0) uniform ViewProjection {

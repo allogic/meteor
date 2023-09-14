@@ -1,6 +1,6 @@
 #include <vulkan/vertex.h>
 
-void Vertex_CreateDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions) {
+void Vertex_AllocDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions) {
 	pxVertexInputBindingDescription->binding = 0;
 	pxVertexInputBindingDescription->stride = sizeof(xVertex_t);
 	pxVertexInputBindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;

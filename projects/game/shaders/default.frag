@@ -10,14 +10,12 @@ layout(location = 0) in Vertex {
 
 layout(push_constant) uniform PerObjectData {
 	mat4 model;
-	uint textureIndex;
 } perObjectData;
 
-layout(binding = 1) uniform sampler texSampler;
-layout(binding = 2) uniform texture2D Textures[TEXTURE_COUNT];
+layout(binding = 1) uniform sampler2D textureSampler;
 
 layout(location = 0) out vec4 outputColor;
 
 void main() {
-	outputColor = texture(sampler2D(Textures[perObjectData.textureIndex], texSampler), inputVertex.uv);
+	outputColor = texture(textureSampler, inputVertex.uv);
 }

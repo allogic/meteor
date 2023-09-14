@@ -96,7 +96,7 @@ static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT xMessageSev
 }
 #endif
 
-static void Instance_CreateInstance(struct xInstance_t* pxInstance) {
+static void Instance_AllocInstance(struct xInstance_t* pxInstance) {
 	VkApplicationInfo xAppInfo;
 	memset(&xAppInfo, 0, sizeof(xAppInfo));
 	xAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -133,7 +133,7 @@ static void Instance_CreateInstance(struct xInstance_t* pxInstance) {
 #endif
 }
 
-static void Instance_CreateSurface(struct xInstance_t* pxInstance) {
+static void Instance_AllocSurface(struct xInstance_t* pxInstance) {
 #ifdef OS_WINDOWS
 	VkWin32SurfaceCreateInfoKHR xSurfaceCreateInfo;
 	memset(&xSurfaceCreateInfo, 0, sizeof(xSurfaceCreateInfo));
@@ -244,7 +244,7 @@ static void Instance_CheckPhysicalDeviceExtensions(struct xInstance_t* pxInstanc
 	free(pxAvailableDeviceExtensions);
 }
 
-static void Instance_CreateLogicalDevice(struct xInstance_t* pxInstance) {
+static void Instance_AllocLogicalDevice(struct xInstance_t* pxInstance) {
 	float fQueuePriority = 1.0F;
 
 	VkDeviceQueueCreateInfo xQueueCreateInfos[2];
@@ -315,7 +315,7 @@ static void Instance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) {
 	free(pxPresentModes);
 }
 
-static void Instance_CreateCommandPool(struct xInstance_t* pxInstance) {
+static void Instance_AllocCommandPool(struct xInstance_t* pxInstance) {
 	VkCommandPoolCreateInfo xCommandPoolCreateInfo;
 	memset(&xCommandPoolCreateInfo, 0, sizeof(xCommandPoolCreateInfo));
 	xCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -331,14 +331,14 @@ struct xInstance_t* Instance_Alloc(void) {
 	pxInstance->nGraphicAndComputeQueueIndex = -1;
 	pxInstance->nPresentQueueIndex = -1;
 
-	Instance_CreateInstance(pxInstance);
-	Instance_CreateSurface(pxInstance);
+	Instance_AllocInstance(pxInstance);
+	Instance_AllocSurface(pxInstance);
 	Instance_FindPhysicalDevice(pxInstance);
 	Instance_FindQueueFamilies(pxInstance);
 	Instance_CheckPhysicalDeviceExtensions(pxInstance);
-	Instance_CreateLogicalDevice(pxInstance);
+	Instance_AllocLogicalDevice(pxInstance);
 	Instance_CheckSurfaceCapabilities(pxInstance);
-	Instance_CreateCommandPool(pxInstance);
+	Instance_AllocCommandPool(pxInstance);
 
 	return pxInstance;
 }

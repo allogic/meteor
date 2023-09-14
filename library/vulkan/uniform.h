@@ -15,7 +15,6 @@
 
 #define PER_OBJECT_DATA_STRUCT { \
 	xMat4_t xModel; \
-	uint32_t nTextureIndex; \
 }
 
 #ifdef OS_WINDOWS

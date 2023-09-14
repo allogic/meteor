@@ -35,10 +35,10 @@ static void List_Test(void) {
 		printf("\n");
 
 		printf("Iterate\n");
-		uint32_t* pnData = List_Begin(pxList);
-		while (pnData) {
-			printf("%u\n", *pnData);
-			pnData = List_Next(pxList);
+		void* pIter = List_Begin(pxList);
+		while (pIter) {
+			printf("%u\n", *(uint32_t*)List_Value(pIter));
+			pIter = List_Next(pIter);
 		}
 		printf("\n");
 
@@ -60,10 +60,10 @@ static void List_Test(void) {
 		printf("\n");
 
 		printf("Iterate\n");
-		uint32_t* pnData = List_Begin(pxList);
-		while (pnData) {
-			printf("%u\n", *pnData);
-			pnData = List_Next(pxList);
+		void* pIter = List_Begin(pxList);
+		while (pIter) {
+			printf("%u\n", *(uint32_t*)List_Value(pIter));
+			pIter = List_Next(pIter);
 		}
 		printf("\n");
 
@@ -95,10 +95,10 @@ static void List_Test(void) {
 		printf("\n");
 
 		printf("Iterate\n");
-		uint32_t* pnData = List_Begin(pxList);
-		while (pnData) {
-			printf("%u\n", *pnData);
-			pnData = List_Next(pxList);
+		void* pIter = List_Begin(pxList);
+		while (pIter) {
+			printf("%u\n", *(uint32_t*)List_Value(pIter));
+			pIter = List_Next(pIter);
 		}
 		printf("\n");
 
@@ -171,8 +171,10 @@ static void FileList_Test(void) {
 
 	struct xList_t* pxList = FileList_Alloc("./");
 
-	struct xFile_t* pxFile = FileList_Begin(pxList);
-	while (pxFile) {
+	void* pIter = FileList_Begin(pxList);
+	while (pIter) {
+		struct xFile_t* pxFile = List_Value(pIter);
+
 		printf("FilePath:%s\n", FileList_FilePath(pxFile));
 		printf("FileName:%s\n", FileList_FileName(pxFile));
 		printf("FileStem:%s\n", FileList_FileStem(pxFile));
@@ -180,7 +182,7 @@ static void FileList_Test(void) {
 		printf("FileExt:%u\n", FileList_IsDirectory(pxFile));
 		printf("\n");
 
-		pxFile = FileList_Next(pxList);
+		pIter = FileList_Next(pIter);
 	}
 
 	FileList_Free(pxList);

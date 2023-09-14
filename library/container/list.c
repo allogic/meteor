@@ -122,11 +122,13 @@ uint32_t List_Count(struct xList_t* pxList) {
 }
 
 void* List_Begin(struct xList_t* pxList) {
-	pxList->pxCurr = pxList->pxHead;
-	return (pxList->pxCurr) ? pxList->pxCurr->pBuffer : 0;
+	return pxList->pxHead;
 }
 
-void* List_Next(struct xList_t* pxList) {
-	pxList->pxCurr = pxList->pxCurr->pxNext;
-	return (pxList->pxCurr) ? pxList->pxCurr->pBuffer : 0;
+void* List_Value(void* pIter) {
+	return ((struct xNode_t*)pIter)->pBuffer;
+}
+
+void* List_Next(void* pIter) {
+	return ((struct xNode_t*)pIter)->pxNext;
 }

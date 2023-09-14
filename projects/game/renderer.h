@@ -18,5 +18,6 @@ xTimeInfo_t* Renderer_GetTimeInfo(struct xRenderer_t* pxRenderer);
 xViewProjection_t* Renderer_GetViewProjection(struct xRenderer_t* pxRenderer);
 
 void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xList_t* pxEntities);
+void Renderer_RebuildEnitityDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities);
 
 #endif

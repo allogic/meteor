@@ -16,6 +16,7 @@ bool List_Empty(struct xList_t* pxList);
 uint32_t List_Count(struct xList_t* pxList);
 
 void* List_Begin(struct xList_t* pxList);
-void* List_Next(struct xList_t* pxList);
+void* List_Value(void* pIter);
+void* List_Next(void* pIter);
 
 #endif

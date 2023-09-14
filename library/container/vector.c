@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <common/macros.h>
+
 #include <container/vector.h>
 
 struct xVector_t {
@@ -54,6 +56,26 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 	}
 
 	return nIndex;
+}
+
+void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
+	if (pxVector->nBufferCount > nCount) {
+		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
+
+		pxVector->nBufferCount = nCount;
+		pxVector->nBufferSize = nCount * pxVector->nValueSize;
+	} else if (pxVector->nBufferCount < nCount) {
+		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
+
+		pxVector->nBufferCount = nCount;
+		pxVector->nBufferSize = nCount * pxVector->nValueSize;
+		pxVector->nBufferIndex = MIN(pxVector->nBufferIndex, nCount);
+		pxVector->nBufferOffset = MIN(pxVector->nBufferIndex, nCount) * pxVector->nValueSize;
+	}
+}
+
+void* Vector_At(struct xVector_t* pxVector, uint32_t nIndex) {
+	return ((uint8_t*)pxVector->pBuffer) + (nIndex * pxVector->nValueSize);
 }
 
 void* Vector_Data(struct xVector_t* pxVector) {
