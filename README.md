@@ -36,5 +36,5 @@ wayland-scanner private-code /usr/share/wayland-protocols/stable/xdg-shell/xdg-s
 ```
 sudo python llvm.py cbi
 sudo python project.py cbr test debug
-sudo python project.py cbr vulkan debug
+sudo python project.py cbsr game debug
 ```
