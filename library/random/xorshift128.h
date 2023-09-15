@@ -1,5 +1,5 @@
-#ifndef METEOR_RANDOM_H
-#define METEOR_RANDOM_H
+#ifndef METEOR_RANDOM_XORSHIFT128_H
+#define METEOR_RANDOM_XORSHIFT128_H
 
 #include <stdint.h>
 

@@ -1,5 +1,5 @@
-#ifndef METEOR_IMAGE_H
-#define METEOR_IMAGE_H
+#ifndef METEOR_VULKAN_IMAGE_H
+#define METEOR_VULKAN_IMAGE_H
 
 #include <stdint.h>
 

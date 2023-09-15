@@ -1,5 +1,5 @@
-#ifndef METEOR_BUFFER_H
-#define METEOR_BUFFER_H
+#ifndef METEOR_VULKAN_BUFFER_H
+#define METEOR_VULKAN_BUFFER_H
 
 #include <stdint.h>
 

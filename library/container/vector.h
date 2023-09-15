@@ -1,5 +1,5 @@
-#ifndef METEOR_VECTOR_H
-#define METEOR_VECTOR_H
+#ifndef METEOR_CONTAINER_VECTOR_H
+#define METEOR_CONTAINER_VECTOR_H
 
 #include <stdint.h>
 #include <stdbool.h>

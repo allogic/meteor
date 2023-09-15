@@ -1,5 +1,5 @@
-#ifndef METEOR_STRINGUTIL_H
-#define METEOR_STRINGUTIL_H
+#ifndef METEOR_COMMON_STRINGUTIL_H
+#define METEOR_COMMON_STRINGUTIL_H
 
 void StringUtil_ReplaceChar(char* pcSubject, char cFrom, char cTo);
 

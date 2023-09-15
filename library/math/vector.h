@@ -1,7 +1,7 @@
-#ifndef METEOR_VECTOR_H
-#define METEOR_VECTOR_H
+#ifndef METEOR_MATH_VECTOR_H
+#define METEOR_MATH_VECTOR_H
 
-#include <math/mathtypes.h>
+#include <math/common.h>
 
 #define VEC2_ZERO { 0.0F, 0.0F }
 #define VEC3_ZERO { 0.0F, 0.0F, 0.0F }

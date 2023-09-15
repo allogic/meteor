@@ -1,5 +1,5 @@
-#ifndef METEOR_QUEUE_H
-#define METEOR_QUEUE_H
+#ifndef METEOR_CONTAINER_QUEUE_H
+#define METEOR_CONTAINER_QUEUE_H
 
 #include <stdint.h>
 #include <stdbool.h>

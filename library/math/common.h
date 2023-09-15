@@ -1,5 +1,5 @@
-#ifndef METEOR_MATHTYPES_H
-#define METEOR_MATHTYPES_H
+#ifndef METEOR_MATH_MATHTYPES_H
+#define METEOR_MATH_MATHTYPES_H
 
 typedef float xVec2_t[2];
 typedef float xVec3_t[3];

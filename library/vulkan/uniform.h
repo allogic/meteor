@@ -1,5 +1,5 @@
-#ifndef METEOR_UNIFORM_H
-#define METEOR_UNIFORM_H
+#ifndef METEOR_VULKAN_UNIFORM_H
+#define METEOR_VULKAN_UNIFORM_H
 
 #include <math/matrix.h>
 

@@ -1,5 +1,5 @@
-#ifndef METEOR_MACROS_H
-#define METEOR_MACROS_H
+#ifndef METEOR_COMMON_MACROS_H
+#define METEOR_COMMON_MACROS_H
 
 #define UNUSED(X) ((void)X)
 

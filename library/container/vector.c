@@ -59,12 +59,12 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 }
 
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
-	if (pxVector->nBufferCount > nCount) {
+	if (nCount > pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
 
 		pxVector->nBufferCount = nCount;
 		pxVector->nBufferSize = nCount * pxVector->nValueSize;
-	} else if (pxVector->nBufferCount < nCount) {
+	} else if (nCount < pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
 
 		pxVector->nBufferCount = nCount;
@@ -87,5 +87,5 @@ bool Vector_Empty(struct xVector_t* pxVector) {
 }
 
 uint32_t Vector_Count(struct xVector_t* pxVector) {
-	return pxVector->nBufferIndex;
+	return pxVector->nBufferCount;
 }

@@ -125,6 +125,18 @@ static void Vector_Test(void) {
 	}
 	printf("\n");
 
+	printf("Resize\n");
+	printf("X == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 3);
+	printf("3 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 255);
+	printf("255 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 17);
+	printf("17 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 1);
+	printf("1 == %u\n", Vector_Count(pxVector));
+	printf("\n");
+
 	Vector_Free(pxVector);
 }
 

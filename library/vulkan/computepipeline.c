@@ -4,6 +4,8 @@
 
 #include <common/macros.h>
 
+#include <container/vector.h>
+
 #include <platform/nativewindow.h>
 
 #include <vulkan/instance.h>
@@ -14,7 +16,7 @@ struct xComputePipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, VkDescriptorSetLayout xDescriptorSetLayout) {
+struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, struct xVector_t* pxDescriptorSetLayouts) {
 	struct xComputePipeline_t* pxComputePipeline = (struct xComputePipeline_t*)calloc(1, sizeof(struct xComputePipeline_t));
 
 	VkPipelineShaderStageCreateInfo xCompShaderStageCreateInfo;
@@ -27,8 +29,8 @@ struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance,
 	VkPipelineLayoutCreateInfo xPipelineLayoutCreateInfo;
 	memset(&xPipelineLayoutCreateInfo, 0, sizeof(xPipelineLayoutCreateInfo));
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	xPipelineLayoutCreateInfo.setLayoutCount = 1;
-	xPipelineLayoutCreateInfo.pSetLayouts = &xDescriptorSetLayout;
+	xPipelineLayoutCreateInfo.setLayoutCount = Vector_Count(pxDescriptorSetLayouts);
+	xPipelineLayoutCreateInfo.pSetLayouts = Vector_Data(pxDescriptorSetLayouts);
 	xPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	xPipelineLayoutCreateInfo.pPushConstantRanges = 0;
 

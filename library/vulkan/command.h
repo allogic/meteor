@@ -1,5 +1,5 @@
-#ifndef METEOR_COMMAND_H
-#define METEOR_COMMAND_H
+#ifndef METEOR_VULKAN_COMMAND_H
+#define METEOR_VULKAN_COMMAND_H
 
 #include <vulkan/vulkan.h>
 

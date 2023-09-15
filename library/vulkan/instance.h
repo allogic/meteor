@@ -1,5 +1,5 @@
-#ifndef METEOR_INSTANCE_H
-#define METEOR_INSTANCE_H
+#ifndef METEOR_VULKAN_INSTANCE_H
+#define METEOR_VULKAN_INSTANCE_H
 
 #include <stdint.h>
 

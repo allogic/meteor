@@ -1,5 +1,5 @@
-#ifndef METEOR_LIST_H
-#define METEOR_LIST_H
+#ifndef METEOR_CONTAINER_LIST_H
+#define METEOR_CONTAINER_LIST_H
 
 #include <stdint.h>
 #include <stdbool.h>

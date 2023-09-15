@@ -1,5 +1,5 @@
-#ifndef METEOR_TIMER_H
-#define METEOR_TIMER_H
+#ifndef METEOR_COMMON_TIMER_H
+#define METEOR_COMMON_TIMER_H
 
 struct xTimer_t;
 

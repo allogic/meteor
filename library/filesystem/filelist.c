@@ -9,7 +9,7 @@
 
 #include <container/list.h>
 
-#include <filesystem/fs.h>
+#include <filesystem/common.h>
 #include <filesystem/filelist.h>
 
 #ifdef OS_WINDOWS

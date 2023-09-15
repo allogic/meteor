@@ -1,5 +1,5 @@
-#ifndef METEOR_FILELIST_H
-#define METEOR_FILELIST_H
+#ifndef METEOR_FILESYSTEM_FILELIST_H
+#define METEOR_FILESYSTEM_FILELIST_H
 
 #include <stdbool.h>
 

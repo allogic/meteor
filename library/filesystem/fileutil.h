@@ -1,5 +1,5 @@
-#ifndef METEOR_FILEUTIL_H
-#define METEOR_FILEUTIL_H
+#ifndef METEOR_FILESYSTEM_FILEUTIL_H
+#define METEOR_FILESYSTEM_FILEUTIL_H
 
 #include <stdint.h>
 
