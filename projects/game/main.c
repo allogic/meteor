@@ -74,7 +74,12 @@ int32_t main(void) {
 		Assets_GetImageByName("test"),
 	};
 
-	xParticleSystem_t xParticleSystem = {
+	xParticleSystem_t xParticleSystemA = {
+		StorageBuffer_Alloc(pxInstance, pxParticles, sizeof(xParticle_t) * nParticleCount),
+		nParticleCount,
+	};
+
+	xParticleSystem_t xParticleSystemC = {
 		StorageBuffer_Alloc(pxInstance, pxParticles, sizeof(xParticle_t) * nParticleCount),
 		nParticleCount,
 	};
@@ -94,6 +99,9 @@ int32_t main(void) {
 	Entity_SetRenderable(pxEntityA, &xSharedQuad);
 	Entity_SetRenderable(pxEntityB, &xSharedQuad);
 	Entity_SetRenderable(pxEntityC, &xSharedQuad);
+
+	Entity_SetParticleSystem(pxEntityA, &xParticleSystemA);
+	Entity_SetParticleSystem(pxEntityC, &xParticleSystemC);
 
 	Scene_CommitEntities(pxScene, pxInstance);
 
@@ -122,18 +130,19 @@ int32_t main(void) {
 
 		Scene_Draw(pxScene, pxInstance, pxTimer);
 
-		break;
+		//break;
 	}
 
 	Instance_WaitIdle(pxInstance);
 
-	Scene_FreeEntity(pxScene, pxEntityA);
-	Scene_FreeEntity(pxScene, pxEntityB);
 	Scene_FreeEntity(pxScene, pxEntityC);
+	Scene_FreeEntity(pxScene, pxEntityB);
+	Scene_FreeEntity(pxScene, pxEntityA);	
 
 	Scene_Free(pxScene, pxInstance);
 
-	Buffer_Free(xParticleSystem.pxParticleBuffer, pxInstance);
+	Buffer_Free(xParticleSystemC.pxParticleBuffer, pxInstance);
+	Buffer_Free(xParticleSystemA.pxParticleBuffer, pxInstance);
 
 	Buffer_Free(xSharedQuad.pxIndexBuffer, pxInstance);
 	Buffer_Free(xSharedQuad.pxVertexBuffer, pxInstance);
