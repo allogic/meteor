@@ -4,8 +4,6 @@
 
 #include <common/macros.h>
 
-#include <container/vector.h>
-
 #include <platform/nativewindow.h>
 
 #include <vulkan/instance.h>
@@ -18,7 +16,7 @@ struct xGraphicPipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, struct xVector_t* pxDescriptorSetLayouts, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantCount) {
+struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantCount) {
 	struct xGraphicPipeline_t* pxGraphicPipeline = (struct xGraphicPipeline_t*)calloc(1, sizeof(struct xGraphicPipeline_t));
 
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
@@ -133,8 +131,8 @@ struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance,
 	VkPipelineLayoutCreateInfo xPipelineLayoutCreateInfo;
 	memset(&xPipelineLayoutCreateInfo, 0, sizeof(xPipelineLayoutCreateInfo));
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	xPipelineLayoutCreateInfo.setLayoutCount = Vector_Count(pxDescriptorSetLayouts);
-	xPipelineLayoutCreateInfo.pSetLayouts = Vector_Data(pxDescriptorSetLayouts);
+	xPipelineLayoutCreateInfo.setLayoutCount = 1;
+	xPipelineLayoutCreateInfo.pSetLayouts = &xDescriptorSetLayout;
 	xPipelineLayoutCreateInfo.pushConstantRangeCount = nPushConstantCount;
 	xPipelineLayoutCreateInfo.pPushConstantRanges = pxPushConstantRanges;
 

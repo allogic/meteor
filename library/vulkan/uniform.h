@@ -13,7 +13,7 @@
 	xMat4_t xProjection; \
 }
 
-#define PER_OBJECT_DATA_STRUCT { \
+#define PER_ENTITY_DATA_STRUCT { \
 	xMat4_t xModel; \
 }
 
@@ -21,14 +21,14 @@
 #pragma pack(push, 1)
 	typedef struct TIME_INFO_STRUCT xTimeInfo_t;
 	typedef struct VIEW_PROJECTION_STRUCT xViewProjection_t;
-	typedef struct PER_OBJECT_DATA_STRUCT xPerObjectData_t;
+	typedef struct PER_ENTITY_DATA_STRUCT xPerEntityData_t;
 #pragma pack(pop)
 #endif
 
 #ifdef OS_LINUX
 	typedef struct __attribute__((packed)) TIME_INFO_STRUCT xTimeInfo_t;
 	typedef struct __attribute__((packed)) VIEW_PROJECTION_STRUCT xViewProjection_t;
-	typedef struct __attribute__((packed)) PER_OBJECT_DATA_STRUCT xPerObjectData_t;
+	typedef struct __attribute__((packed)) PER_ENTITY_DATA_STRUCT xPerEntityData_t;
 #endif
 
 #endif

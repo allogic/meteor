@@ -121,16 +121,12 @@ int32_t main(void) {
 		Timer_Measure(pxTimer);
 
 		if (NativeWindow_HasResized()) {
-			// TODO: Resize not working since descriptor sets must be rebuild
+			Instance_WaitIdle(pxInstance);
 
-			//Instance_WaitIdle(pxInstance);
-
-			//Scene_Resize(pxScene, pxInstance);
+			Scene_Resize(pxScene, pxInstance);
 		}
 
 		Scene_Draw(pxScene, pxInstance, pxTimer);
-
-		//break;
 	}
 
 	Instance_WaitIdle(pxInstance);

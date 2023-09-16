@@ -9,9 +9,9 @@ layout(location = 0) in vec3 inputPosition;
 layout(location = 1) in vec2 inputUv;
 layout(location = 2) in vec4 inputColor;
 
-layout(push_constant) uniform PerObjectData {
+layout(push_constant) uniform PerEntityData {
 	mat4 model;
-} perObjectData;
+} perEntityData;
 
 layout(binding = 0) uniform ViewProjection {
 	mat4 view;
@@ -33,7 +33,7 @@ void main() {
 
 	vec3 instancePosition = particles[index].position;
 
-	vec4 position = vp.projection * vp.view * perObjectData.model * vec4(inputPosition + instancePosition, 1.0);
+	vec4 position = vp.projection * vp.view * perEntityData.model * vec4(inputPosition + instancePosition, 1.0);
 	vec4 color = inputColor;
 
 	outputVertex.position = position;

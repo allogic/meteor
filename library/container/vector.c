@@ -59,6 +59,7 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 }
 
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
+	// TODO: Resize count is not the new buffer count
 	if (nCount > pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
 

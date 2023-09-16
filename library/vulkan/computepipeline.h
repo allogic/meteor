@@ -5,9 +5,8 @@
 
 struct xInstance_t;
 struct xComputePipeline_t;
-struct xVector_t;
 
-struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, struct xVector_t* pxDescriptorSetLayouts);
+struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, VkDescriptorSetLayout xDescriptorSetLayout);
 void ComputePipeline_Free(struct xComputePipeline_t* pxComputePipeline, struct xInstance_t* pxInstance);
 
 VkPipelineLayout ComputePipeline_GetPipelineLayout(struct xComputePipeline_t* pxComputePipeline);

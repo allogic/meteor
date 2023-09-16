@@ -8,10 +8,6 @@ layout(location = 0) in Vertex {
 	vec4 color;
 } inputVertex;
 
-layout(push_constant) uniform PerObjectData {
-	mat4 model;
-} perObjectData;
-
 layout(binding = 2) uniform sampler2D textureSampler;
 
 layout(location = 0) out vec4 outputColor;
