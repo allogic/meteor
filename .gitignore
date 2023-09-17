@@ -6,5 +6,6 @@
 *.spv
 
 build
+assets
 
 token.txt

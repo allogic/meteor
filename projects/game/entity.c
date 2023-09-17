@@ -84,6 +84,10 @@ xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX];
 }
 
+xComputable_t* Entity_GetComputable(struct xEntity_t* pxEntity) {
+	return pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX];
+}
+
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
 	memset(pxEntity->acName, 0, ENTITY_NAME_LENGTH);
 	uint32_t nNameLength = strlen(pcName);
@@ -143,6 +147,17 @@ void Entity_SetParticleSystem(struct xEntity_t* pxEntity, xParticleSystem_t* pxP
 
 	if (pxParticleSystem) {
 		memcpy(pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX], pxParticleSystem, sizeof(xParticleSystem_t));
+	}
+}
+
+void Entity_SetComputable(struct xEntity_t* pxEntity, xComputable_t* pxComputable) {
+	if ((pxEntity->wMask & COMPONENT_COMPUTABLE_BIT) == 0) {
+		pxEntity->wMask |= COMPONENT_COMPUTABLE_BIT;
+		pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX] = calloc(1, sizeof(xComputable_t));
+	}
+
+	if (pxComputable) {
+		memcpy(pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX], pxComputable, sizeof(xComputable_t));
 	}
 }
 

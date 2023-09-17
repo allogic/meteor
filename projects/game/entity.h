@@ -18,6 +18,7 @@ xCamera_t* Entity_GetCamera(struct xEntity_t* pxEntity);
 xRigidBody_t* Entity_GetRigidbody(struct xEntity_t* pxEntity);
 xRenderable_t* Entity_GetRenderable(struct xEntity_t* pxEntity);
 xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity);
+xComputable_t* Entity_GetComputable(struct xEntity_t* pxEntity);
 
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName);
 void Entity_SetTransform(struct xEntity_t* pxEntity, xTransform_t* pxTransform);
@@ -25,6 +26,7 @@ void Entity_SetCamera(struct xEntity_t* pxEntity, xCamera_t* pxCamera);
 void Entity_SetRigidbody(struct xEntity_t* pxEntity, xRigidBody_t* pxRigidBody);
 void Entity_SetRenderable(struct xEntity_t* pxEntity, xRenderable_t* pxRenderable);
 void Entity_SetParticleSystem(struct xEntity_t* pxEntitiy, xParticleSystem_t* pxParticleSystem);
+void Entity_SetComputable(struct xEntity_t* pxEntitiy, xComputable_t* pxComputable);
 
 bool Entity_HasComponents(struct xEntity_t* pxEntity, uint64_t wMask);
 

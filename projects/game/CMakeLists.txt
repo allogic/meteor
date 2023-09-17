@@ -5,11 +5,12 @@ project(game VERSION 0.0.1 LANGUAGES C)
 include("../../cmake/common.cmake")
 include("../../cmake/vulkan.cmake")
 
+list(APPEND SOURCES "${PROJECT_DIR}/assets.c")
+list(APPEND SOURCES "${PROJECT_DIR}/entity.c")
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 list(APPEND SOURCES "${PROJECT_DIR}/renderer.c")
-list(APPEND SOURCES "${PROJECT_DIR}/entity.c")
 list(APPEND SOURCES "${PROJECT_DIR}/scene.c")
-list(APPEND SOURCES "${PROJECT_DIR}/assets.c")
+list(APPEND SOURCES "${PROJECT_DIR}/world.c")
 
 list(APPEND SOURCES "${COMMON_DIR}/timer.c")
 

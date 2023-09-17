@@ -14,8 +14,10 @@
 						{ 0.0F, 0.0F, 0.0F, 1.0F } }
 
 void Matrix_GetPosition(xMat4_t xMat, xVec3_t xVec);
+void Matrix_GetScale(xMat4_t xMat, xVec3_t xVec);
 
 void Matrix_SetPosition(xMat4_t xMat, xVec3_t xVec);
+void Matrix_SetScale(xMat4_t xMat, xVec3_t xVec);
 
 void Matrix_Zero(xMat4_t xMat);
 void Matrix_Copy(xMat4_t xMat, xMat4_t xRes);

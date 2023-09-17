@@ -8,7 +8,7 @@ layout(location = 0) in Vertex {
 	vec4 color;
 } inputVertex;
 
-layout(binding = 2) uniform sampler2D textureSampler;
+layout(set = 0, binding = 2) uniform sampler2D textureSampler;
 
 layout(location = 0) out vec4 outputColor;
 

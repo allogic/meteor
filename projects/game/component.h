@@ -10,12 +10,14 @@
 #define COMPONENT_RIGIDBODY_BIT      0x0000000000000004
 #define COMPONENT_RENDERABLE_BIT     0x0000000000000008
 #define COMPONENT_PARTICLESYSTEM_BIT 0x0000000000000010
+#define COMPONENT_COMPUTABLE_BIT     0x0000000000000020
 
 #define COMPONENT_TRANSFORM_IDX      0x0
 #define COMPONENT_CAMERA_IDX         0x1
 #define COMPONENT_RIGIDBODY_IDX      0x2
 #define COMPONENT_RENDERABLE_IDX     0x3
 #define COMPONENT_PARTICLESYSTEM_IDX 0x4
+#define COMPONENT_COMPUTABLE_IDX     0x5
 
 typedef struct {
 	xVec3_t xPosition;
@@ -54,5 +56,13 @@ typedef struct {
 	struct xBuffer_t* pxParticleBuffer;
 	uint32_t nParticleCount;
 } xParticleSystem_t;
+
+typedef struct {
+	struct xImage_t* pxImage;
+	struct xImage_t* pxAuxImage0;
+	struct xImage_t* pxAuxImage1;
+	struct xImage_t* pxAuxImage2;
+	struct xImage_t* pxAuxImage3;
+} xComputable_t;
 
 #endif

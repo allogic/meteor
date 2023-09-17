@@ -7,10 +7,22 @@ void Matrix_GetPosition(xMat4_t xMat, xVec3_t xVec) {
 	xVec[2] = xMat[2][0];
 }
 
+void Matrix_GetScale(xMat4_t xMat, xVec3_t xVec) {
+	xVec[0] = xMat[0][0];
+	xVec[1] = xMat[1][1];
+	xVec[2] = xMat[2][2];
+}
+
 void Matrix_SetPosition(xMat4_t xMat, xVec3_t xVec) {
 	xMat[3][0] = xVec[0];
 	xMat[3][1] = xVec[1];
 	xMat[3][2] = xVec[2];
+}
+
+void Matrix_SetScale(xMat4_t xMat, xVec3_t xVec) {
+	xMat[0][0] = xVec[0];
+	xMat[1][1] = xVec[1];
+	xMat[2][2] = xVec[2];
 }
 
 void Matrix_Zero(xMat4_t xMat) {

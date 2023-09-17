@@ -18,11 +18,13 @@
 #include <game/component.h>
 #include <game/scene.h>
 #include <game/renderer.h>
+#include <game/world.h>
 
 struct xScene_t {
 	struct xList_t* pxEntities;
 	struct xSwapChain_t* pxSwapChain;
 	struct xRenderer_t* pxRenderer;
+	struct xWorld_t* pxWorld;
 };
 
 struct xScene_t* Scene_Alloc(struct xInstance_t* pxInstance) {
@@ -31,13 +33,13 @@ struct xScene_t* Scene_Alloc(struct xInstance_t* pxInstance) {
 	pxScene->pxEntities = List_Alloc(sizeof(struct xEntity_t*));
 	pxScene->pxSwapChain = SwapChain_Alloc(pxInstance);
 	pxScene->pxRenderer = Renderer_Alloc(pxInstance, pxScene->pxSwapChain);
+	pxScene->pxWorld = World_Alloc(pxInstance, pxScene);
 
 	return pxScene;
 }
 
 void Scene_Free(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
-	// TODO: Destroy entities..
-
+	World_Free(pxScene->pxWorld, pxInstance, pxScene);
 	Renderer_Free(pxScene->pxRenderer, pxInstance);
 	SwapChain_Free(pxScene->pxSwapChain, pxInstance);
 	List_Free(pxScene->pxEntities);

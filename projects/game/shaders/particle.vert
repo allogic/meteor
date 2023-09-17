@@ -13,12 +13,12 @@ layout(push_constant) uniform PerEntityData {
 	mat4 model;
 } perEntityData;
 
-layout(binding = 0) uniform ViewProjection {
+layout(set = 0, binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
 } vp;
 
-layout(std430, binding = 1) readonly buffer InputParticle {
+layout(set = 0, binding = 1, std430) readonly buffer InputParticle {
 	Particle particles[];
 };
 
