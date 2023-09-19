@@ -7,7 +7,6 @@
 
 #include <vulkan/instance.h>
 #include <vulkan/image.h>
-#include <vulkan/command.h>
 
 struct xImage_t {
 	uint64_t wSize;
@@ -162,11 +161,11 @@ void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance) {
 	pxImage->pMappedData = 0;
 }
 
-void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
-	UNUSED(xFormat);
+void Image_SetTo(struct xImage_t* pxImage, void* pData, uint64_t wSize) {
+	memcpy(pxImage->pMappedData, pData, wSize);
+}
 
-	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
-
+void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
 	VkImageMemoryBarrier xImageMemoryBarrier;
 	memset(&xImageMemoryBarrier, 0, sizeof(xImageMemoryBarrier));
 	xImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -192,15 +191,19 @@ void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInst
 
 		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} else if ((xOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_GENERAL)) {
 		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		xImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		xImageMemoryBarrier.dstAccessMask = 0;
 
 		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_GENERAL) && (xNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+		xImageMemoryBarrier.srcAccessMask = 0;
+		xImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 
 	vkCmdPipelineBarrier(xCommandBuffer, xPipelineSourceStageFlags, xPipelineDestinationStageFlags, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
-
-	Command_EndSingle(pxInstance, xCommandBuffer);
 }

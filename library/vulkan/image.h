@@ -7,6 +7,7 @@
 
 struct xInstance_t;
 struct xImage_t;
+struct xBuffer_t;
 
 struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, uint32_t nHeight, VkImageUsageFlags xUsage, VkMemoryPropertyFlags xMemoryProperties, VkFormat xFormat, VkImageTiling xTiling, VkFilter xFilter);
 void Image_Free(struct xImage_t* pxImage, struct xInstance_t* pxInstance);
@@ -25,9 +26,12 @@ void* Image_GetMappedDataRef(struct xImage_t* pxImage);
 void Image_Map(struct xImage_t* pxImage, struct xInstance_t* pxInstance);
 void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance);
 
-void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkFormat xFormat, VkImageLayout xOldLayout, VkImageLayout xNewLayout);
+// TODO: Implement these..
+//void Image_CopyToImage(struct xImage_t pxImage, VkCommandBuffer xCommandBuffer, struct xImage_t* pxTarget);
+//void Image_CopyToBuffer(struct xImage_t pxImage, VkCommandBuffer xCommandBuffer, struct xBuffer_t* pxTarget);
 
-//void Buffer_Copy(struct xInstance_t* pxInstance, struct xBuffer_t* pxSourceBuffer, struct xBuffer_t* pxDestinationBuffer, uint64_t wSize);
-//void Buffer_CopyDirect(struct xImage_t* pxImage, void* pData, uint64_t wSize);
+void Image_SetTo(struct xImage_t* pxImage, void* pData, uint64_t wSize);
+
+void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout);
 
 #endif

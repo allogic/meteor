@@ -84,8 +84,8 @@ xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX];
 }
 
-xComputable_t* Entity_GetComputable(struct xEntity_t* pxEntity) {
-	return pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX];
+xPixelSystem_t* Entity_GetPixelSystem(struct xEntity_t* pxEntity) {
+	return pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX];
 }
 
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
@@ -150,14 +150,14 @@ void Entity_SetParticleSystem(struct xEntity_t* pxEntity, xParticleSystem_t* pxP
 	}
 }
 
-void Entity_SetComputable(struct xEntity_t* pxEntity, xComputable_t* pxComputable) {
-	if ((pxEntity->wMask & COMPONENT_COMPUTABLE_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_COMPUTABLE_BIT;
-		pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX] = calloc(1, sizeof(xComputable_t));
+void Entity_SetPixelSystem(struct xEntity_t* pxEntity, xPixelSystem_t* pxPixelSystem) {
+	if ((pxEntity->wMask & COMPONENT_PIXELSYSTEM_BIT) == 0) {
+		pxEntity->wMask |= COMPONENT_PIXELSYSTEM_BIT;
+		pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX] = calloc(1, sizeof(xPixelSystem_t));
 	}
 
-	if (pxComputable) {
-		memcpy(pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX], pxComputable, sizeof(xComputable_t));
+	if (pxPixelSystem) {
+		memcpy(pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX], pxPixelSystem, sizeof(xPixelSystem_t));
 	}
 }
 

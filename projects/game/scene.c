@@ -84,7 +84,7 @@ void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct
 	pxTimeInfo->fTime = Timer_GetTime(pxTimer);
 	pxTimeInfo->fDeltaTime = Timer_GetDeltaTime(pxTimer);
 
-	Orthographic_Projection(-50.0F, 50.0F, -50.0F, 50.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
+	Orthographic_Projection(-15.0F, 15.0F, -15.0F, 15.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
 
 	xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
 	xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };

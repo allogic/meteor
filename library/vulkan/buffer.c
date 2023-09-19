@@ -7,7 +7,6 @@
 #include <vulkan/instance.h>
 #include <vulkan/buffer.h>
 #include <vulkan/image.h>
-#include <vulkan/command.h>
 
 struct xBuffer_t {
 	uint64_t wSize;
@@ -85,20 +84,15 @@ void Buffer_UnMap(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance) {
 	pxBuffer->pMappedData = 0;
 }
 
-void Buffer_CopyToBuffer(struct xInstance_t* pxInstance, struct xBuffer_t* pxSourceBuffer, struct xBuffer_t* pxDestinationBuffer, uint64_t wSize) {
-	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
-
+void Buffer_CopyToBuffer(struct xBuffer_t* pxBuffer, VkCommandBuffer xCommandBuffer, struct xBuffer_t* pxTarget, uint64_t wSize) {
 	VkBufferCopy xBufferCopy;
 	memset(&xBufferCopy, 0, sizeof(xBufferCopy));
 	xBufferCopy.size = wSize;
-	vkCmdCopyBuffer(xCommandBuffer, pxSourceBuffer->xBuffer, pxDestinationBuffer->xBuffer, 1, &xBufferCopy);
 
-	Command_EndSingle(pxInstance, xCommandBuffer);
+	vkCmdCopyBuffer(xCommandBuffer, pxBuffer->xBuffer, pxTarget->xBuffer, 1, &xBufferCopy);
 }
 
-void Buffer_CopyToImage(struct xInstance_t* pxInstance, struct xBuffer_t* pxBuffer, struct xImage_t* pxImage, uint32_t nWidth, uint32_t nHeight) {
-	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
-
+void Buffer_CopyToImage(struct xBuffer_t* pxBuffer, VkCommandBuffer xCommandBuffer, struct xImage_t* pxTarget, uint32_t nWidth, uint32_t nHeight) {
 	VkBufferImageCopy xBufferImageCopy;
 	memset(&xBufferImageCopy, 0, sizeof(xBufferImageCopy));
 	xBufferImageCopy.bufferOffset = 0;
@@ -115,11 +109,9 @@ void Buffer_CopyToImage(struct xInstance_t* pxInstance, struct xBuffer_t* pxBuff
 	xBufferImageCopy.imageExtent.height = nHeight;
 	xBufferImageCopy.imageExtent.depth = 1;
 
-	vkCmdCopyBufferToImage(xCommandBuffer, pxBuffer->xBuffer, Image_GetImage(pxImage), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &xBufferImageCopy);
-
-	Command_EndSingle(pxInstance, xCommandBuffer);
+	vkCmdCopyBufferToImage(xCommandBuffer, pxBuffer->xBuffer, Image_GetImage(pxTarget), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &xBufferImageCopy);
 }
 
-void Buffer_Copy(struct xBuffer_t* pxBuffer, void* pData, uint64_t wSize) {
+void Buffer_SetTo(struct xBuffer_t* pxBuffer, void* pData, uint64_t wSize) {
 	memcpy(pxBuffer->pMappedData, pData, wSize);
 }

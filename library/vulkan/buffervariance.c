@@ -4,18 +4,23 @@
 #include <vulkan/instance.h>
 #include <vulkan/buffer.h>
 #include <vulkan/buffervariance.h>
+#include <vulkan/command.h>
 
 struct xBuffer_t* VertexBuffer_Alloc(struct xInstance_t* pxInstance, void* pData, uint64_t wSize) {
 	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	Buffer_Map(pxStagingBuffer, pxInstance);
-	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
 	struct xBuffer_t* pxVertexBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	Buffer_CopyToBuffer(pxInstance, pxStagingBuffer, pxVertexBuffer, wSize);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
+
+	Buffer_CopyToBuffer(pxStagingBuffer, xCommandBuffer, pxVertexBuffer, wSize);
 	
+	Command_EndSingle(pxInstance, xCommandBuffer);
+
 	Buffer_Free(pxStagingBuffer, pxInstance);
 
 	return pxVertexBuffer;
@@ -25,12 +30,16 @@ struct xBuffer_t* IndexBuffer_Alloc(struct xInstance_t* pxInstance, void* pData,
 	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	Buffer_Map(pxStagingBuffer, pxInstance);
-	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
 	struct xBuffer_t* pxIndexBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	Buffer_CopyToBuffer(pxInstance, pxStagingBuffer, pxIndexBuffer, wSize);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
+
+	Buffer_CopyToBuffer(pxStagingBuffer, xCommandBuffer, pxIndexBuffer, wSize);
+
+	Command_EndSingle(pxInstance, xCommandBuffer);
 
 	Buffer_Free(pxStagingBuffer, pxInstance);
 
@@ -49,12 +58,16 @@ struct xBuffer_t* StorageBuffer_Alloc(struct xInstance_t* pxInstance, void* pDat
 	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	Buffer_Map(pxStagingBuffer, pxInstance);
-	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
 	struct xBuffer_t* pxStorageBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	Buffer_CopyToBuffer(pxInstance, pxStagingBuffer, pxStorageBuffer, wSize);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
+
+	Buffer_CopyToBuffer(pxStagingBuffer, xCommandBuffer, pxStorageBuffer, wSize);
+
+	Command_EndSingle(pxInstance, xCommandBuffer);
 
 	Buffer_Free(pxStagingBuffer, pxInstance);
 

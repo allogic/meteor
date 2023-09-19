@@ -58,6 +58,8 @@ int32_t main(void) {
 		}
 
 		Scene_Draw(pxScene, pxInstance, pxTimer);
+
+		break;
 	}
 
 	Instance_WaitIdle(pxInstance);

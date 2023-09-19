@@ -21,9 +21,9 @@ void* Buffer_GetMappedDataRef(struct xBuffer_t* pxBuffer);
 void Buffer_Map(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance);
 void Buffer_UnMap(struct xBuffer_t* pxBuffer, struct xInstance_t* pxInstance);
 
-void Buffer_CopyToBuffer(struct xInstance_t* pxInstance, struct xBuffer_t* pxSourceBuffer, struct xBuffer_t* pxDestinationBuffer, uint64_t wSize);
-void Buffer_CopyToImage(struct xInstance_t* pxInstance, struct xBuffer_t* pxBuffer, struct xImage_t* pxImage, uint32_t nWidth, uint32_t nHeight);
+void Buffer_CopyToBuffer(struct xBuffer_t* pxBuffer, VkCommandBuffer xCommandBuffer, struct xBuffer_t* pxTarget, uint64_t wSize);
+void Buffer_CopyToImage(struct xBuffer_t* pxBuffer, VkCommandBuffer xCommandBuffer, struct xImage_t* pxTarget, uint32_t nWidth, uint32_t nHeight);
 
-void Buffer_Copy(struct xBuffer_t* pxBuffer, void* pData, uint64_t wSize);
+void Buffer_SetTo(struct xBuffer_t* pxBuffer, void* pData, uint64_t wSize);
 
 #endif

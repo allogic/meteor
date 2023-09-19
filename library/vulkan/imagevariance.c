@@ -5,6 +5,7 @@
 
 #include <vulkan/instance.h>
 #include <vulkan/buffer.h>
+#include <vulkan/command.h>
 #include <vulkan/image.h>
 #include <vulkan/vertex.h>
 
@@ -19,14 +20,18 @@ struct xImage_t* StandardImage_Alloc(struct xInstance_t* pxInstance, char const*
 	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	Buffer_Map(pxStagingBuffer, pxInstance);
-	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
 	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_FILTER_NEAREST);
 
-	Image_LayoutTransition(pxImage, pxInstance, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	Buffer_CopyToImage(pxInstance, pxStagingBuffer, pxImage, nWidth, nHeight);
-	Image_LayoutTransition(pxImage, pxInstance, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
+
+	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	Buffer_CopyToImage(pxStagingBuffer, xCommandBuffer, pxImage, nWidth, nHeight);
+	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+
+	Command_EndSingle(pxInstance, xCommandBuffer);
 
 	Buffer_Free(pxStagingBuffer, pxInstance);
 
@@ -46,14 +51,18 @@ struct xImage_t* StorageImage_Alloc(struct xInstance_t* pxInstance, char const* 
 	struct xBuffer_t* pxStagingBuffer = Buffer_Alloc(pxInstance, wSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	Buffer_Map(pxStagingBuffer, pxInstance);
-	Buffer_Copy(pxStagingBuffer, pData, wSize);
+	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
 	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_FILTER_NEAREST);
 
-	Image_LayoutTransition(pxImage, pxInstance, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	Buffer_CopyToImage(pxInstance, pxStagingBuffer, pxImage, nWidth, nHeight);
-	Image_LayoutTransition(pxImage, pxInstance, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
+
+	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	Buffer_CopyToImage(pxStagingBuffer, xCommandBuffer, pxImage, nWidth, nHeight);
+	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+
+	Command_EndSingle(pxInstance, xCommandBuffer);
 
 	Buffer_Free(pxStagingBuffer, pxInstance);
 
