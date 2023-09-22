@@ -40,7 +40,7 @@ static void SwapChain_AllocSwapChain(struct xSwapChain_t* pxSwapChain, struct xI
 	xSwapChaincreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	xSwapChaincreateInfo.presentMode = Instance_GetPreferedPresentMode(pxInstance);
 	xSwapChaincreateInfo.clipped = VK_TRUE;
-	xSwapChaincreateInfo.oldSwapchain = VK_NULL_HANDLE;
+	xSwapChaincreateInfo.oldSwapchain = 0;
 
 	int32_t nGraphicsQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
 	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);

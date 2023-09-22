@@ -36,7 +36,7 @@ void Command_EndSingle(struct xInstance_t* pxInstance, VkCommandBuffer xCommandB
 	xSubmitInfo.commandBufferCount = 1;
 	xSubmitInfo.pCommandBuffers = &xCommandBuffer;
 
-	VK_CHECK(vkQueueSubmit(Instance_GetGraphicQueue(pxInstance), 1, &xSubmitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(Instance_GetGraphicQueue(pxInstance), 1, &xSubmitInfo, 0));
 	VK_CHECK(vkQueueWaitIdle(Instance_GetGraphicQueue(pxInstance)));
 
 	vkFreeCommandBuffers(Instance_GetDevice(pxInstance), Instance_GetCommandPool(pxInstance), 1, &xCommandBuffer);

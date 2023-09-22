@@ -32,6 +32,6 @@ void Image_UnMap(struct xImage_t* pxImage, struct xInstance_t* pxInstance);
 
 void Image_SetTo(struct xImage_t* pxImage, void* pData, uint64_t wSize);
 
-void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout);
+void Image_LayoutTransition(struct xImage_t* pxImage, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout);
 
 #endif

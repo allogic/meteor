@@ -27,9 +27,9 @@ struct xImage_t* StandardImage_Alloc(struct xInstance_t* pxInstance, char const*
 
 	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
-	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	Image_LayoutTransition(pxImage, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	Buffer_CopyToImage(pxStagingBuffer, xCommandBuffer, pxImage, nWidth, nHeight);
-	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+	Image_LayoutTransition(pxImage, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
 
 	Command_EndSingle(pxInstance, xCommandBuffer);
 
@@ -58,9 +58,9 @@ struct xImage_t* StorageImage_Alloc(struct xInstance_t* pxInstance, char const* 
 
 	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 
-	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	Image_LayoutTransition(pxImage, xCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	Buffer_CopyToImage(pxStagingBuffer, xCommandBuffer, pxImage, nWidth, nHeight);
-	Image_LayoutTransition(pxImage, pxInstance, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+	Image_LayoutTransition(pxImage, xCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
 
 	Command_EndSingle(pxInstance, xCommandBuffer);
 

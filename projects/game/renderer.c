@@ -65,12 +65,9 @@ struct xRenderer_t {
 	VkCommandBuffer xGraphicCommandBuffer;
 	VkCommandBuffer xComputeCommandBuffer;
 
+	VkSemaphore xGraphicCompleteSemaphore;
+	VkSemaphore xComputeCompleteSemaphore;
 	VkSemaphore xImageAvailableSemaphore;
-	VkSemaphore xGraphicFinishedSemaphore;
-	VkSemaphore xComputeFinishedSemaphore;
-
-	VkFence xGraphicInFlightFence;
-	VkFence xComputeInFlightFence;
 };
 
 static void Renderer_AllocDefaultGraphicDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
@@ -382,7 +379,7 @@ static void Renderer_UpdateDefaultGraphicDescriptorSet(struct xRenderer_t* pxRen
 
 	VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
 	memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
-	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxAlbedoImage);
 	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxAlbedoImage);
 
@@ -427,7 +424,7 @@ static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRe
 
 	VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
 	memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
-	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxAlbedoImage);
 	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxAlbedoImage);
 
@@ -626,12 +623,12 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
 
-static void Renderer_AllocDefaultPushConstants(struct xRenderer_t* pxRenderer) {
+static void Renderer_UpdateDefaultPushConstants(struct xRenderer_t* pxRenderer) {
 	pxRenderer->axDefaultGraphicPushConstantRanges[0].offset = 0;
 	pxRenderer->axDefaultGraphicPushConstantRanges[0].size = sizeof(xPerEntityData_t);
 	pxRenderer->axDefaultGraphicPushConstantRanges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 }
-static void Renderer_AllocParticlePushConstants(struct xRenderer_t* pxRenderer) {
+static void Renderer_UpdateParticlePushConstants(struct xRenderer_t* pxRenderer) {
 	pxRenderer->axParticleGraphicPushConstantRanges[0].offset = 0;
 	pxRenderer->axParticleGraphicPushConstantRanges[0].size = sizeof(xPerEntityData_t);
 	pxRenderer->axParticleGraphicPushConstantRanges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -740,7 +737,16 @@ static void Renderer_AllocComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 	VK_CHECK(vkAllocateCommandBuffers(Instance_GetDevice(pxInstance), &xCommandBufferAllocCreateInfo, &pxRenderer->xComputeCommandBuffer));
 }
 
-static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, uint32_t nImageIndex, struct xList_t* pxEntities) {
+static void Renderer_FreeGraphicCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
+	vkFreeCommandBuffers(Instance_GetDevice(pxInstance), Instance_GetCommandPool(pxInstance), 1, &pxRenderer->xGraphicCommandBuffer);
+}
+static void Renderer_FreeComputeCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
+	vkFreeCommandBuffers(Instance_GetDevice(pxInstance), Instance_GetCommandPool(pxInstance), 1, &pxRenderer->xComputeCommandBuffer);
+}
+
+static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, uint32_t nImageIndex, struct xList_t* pxEntities) {
+	Instance_GraphicQueueWaitIdle(pxInstance);
+
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -802,8 +808,6 @@ static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 				xTransform_t* pxTransform = Entity_GetTransform(*ppxEntity);
 				xRenderable_t* pxRenderable = Entity_GetRenderable(*ppxEntity);
 
-				Image_LayoutTransition(pxRenderable->pxAlbedoImage, pxInstance, pxRenderer->xGraphicCommandBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
 				VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
 				uint64_t awOffsets[] = { 0 };
 
@@ -847,8 +851,6 @@ static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 				xRenderable_t* pxRenderable = Entity_GetRenderable(*ppxEntity);
 				xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(*ppxEntity);
 
-				Image_LayoutTransition(pxRenderable->pxAlbedoImage, pxInstance, pxRenderer->xGraphicCommandBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
 				VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
 				uint64_t awOffsets[] = { 0 };
 
@@ -879,7 +881,9 @@ static void Renderer_RecordGraphicCommandBuffer(struct xRenderer_t* pxRenderer, 
 
 	VK_CHECK(vkEndCommandBuffer(pxRenderer->xGraphicCommandBuffer));
 }
-static void Renderer_RecordComputeCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
+static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
+	Instance_ComputeQueueWaitIdle(pxInstance);
+
 	VkCommandBufferBeginInfo xCommandBufferBeginInfo;
 	memset(&xCommandBufferBeginInfo, 0, sizeof(xCommandBufferBeginInfo));
 	xCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -919,7 +923,7 @@ static void Renderer_RecordComputeCommandBuffer(struct xRenderer_t* pxRenderer, 
 			if (Entity_HasComponents(*ppxEntity, COMPONENT_PIXELSYSTEM_BIT)) {
 				xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(*ppxEntity);
 
-				vkCmdDispatch(pxRenderer->xComputeCommandBuffer, pxPixelSystem->nImageWidth / 256, pxPixelSystem->nImageHeight / 256, 1);
+				vkCmdDispatch(pxRenderer->xComputeCommandBuffer, pxPixelSystem->nImageWidth / 32, pxPixelSystem->nImageHeight / 32, 1);
 			}
 
 			pIter = List_Next(pIter);
@@ -929,113 +933,20 @@ static void Renderer_RecordComputeCommandBuffer(struct xRenderer_t* pxRenderer, 
 	VK_CHECK(vkEndCommandBuffer(pxRenderer->xComputeCommandBuffer));
 }
 
-static void Renderer_AllocGraphicSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
+static void Renderer_AllocSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	VkSemaphoreCreateInfo xSemaphoreCreateInfo;
 	memset(&xSemaphoreCreateInfo, 0, sizeof(xSemaphoreCreateInfo));
 	xSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	VkFenceCreateInfo xFenceCreateInfo;
-	memset(&xFenceCreateInfo, 0, sizeof(xFenceCreateInfo));
-	xFenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	xFenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	VK_CHECK(vkCreateSemaphore(Instance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->xGraphicFinishedSemaphore));
+	VK_CHECK(vkCreateSemaphore(Instance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->xGraphicCompleteSemaphore));
+	VK_CHECK(vkCreateSemaphore(Instance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->xComputeCompleteSemaphore));
 	VK_CHECK(vkCreateSemaphore(Instance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->xImageAvailableSemaphore));
-
-	VK_CHECK(vkCreateFence(Instance_GetDevice(pxInstance), &xFenceCreateInfo, 0, &pxRenderer->xGraphicInFlightFence));
-}
-static void Renderer_AllocComputeSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkSemaphoreCreateInfo xSemaphoreCreateInfo;
-	memset(&xSemaphoreCreateInfo, 0, sizeof(xSemaphoreCreateInfo));
-	xSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkFenceCreateInfo xFenceCreateInfo;
-	memset(&xFenceCreateInfo, 0, sizeof(xFenceCreateInfo));
-	xFenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	xFenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	VK_CHECK(vkCreateSemaphore(Instance_GetDevice(pxInstance), &xSemaphoreCreateInfo, 0, &pxRenderer->xComputeFinishedSemaphore));
-
-	VK_CHECK(vkCreateFence(Instance_GetDevice(pxInstance), &xFenceCreateInfo, 0, &pxRenderer->xComputeInFlightFence));
 }
 
-static void Renderer_FreeGraphicSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	vkDestroySemaphore(Instance_GetDevice(pxInstance), pxRenderer->xGraphicFinishedSemaphore, 0);
+static void Renderer_FreeSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
 	vkDestroySemaphore(Instance_GetDevice(pxInstance), pxRenderer->xImageAvailableSemaphore, 0);
-
-	vkDestroyFence(Instance_GetDevice(pxInstance), pxRenderer->xGraphicInFlightFence, 0);
-}
-static void Renderer_FreeComputeSynchronizationObjects(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	vkDestroySemaphore(Instance_GetDevice(pxInstance), pxRenderer->xComputeFinishedSemaphore, 0);
-
-	vkDestroyFence(Instance_GetDevice(pxInstance), pxRenderer->xComputeInFlightFence, 0);
-}
-
-static void Renderer_SubmitGraphic(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xList_t* pxEntities) {
-	VK_CHECK(vkWaitForFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xGraphicInFlightFence, VK_TRUE, UINT64_MAX));
-
-	Buffer_SetTo(pxRenderer->pxViewProjectionBuffer, &pxRenderer->xViewProjection, sizeof(xViewProjection_t));
-
-	uint32_t nImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(Instance_GetDevice(pxInstance), SwapChain_GetSwapChain(pxSwapChain), UINT64_MAX, pxRenderer->xImageAvailableSemaphore, VK_NULL_HANDLE, &nImageIndex));
-
-	VK_CHECK(vkResetFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xGraphicInFlightFence));
-
-	VK_CHECK(vkResetCommandBuffer(pxRenderer->xGraphicCommandBuffer, 0));
-
-	Renderer_RecordGraphicCommandBuffer(pxRenderer, pxInstance, pxSwapChain, nImageIndex, pxEntities);
-
-	VkSemaphore axWaitSemaphores[] = { pxRenderer->xComputeFinishedSemaphore, pxRenderer->xImageAvailableSemaphore };
-	VkSemaphore axSignalSemaphores[] = { pxRenderer->xGraphicFinishedSemaphore };
-	VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	VkSwapchainKHR axSwapChains[] = { SwapChain_GetSwapChain(pxSwapChain) };
-
-	VkSubmitInfo xSubmitInfo;
-	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
-	xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	xSubmitInfo.waitSemaphoreCount = ARRAY_LENGTH(axWaitSemaphores);
-	xSubmitInfo.pWaitSemaphores = axWaitSemaphores;
-	xSubmitInfo.pWaitDstStageMask = axWaitStages;
-	xSubmitInfo.commandBufferCount = 1;
-	xSubmitInfo.pCommandBuffers = &pxRenderer->xGraphicCommandBuffer;
-	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
-	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
-
-	VK_CHECK(vkQueueSubmit(Instance_GetGraphicQueue(pxInstance), 1, &xSubmitInfo, pxRenderer->xGraphicInFlightFence));
-
-	VkPresentInfoKHR xPresentInfo;
-	memset(&xPresentInfo, 0, sizeof(xPresentInfo));
-	xPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	xPresentInfo.swapchainCount = ARRAY_LENGTH(axSwapChains);
-	xPresentInfo.pSwapchains = axSwapChains;
-	xPresentInfo.pImageIndices = &nImageIndex;
-	xPresentInfo.waitSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
-	xPresentInfo.pWaitSemaphores = axSignalSemaphores;
-
-	VK_CHECK(vkQueuePresentKHR(Instance_GetPresentQueue(pxInstance), &xPresentInfo));
-}
-static void Renderer_SubmitCompute(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
-	VK_CHECK(vkWaitForFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xComputeInFlightFence, VK_TRUE, UINT64_MAX));
-
-	Buffer_SetTo(pxRenderer->pxTimeInfoBuffer, &pxRenderer->xTimeInfo, sizeof(xTimeInfo_t));
-
-	VK_CHECK(vkResetFences(Instance_GetDevice(pxInstance), 1, &pxRenderer->xComputeInFlightFence));
-
-	VK_CHECK(vkResetCommandBuffer(pxRenderer->xComputeCommandBuffer, 0));
-
-	Renderer_RecordComputeCommandBuffer(pxRenderer, pxInstance, pxEntities);
-
-	VkSemaphore axSignalSemaphores[] = { pxRenderer->xComputeFinishedSemaphore };
-
-	VkSubmitInfo xSubmitInfo;
-	memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
-	xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	xSubmitInfo.commandBufferCount = 1;
-	xSubmitInfo.pCommandBuffers = &pxRenderer->xComputeCommandBuffer;
-	xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
-	xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
-
-	VK_CHECK(vkQueueSubmit(Instance_GetComputeQueue(pxInstance), 1, &xSubmitInfo, pxRenderer->xComputeInFlightFence));
+	vkDestroySemaphore(Instance_GetDevice(pxInstance), pxRenderer->xComputeCompleteSemaphore, 0);
+	vkDestroySemaphore(Instance_GetDevice(pxInstance), pxRenderer->xGraphicCompleteSemaphore, 0);
 }
 
 struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain) {
@@ -1062,8 +973,8 @@ struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapC
 	Renderer_AllocParticleComputeDescriptorSetLayout(pxRenderer, pxInstance);
 	Renderer_AllocPixelComputeDescriptorSetLayout(pxRenderer, pxInstance);
 
-	Renderer_AllocDefaultPushConstants(pxRenderer);
-	Renderer_AllocParticlePushConstants(pxRenderer);
+	Renderer_UpdateDefaultPushConstants(pxRenderer);
+	Renderer_UpdateParticlePushConstants(pxRenderer);
 
 	Renderer_AllocDefaultGraphicPipeline(pxRenderer, pxInstance, pxSwapChain);
 	Renderer_AllocParticleGraphicPipeline(pxRenderer, pxInstance, pxSwapChain);
@@ -1073,15 +984,16 @@ struct xRenderer_t* Renderer_Alloc(struct xInstance_t* pxInstance, struct xSwapC
 	Renderer_AllocGraphicCommandBuffer(pxRenderer, pxInstance);
 	Renderer_AllocComputeCommandBuffer(pxRenderer, pxInstance);
 
-	Renderer_AllocGraphicSynchronizationObjects(pxRenderer, pxInstance);
-	Renderer_AllocComputeSynchronizationObjects(pxRenderer, pxInstance);
+	Renderer_AllocSynchronizationObjects(pxRenderer, pxInstance);
 
 	return pxRenderer;
 }
 
 void Renderer_Free(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	Renderer_FreeComputeSynchronizationObjects(pxRenderer, pxInstance);
-	Renderer_FreeGraphicSynchronizationObjects(pxRenderer, pxInstance);
+	Renderer_FreeSynchronizationObjects(pxRenderer, pxInstance);
+
+	Renderer_FreeComputeCommandBuffer(pxRenderer, pxInstance);
+	Renderer_FreeGraphicCommandBuffer(pxRenderer, pxInstance);
 
 	Renderer_FreePixelComputePipeline(pxRenderer, pxInstance);
 	Renderer_FreeParticleComputePipeline(pxRenderer, pxInstance);
@@ -1118,8 +1030,68 @@ xViewProjection_t* Renderer_GetViewProjection(struct xRenderer_t* pxRenderer) {
 }
 
 void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xList_t* pxEntities) {
-	Renderer_SubmitCompute(pxRenderer, pxInstance, pxEntities);
-	Renderer_SubmitGraphic(pxRenderer, pxInstance, pxSwapChain, pxEntities);
+	Buffer_SetTo(pxRenderer->pxTimeInfoBuffer, &pxRenderer->xTimeInfo, sizeof(xTimeInfo_t));
+	Buffer_SetTo(pxRenderer->pxViewProjectionBuffer, &pxRenderer->xViewProjection, sizeof(xViewProjection_t));
+
+	uint32_t nImageIndex;
+	VK_CHECK(vkAcquireNextImageKHR(Instance_GetDevice(pxInstance), SwapChain_GetSwapChain(pxSwapChain), UINT64_MAX, pxRenderer->xImageAvailableSemaphore, 0, &nImageIndex));
+
+	Renderer_BuildGraphicCommandBuffer(pxRenderer, pxInstance, pxSwapChain, nImageIndex, pxEntities);
+	Renderer_BuildComputeCommandBuffer(pxRenderer, pxInstance, pxEntities);
+
+	{
+		VkSemaphore axWaitSemaphores[] = { pxRenderer->xImageAvailableSemaphore };
+		VkSemaphore axSignalSemaphores[] = { pxRenderer->xComputeCompleteSemaphore };
+		VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
+
+		VkSubmitInfo xSubmitInfo;
+		memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
+		xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		xSubmitInfo.waitSemaphoreCount = ARRAY_LENGTH(axWaitSemaphores);
+		xSubmitInfo.pWaitSemaphores = axWaitSemaphores;
+		xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+		xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
+		xSubmitInfo.pWaitDstStageMask = axWaitStages;
+		xSubmitInfo.commandBufferCount = 1;
+		xSubmitInfo.pCommandBuffers = &pxRenderer->xComputeCommandBuffer;
+
+		VK_CHECK(vkQueueSubmit(Instance_GetComputeQueue(pxInstance), 1, &xSubmitInfo, 0));
+	}
+
+	{
+		VkSemaphore axWaitSemaphores[] = { pxRenderer->xComputeCompleteSemaphore };
+		VkSemaphore axSignalSemaphores[] = { pxRenderer->xGraphicCompleteSemaphore };
+		VkPipelineStageFlags axWaitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		VkSubmitInfo xSubmitInfo;
+		memset(&xSubmitInfo, 0, sizeof(xSubmitInfo));
+		xSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		xSubmitInfo.waitSemaphoreCount = ARRAY_LENGTH(axWaitSemaphores);
+		xSubmitInfo.pWaitSemaphores = axWaitSemaphores;
+		xSubmitInfo.signalSemaphoreCount = ARRAY_LENGTH(axSignalSemaphores);
+		xSubmitInfo.pSignalSemaphores = axSignalSemaphores;
+		xSubmitInfo.pWaitDstStageMask = axWaitStages;
+		xSubmitInfo.commandBufferCount = 1;
+		xSubmitInfo.pCommandBuffers = &pxRenderer->xGraphicCommandBuffer;
+
+		VK_CHECK(vkQueueSubmit(Instance_GetGraphicQueue(pxInstance), 1, &xSubmitInfo, 0));
+	}
+
+	{
+		VkSemaphore axWaitSemaphores[] = { pxRenderer->xGraphicCompleteSemaphore };
+		VkSwapchainKHR axSwapChains[] = { SwapChain_GetSwapChain(pxSwapChain) };
+
+		VkPresentInfoKHR xPresentInfo;
+		memset(&xPresentInfo, 0, sizeof(xPresentInfo));
+		xPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		xPresentInfo.waitSemaphoreCount = ARRAY_LENGTH(axWaitSemaphores);
+		xPresentInfo.pWaitSemaphores = axWaitSemaphores;
+		xPresentInfo.swapchainCount = ARRAY_LENGTH(axSwapChains);
+		xPresentInfo.pSwapchains = axSwapChains;
+		xPresentInfo.pImageIndices = &nImageIndex;
+
+		VK_CHECK(vkQueuePresentKHR(Instance_GetPresentQueue(pxInstance), &xPresentInfo));
+	}
 }
 
 void Renderer_RebuildEnitityDescriptorSets(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {

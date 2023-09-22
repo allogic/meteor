@@ -27,11 +27,11 @@ layout(set = 0, binding = 5, std430) buffer InputImage {
 };
 */
 
-layout(set = 0, binding = 1, r32f) coherent uniform image2D inputImageN;
-layout(set = 0, binding = 2, r32f) coherent uniform image2D inputImageS;
-layout(set = 0, binding = 3, r32f) coherent uniform image2D inputImageW;
-layout(set = 0, binding = 4, r32f) coherent uniform image2D inputImageE;
-layout(set = 0, binding = 5, r32f) coherent uniform image2D inputImage;
+layout(set = 0, binding = 1, rgba8) coherent uniform image2D inputImageN;
+layout(set = 0, binding = 2, rgba8) coherent uniform image2D inputImageS;
+layout(set = 0, binding = 3, rgba8) coherent uniform image2D inputImageW;
+layout(set = 0, binding = 4, rgba8) coherent uniform image2D inputImageE;
+layout(set = 0, binding = 5, rgba8) coherent uniform image2D inputImage;
 
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
@@ -42,11 +42,44 @@ void main() {
 	//color.x -= timeInfo.deltaTime;
 	//inputImage[index] = uvec4(color * 255.0);
 
-	//uint numRows = 10;
-	//uint x = index % numRows;
-	//uint y = index / numRows;
-	//ivec2 pixelCoord = ivec2(x, y);
-	//vec4 color = imageLoad(inputImage, pixelCoord);
-	//color.x -= timeInfo.deltaTime;
-	//imageStore(inputImage, pixelCoord, color);
+	uint numRows = 128;
+	uint x = index % numRows;
+	uint y = index / numRows;
+
+	ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+
+	vec4 color = imageLoad(inputImageN, pixelCoord);
+	color.x = 1.0;
+	color.y = 0.0;
+	color.z = 0.0;
+	color.w = 0.0;
+	imageStore(inputImageN, pixelCoord, color);
+
+	vec4 color = imageLoad(inputImageS, pixelCoord);
+	color.x = 1.0;
+	color.y = 0.0;
+	color.z = 0.0;
+	color.w = 0.0;
+	imageStore(inputImageS, pixelCoord, color);
+
+	vec4 color = imageLoad(inputImageW, pixelCoord);
+	color.x = 1.0;
+	color.y = 0.0;
+	color.z = 0.0;
+	color.w = 0.0;
+	imageStore(inputImageW, pixelCoord, color);
+
+	vec4 color = imageLoad(inputImageE, pixelCoord);
+	color.x = 1.0;
+	color.y = 0.0;
+	color.z = 0.0;
+	color.w = 0.0;
+	imageStore(inputImageE, pixelCoord, color);
+
+	vec4 color = imageLoad(inputImage, pixelCoord);
+	color.x = 1.0;
+	color.y = 0.0;
+	color.z = 0.0;
+	color.w = 0.0;
+	imageStore(inputImage, pixelCoord, color);
 }

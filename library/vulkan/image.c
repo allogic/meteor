@@ -28,23 +28,30 @@ struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, ui
 	pxImage->nHeight = nHeight;
 	pxImage->xFormat = xFormat;
 
-	VkImageCreateInfo xVkImageCreateInfo;
-	memset(&xVkImageCreateInfo, 0, sizeof(xVkImageCreateInfo));
-	xVkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	xVkImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	xVkImageCreateInfo.extent.width = nWidth;
-	xVkImageCreateInfo.extent.height = nHeight;
-	xVkImageCreateInfo.extent.depth = 1;
-	xVkImageCreateInfo.mipLevels = 1;
-	xVkImageCreateInfo.arrayLayers = 1;
-	xVkImageCreateInfo.format = xFormat;
-	xVkImageCreateInfo.tiling = xTiling;
-	xVkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	xVkImageCreateInfo.usage = xUsage;
-	xVkImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	xVkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	int32_t nGraphicsQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
+	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);
 
-	VK_CHECK(vkCreateImage(Instance_GetDevice(pxInstance), &xVkImageCreateInfo, 0, &pxImage->xImage));
+	uint32_t anQueueFamilies[] = { nGraphicsQueueIndex, nPresentQueueIndex };
+
+	VkImageCreateInfo xImageCreateInfo;
+	memset(&xImageCreateInfo, 0, sizeof(xImageCreateInfo));
+	xImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	xImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	xImageCreateInfo.extent.width = nWidth;
+	xImageCreateInfo.extent.height = nHeight;
+	xImageCreateInfo.extent.depth = 1;
+	xImageCreateInfo.mipLevels = 1;
+	xImageCreateInfo.arrayLayers = 1;
+	xImageCreateInfo.format = xFormat;
+	xImageCreateInfo.tiling = xTiling;
+	xImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	xImageCreateInfo.usage = xUsage;
+	xImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	xImageCreateInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+	xImageCreateInfo.queueFamilyIndexCount = ARRAY_LENGTH(anQueueFamilies);
+	xImageCreateInfo.pQueueFamilyIndices = anQueueFamilies;
+
+	VK_CHECK(vkCreateImage(Instance_GetDevice(pxInstance), &xImageCreateInfo, 0, &pxImage->xImage));
 
 	VkMemoryRequirements xMemoryRequirements;
 	vkGetImageMemoryRequirements(Instance_GetDevice(pxInstance), pxImage->xImage, &xMemoryRequirements);
@@ -165,7 +172,7 @@ void Image_SetTo(struct xImage_t* pxImage, void* pData, uint64_t wSize) {
 	memcpy(pxImage->pMappedData, pData, wSize);
 }
 
-void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInstance, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
+void Image_LayoutTransition(struct xImage_t* pxImage, VkCommandBuffer xCommandBuffer, VkImageLayout xOldLayout, VkImageLayout xNewLayout) {
 	VkImageMemoryBarrier xImageMemoryBarrier;
 	memset(&xImageMemoryBarrier, 0, sizeof(xImageMemoryBarrier));
 	xImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -191,11 +198,41 @@ void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInst
 
 		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_UNDEFINED)) {
+		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		xImageMemoryBarrier.dstAccessMask = 0;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	} else if ((xOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_GENERAL)) {
 		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		xImageMemoryBarrier.dstAccessMask = 0;
 
 		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_UNDEFINED)) {
+		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		xImageMemoryBarrier.dstAccessMask = 0;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_UNDEFINED) && (xNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
+		xImageMemoryBarrier.srcAccessMask = 0;
+		xImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_GENERAL) && (xNewLayout == VK_IMAGE_LAYOUT_UNDEFINED)) {
+		xImageMemoryBarrier.srcAccessMask = 0;
+		xImageMemoryBarrier.dstAccessMask = 0;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_UNDEFINED) && (xNewLayout == VK_IMAGE_LAYOUT_GENERAL)) {
+		xImageMemoryBarrier.srcAccessMask = 0;
+		xImageMemoryBarrier.dstAccessMask = 0;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	} else if ((xOldLayout == VK_IMAGE_LAYOUT_GENERAL) && (xNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)) {
 		xImageMemoryBarrier.srcAccessMask = 0;
@@ -203,7 +240,13 @@ void Image_LayoutTransition(struct xImage_t* pxImage, struct xInstance_t* pxInst
 
 		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
+	} else if ((xOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) && (xNewLayout == VK_IMAGE_LAYOUT_GENERAL)) {
+		xImageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		xImageMemoryBarrier.dstAccessMask = 0;
+
+		xPipelineSourceStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		xPipelineDestinationStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	} 
 
 	vkCmdPipelineBarrier(xCommandBuffer, xPipelineSourceStageFlags, xPipelineDestinationStageFlags, 0, 0, 0, 0, 0, 1, &xImageMemoryBarrier);
 }

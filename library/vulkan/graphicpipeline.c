@@ -154,9 +154,9 @@ struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance,
 	xPipelineCreateInfo.layout = pxGraphicPipeline->xPipelineLayout;
 	xPipelineCreateInfo.renderPass = SwapChain_GetRenderPass(pxSwapChain);
 	xPipelineCreateInfo.subpass = 0;
-	xPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+	xPipelineCreateInfo.basePipelineHandle = 0;
 
-	VK_CHECK(vkCreateGraphicsPipelines(Instance_GetDevice(pxInstance), VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &pxGraphicPipeline->xPipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(Instance_GetDevice(pxInstance), 0, 1, &xPipelineCreateInfo, 0, &pxGraphicPipeline->xPipeline));
 
 	return pxGraphicPipeline;
 }

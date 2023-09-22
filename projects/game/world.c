@@ -51,7 +51,7 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 				pxWorld->pxSharedVertexBuffer,
 				pxWorld->pxSharedIndexBuffer,
 				6,
-				StorageImage_Alloc(pxInstance, "assets/test.bmp"),
+				StorageImage_Alloc(pxInstance, "assets/chunk.bmp"),
 			};
 
 			Entity_SetTransform(pxWorld->apEntities[i][j], 0);
@@ -69,7 +69,7 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 			float y = (float)j * CHUNK_HEIGHT - hh + hch;
 
 			Vector_Set(pxTransform->xPosition, x, y, 0.0F);
-			Vector_Set(pxTransform->xScale, CHUNK_WIDTH, CHUNK_HEIGHT, 1.0F);
+			Vector_Set(pxTransform->xScale, CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1, 1.0F);
 		}
 	}
 

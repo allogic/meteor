@@ -411,7 +411,19 @@ VkCommandPool Instance_GetCommandPool(struct xInstance_t* pxInstance) {
 	return pxInstance->xCommandPool;
 }
 
-void Instance_WaitIdle(struct xInstance_t* pxInstance) {
+void Instance_GraphicQueueWaitIdle(struct xInstance_t* pxInstance) {
+	VK_CHECK(vkQueueWaitIdle(pxInstance->xGraphicQueue));
+}
+
+void Instance_ComputeQueueWaitIdle(struct xInstance_t* pxInstance) {
+	VK_CHECK(vkQueueWaitIdle(pxInstance->xComputeQueue));
+}
+
+void Instance_PresentQueueWaitIdle(struct xInstance_t* pxInstance) {
+	VK_CHECK(vkQueueWaitIdle(pxInstance->xPresentQueue));
+}
+
+void Instance_DeviceWaitIdle(struct xInstance_t* pxInstance) {
 	VK_CHECK(vkDeviceWaitIdle(pxInstance->xDevice));
 }
 

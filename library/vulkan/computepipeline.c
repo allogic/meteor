@@ -40,7 +40,7 @@ struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance,
 	xPipelineCreateInfo.layout = pxComputePipeline->xPipelineLayout;
 	xPipelineCreateInfo.stage = xCompShaderStageCreateInfo;
 
-	VK_CHECK(vkCreateComputePipelines(Instance_GetDevice(pxInstance), VK_NULL_HANDLE, 1, &xPipelineCreateInfo, 0, &pxComputePipeline->xPipeline));
+	VK_CHECK(vkCreateComputePipelines(Instance_GetDevice(pxInstance), 0, 1, &xPipelineCreateInfo, 0, &pxComputePipeline->xPipeline));
 
 	return pxComputePipeline;
 }

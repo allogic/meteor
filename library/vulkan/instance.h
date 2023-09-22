@@ -24,7 +24,11 @@ VkQueue Instance_GetComputeQueue(struct xInstance_t* pxInstance);
 VkQueue Instance_GetPresentQueue(struct xInstance_t* pxInstance);
 VkCommandPool Instance_GetCommandPool(struct xInstance_t* pxInstance);
 
-void Instance_WaitIdle(struct xInstance_t* pxInstance);
+void Instance_GraphicQueueWaitIdle(struct xInstance_t* pxInstance);
+void Instance_ComputeQueueWaitIdle(struct xInstance_t* pxInstance);
+void Instance_PresentQueueWaitIdle(struct xInstance_t* pxInstance);
+void Instance_DeviceWaitIdle(struct xInstance_t* pxInstance);
+
 int32_t Instance_CheckMemoryType(struct xInstance_t* pxInstance, uint32_t nTypeFilter, VkMemoryPropertyFlags xMemoryPropertyFlags);
 
 #endif

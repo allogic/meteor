@@ -52,17 +52,17 @@ int32_t main(void) {
 		Timer_Measure(pxTimer);
 
 		if (NativeWindow_HasResized()) {
-			Instance_WaitIdle(pxInstance);
+			Instance_DeviceWaitIdle(pxInstance);
 
 			Scene_Resize(pxScene, pxInstance);
 		}
 
 		Scene_Draw(pxScene, pxInstance, pxTimer);
 
-		break;
+		//break;
 	}
 
-	Instance_WaitIdle(pxInstance);
+	Instance_DeviceWaitIdle(pxInstance);
 
 	Scene_Free(pxScene, pxInstance);
 
