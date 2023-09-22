@@ -28,10 +28,10 @@ struct xImage_t* Image_Alloc(struct xInstance_t* pxInstance, uint32_t nWidth, ui
 	pxImage->nHeight = nHeight;
 	pxImage->xFormat = xFormat;
 
-	int32_t nGraphicQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
-	int32_t nComputeQueueIndex = Instance_GetComputeQueueIndex(pxInstance);
+	int32_t nGraphicAndComputeQueueIndex = Instance_GetGraphicAndComputeQueueIndex(pxInstance);
+	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);
 
-	uint32_t anQueueFamilies[] = { nGraphicQueueIndex, nComputeQueueIndex };
+	uint32_t anQueueFamilies[] = { nGraphicAndComputeQueueIndex, nPresentQueueIndex };
 
 	VkImageCreateInfo xImageCreateInfo;
 	memset(&xImageCreateInfo, 0, sizeof(xImageCreateInfo));

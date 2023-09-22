@@ -383,11 +383,7 @@ VkPresentModeKHR Instance_GetPreferedPresentMode(struct xInstance_t* pxInstance)
 	return pxInstance->xPreferedPresentMode;
 }
 
-uint32_t Instance_GetGraphicQueueIndex(struct xInstance_t* pxInstance) {
-	return pxInstance->nGraphicAndComputeQueueIndex;
-}
-
-uint32_t Instance_GetComputeQueueIndex(struct xInstance_t* pxInstance) {
+uint32_t Instance_GetGraphicAndComputeQueueIndex(struct xInstance_t* pxInstance) {
 	return pxInstance->nGraphicAndComputeQueueIndex;
 }
 
