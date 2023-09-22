@@ -14,45 +14,11 @@ layout(set = 0, binding = 5, rgba8) coherent uniform image2D inputImage;
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 void main() {
-	//uint index = gl_GlobalInvocationID.x + (gl_GlobalInvocationID.y * (gl_NumWorkGroups.x * gl_WorkGroupSize.x));
-	//uint numRows = 128;
-	//uint x = index % numRows;
-	//uint y = index / numRows;
-
 	ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
-	vec4 color = imageLoad(inputImageN, pixelCoord);
-	color.x = 1.0;
-	color.y = 0.0;
-	color.z = 0.0;
-	color.w = 0.0;
-	imageStore(inputImageN, pixelCoord, color);
-
-	vec4 color = imageLoad(inputImageS, pixelCoord);
-	color.x = 1.0;
-	color.y = 0.0;
-	color.z = 0.0;
-	color.w = 0.0;
-	imageStore(inputImageS, pixelCoord, color);
-
-	vec4 color = imageLoad(inputImageW, pixelCoord);
-	color.x = 1.0;
-	color.y = 0.0;
-	color.z = 0.0;
-	color.w = 0.0;
-	imageStore(inputImageW, pixelCoord, color);
-
-	vec4 color = imageLoad(inputImageE, pixelCoord);
-	color.x = 1.0;
-	color.y = 0.0;
-	color.z = 0.0;
-	color.w = 0.0;
-	imageStore(inputImageE, pixelCoord, color);
-
 	vec4 color = imageLoad(inputImage, pixelCoord);
-	color.x = 1.0;
-	color.y = 0.0;
-	color.z = 0.0;
-	color.w = 0.0;
+	color.x -= timeInfo.deltaTime;
+	color.y -= timeInfo.deltaTime;
+	color.z -= timeInfo.deltaTime;
 	imageStore(inputImage, pixelCoord, color);
 }

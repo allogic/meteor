@@ -798,7 +798,7 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 		vkCmdSetViewport(pxRenderer->xGraphicCommandBuffer, 0, 1, &xViewport);
 		vkCmdSetScissor(pxRenderer->xGraphicCommandBuffer, 0, 1, &xScissor);
 
-		vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDefaultGraphicPipeline), 0, 1, Vector_Data(pxRenderer->pxDefaultGraphicDescriptorSets), 0, 0);
+		uint32_t nDescriptorSetIndex = 0;
 
 		void* pIter = List_Begin(pxEntities);
 		while (pIter) {
@@ -811,6 +811,7 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 				VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
 				uint64_t awOffsets[] = { 0 };
 
+				vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDefaultGraphicPipeline), 0, 1, Vector_At(pxRenderer->pxDefaultGraphicDescriptorSets, nDescriptorSetIndex), 0, 0);
 				vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
 				vkCmdBindIndexBuffer(pxRenderer->xGraphicCommandBuffer, Buffer_GetBuffer(pxRenderable->pxIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
@@ -828,6 +829,8 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 				vkCmdPushConstants(pxRenderer->xGraphicCommandBuffer, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDefaultGraphicPipeline), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(xPerEntityData), &xPerEntityData);
 
 				vkCmdDrawIndexed(pxRenderer->xGraphicCommandBuffer, pxRenderable->nIndexCount, 1, 0, 0, 0);
+
+				nDescriptorSetIndex += 1;
 			}
 
 			pIter = List_Next(pIter);
@@ -840,7 +843,7 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 		vkCmdSetViewport(pxRenderer->xGraphicCommandBuffer, 0, 1, &xViewport);
 		vkCmdSetScissor(pxRenderer->xGraphicCommandBuffer, 0, 1, &xScissor);
 
-		vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxParticleGraphicPipeline), 0, 1, Vector_Data(pxRenderer->pxParticleGraphicDescriptorSets), 0, 0);
+		uint32_t nDescriptorSetIndex = 0;
 
 		void* pIter = List_Begin(pxEntities);
 		while (pIter) {
@@ -854,6 +857,7 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 				VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
 				uint64_t awOffsets[] = { 0 };
 
+				vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxParticleGraphicPipeline), 0, 1, Vector_At(pxRenderer->pxParticleGraphicDescriptorSets, nDescriptorSetIndex), 0, 0);
 				vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
 				vkCmdBindIndexBuffer(pxRenderer->xGraphicCommandBuffer, Buffer_GetBuffer(pxRenderable->pxIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
@@ -871,6 +875,8 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 				vkCmdPushConstants(pxRenderer->xGraphicCommandBuffer, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDefaultGraphicPipeline), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(xPerEntityData), &xPerEntityData);
 
 				vkCmdDrawIndexed(pxRenderer->xGraphicCommandBuffer, pxRenderable->nIndexCount, pxParticleSystem->nParticleCount, 0, 0, 0);
+
+				nDescriptorSetIndex += 1;
 			}
 
 			pIter = List_Next(pIter);
@@ -895,7 +901,7 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 	{
 		vkCmdBindPipeline(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipeline(pxRenderer->pxParticleComputePipeline));
 
-		vkCmdBindDescriptorSets(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipelineLayout(pxRenderer->pxParticleComputePipeline), 0, 1, Vector_Data(pxRenderer->pxParticleComputeDescriptorSets), 0, 0);
+		uint32_t nDescriptorSetIndex = 0;
 
 		void* pIter = List_Begin(pxEntities);
 		while (pIter) {
@@ -904,7 +910,11 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 			if (Entity_HasComponents(*ppxEntity, COMPONENT_PARTICLESYSTEM_BIT)) {
 				xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(*ppxEntity);
 
-				vkCmdDispatch(pxRenderer->xComputeCommandBuffer, pxParticleSystem->nParticleCount / 256, 1, 1);
+				vkCmdBindDescriptorSets(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipelineLayout(pxRenderer->pxParticleComputePipeline), 0, 1, Vector_At(pxRenderer->pxParticleComputeDescriptorSets, nDescriptorSetIndex), 0, 0);
+
+				vkCmdDispatch(pxRenderer->xComputeCommandBuffer, pxParticleSystem->nParticleCount / 32, 1, 1);
+
+				nDescriptorSetIndex += 1;
 			}
 
 			pIter = List_Next(pIter);
@@ -914,7 +924,7 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 	{
 		vkCmdBindPipeline(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipeline(pxRenderer->pxPixelComputePipeline));
 
-		vkCmdBindDescriptorSets(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipelineLayout(pxRenderer->pxPixelComputePipeline), 0, 1, Vector_Data(pxRenderer->pxPixelComputeDescriptorSets), 0, 0);
+		uint32_t nDescriptorSetIndex = 0;
 
 		void* pIter = List_Begin(pxEntities);
 		while (pIter) {
@@ -923,7 +933,11 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 			if (Entity_HasComponents(*ppxEntity, COMPONENT_PIXELSYSTEM_BIT)) {
 				xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(*ppxEntity);
 
+				vkCmdBindDescriptorSets(pxRenderer->xComputeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline_GetPipelineLayout(pxRenderer->pxPixelComputePipeline), 0, 1, Vector_At(pxRenderer->pxPixelComputeDescriptorSets, nDescriptorSetIndex), 0, 0);
+
 				vkCmdDispatch(pxRenderer->xComputeCommandBuffer, pxPixelSystem->nImageWidth / 32, pxPixelSystem->nImageHeight / 32, 1);
+
+				nDescriptorSetIndex += 1;
 			}
 
 			pIter = List_Next(pIter);
@@ -1130,17 +1144,17 @@ void Renderer_RebuildEnitityDescriptorSets(struct xRenderer_t* pxRenderer, struc
 	if (nParticleComputeDescriptorCount == 0) nParticleComputeDescriptorCount = 1;
 	if (nPixelComputeDescriptorCount == 0) nPixelComputeDescriptorCount = 1;
 
+#ifdef DEBUG
+	printf("Creating %u DefaultGraphicDescriptorSets\n", nDefaultGraphicDescriptorCount);
+	printf("Creating %u ParticleGraphicDescriptorSets\n", nParticleGraphicDescriptorCount);
+	printf("Creating %u ParticleComputeDescriptorSets\n", nParticleComputeDescriptorCount);
+	printf("Creating %u PixelComputeDescriptorSets\n", nPixelComputeDescriptorCount);
+#endif
+
 	Vector_Resize(pxRenderer->pxDefaultGraphicDescriptorSets, nDefaultGraphicDescriptorCount);
 	Vector_Resize(pxRenderer->pxParticleGraphicDescriptorSets, nParticleGraphicDescriptorCount);
 	Vector_Resize(pxRenderer->pxParticleComputeDescriptorSets, nParticleComputeDescriptorCount);
 	Vector_Resize(pxRenderer->pxPixelComputeDescriptorSets, nPixelComputeDescriptorCount);
-
-#ifdef DEBUG
-	printf("Creating %u DefaultGraphicDescriptorSets\n", Vector_Count(pxRenderer->pxDefaultGraphicDescriptorSets));
-	printf("Creating %u ParticleGraphicDescriptorSets\n", Vector_Count(pxRenderer->pxParticleGraphicDescriptorSets));
-	printf("Creating %u ParticleComputeDescriptorSets\n", Vector_Count(pxRenderer->pxParticleComputeDescriptorSets));
-	printf("Creating %u PixelComputeDescriptorSets\n", Vector_Count(pxRenderer->pxPixelComputeDescriptorSets));
-#endif
 
 	Renderer_CreateDefaultGraphicDescriptorSets(pxRenderer, pxInstance, nDefaultGraphicDescriptorCount);
 	Renderer_CreateParticleGraphicDescriptorSets(pxRenderer, pxInstance, nParticleGraphicDescriptorCount);
