@@ -10,4 +10,7 @@ void FileUtil_ReadBmp(uint8_t** ppcData, uint64_t* pwSize, uint32_t* pnWidth, ui
 void FileUtil_WriteBinary(uint8_t* pcData, uint64_t wSize, const char* pcFilePath);
 void FileUtil_WriteText(int8_t* pcData, uint64_t wSize, const char* pcFilePath);
 
+char* FileUtil_NormalizePath(const char* pcFilePath, uint64_t* pwFilePathLength, uint64_t wScratch);
+char* FileUtil_JoinPath(const char* pcFirstPath, const char* pcSecondPath);
+
 #endif

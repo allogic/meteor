@@ -42,15 +42,15 @@ static void SwapChain_AllocSwapChain(struct xSwapChain_t* pxSwapChain, struct xI
 	xSwapChaincreateInfo.clipped = VK_TRUE;
 	xSwapChaincreateInfo.oldSwapchain = 0;
 
-	int32_t nGraphicsQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
+	int32_t nGraphicQueueIndex = Instance_GetGraphicQueueIndex(pxInstance);
 	int32_t nPresentQueueIndex = Instance_GetPresentQueueIndex(pxInstance);
 
-	if (nGraphicsQueueIndex == nPresentQueueIndex) {
+	if (nGraphicQueueIndex == nPresentQueueIndex) {
 		xSwapChaincreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		xSwapChaincreateInfo.queueFamilyIndexCount = 0;
 		xSwapChaincreateInfo.pQueueFamilyIndices = 0;
 	} else {
-		uint32_t anQueueFamilies[] = { nGraphicsQueueIndex, nPresentQueueIndex };
+		uint32_t anQueueFamilies[] = { nGraphicQueueIndex, nPresentQueueIndex };
 
 		xSwapChaincreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		xSwapChaincreateInfo.queueFamilyIndexCount = ARRAY_LENGTH(anQueueFamilies);

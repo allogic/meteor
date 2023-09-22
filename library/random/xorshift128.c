@@ -1,3 +1,5 @@
+#include <limits.h>
+
 #include <random/xorshift128.h>
 
 #define U64_TO_DOUBLE(X) ((X >> 11) * 0x1.0p-53)
@@ -23,19 +25,19 @@ void XorShift128_Init(uint64_t wSeed) {
 }
 
 int8_t XorShift128_Int8(int8_t cMin, int8_t cMax) {
-	return cMin + ((int8_t)XorShift128_Next()) * (cMax - cMin);
+	return cMin + ((int8_t)XorShift128_Next() & CHAR_MAX) * (cMax - cMin);
 }
 
 int16_t XorShift128_Int16(int16_t sMin, int16_t sMax) {
-	return sMin + ((int16_t)XorShift128_Next()) * (sMax - sMin);
+	return sMin + ((int16_t)XorShift128_Next() & SHRT_MAX) * (sMax - sMin);
 }
 
 int32_t XorShift128_Int32(int32_t nMin, int32_t nMax) {
-	return nMin + ((int32_t)XorShift128_Next()) * (nMax - nMin);
+	return nMin + ((int32_t)XorShift128_Next() & INT_MAX) % (nMax - nMin);
 }
 
 int64_t XorShift128_Int64(int64_t wMin, int64_t wMax) {
-	return wMin + ((int64_t)XorShift128_Next()) * (wMax - wMin);
+	return wMin + ((int64_t)XorShift128_Next() & LLONG_MAX) % (wMax - wMin);
 }
 
 float XorShift128_Float(float fMin, float fMax) {

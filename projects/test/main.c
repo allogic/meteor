@@ -14,6 +14,7 @@
 
 #include <filesystem/filelist.h>
 #include <filesystem/fileutil.h>
+#include <filesystem/path.h>
 
 #define PRINT_TEST_BEGIN(NAME) \
 printf("///////////////////////////////////////////\n"); \
@@ -127,12 +128,16 @@ static void Vector_Test(void) {
 
 	printf("Resize\n");
 	printf("X == %u\n", Vector_Count(pxVector));
-	Vector_Resize(pxVector, 3);
-	printf("3 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 24);
+	printf("24 == %u\n", Vector_Count(pxVector));
 	Vector_Resize(pxVector, 255);
 	printf("255 == %u\n", Vector_Count(pxVector));
 	Vector_Resize(pxVector, 17);
 	printf("17 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 16);
+	printf("16 == %u\n", Vector_Count(pxVector));
+	Vector_Resize(pxVector, 15);
+	printf("15 == %u\n", Vector_Count(pxVector));
 	Vector_Resize(pxVector, 1);
 	printf("1 == %u\n", Vector_Count(pxVector));
 	printf("\n");
@@ -181,7 +186,7 @@ static void Queue_Test(void) {
 static void FileList_Test(void) {
 	PRINT_TEST_BEGIN(FileList_Test);
 
-	struct xList_t* pxList = FileList_Alloc("./");
+	struct xList_t* pxList = FileList_Alloc(".");
 
 	void* pIter = FileList_Begin(pxList);
 	while (pIter) {
@@ -205,13 +210,13 @@ static void StringUtil_Test(void) {
 
 	uint64_t wLength;
 
-	char* pcPath0 = StringUtil_NormalizePath(".", 0, 0);
-	char* pcPath1 = StringUtil_NormalizePath("..", 0, 0);
-	char* pcPath2 = StringUtil_NormalizePath("./", 0, 0);
-	char* pcPath3 = StringUtil_NormalizePath("../", 0, 0);
-	char* pcPath4 = StringUtil_NormalizePath(".\\test", 0, 0);
-	char* pcPath5 = StringUtil_NormalizePath("..\\\\test.exe", 0, 0);
-	char* pcPath6 = StringUtil_NormalizePath("..\\", &wLength, 1);
+	char* pcPath0 = Path_Normalize(".", 0, 0);
+	char* pcPath1 = Path_Normalize("..", 0, 0);
+	char* pcPath2 = Path_Normalize("./", 0, 0);
+	char* pcPath3 = Path_Normalize("../", 0, 0);
+	char* pcPath4 = Path_Normalize(".\\test", 0, 0);
+	char* pcPath5 = Path_Normalize("..\\\\test.exe", 0, 0);
+	char* pcPath6 = Path_Normalize("..\\", &wLength, 1);
 
 	pcPath6[wLength - 1] = '*';
 

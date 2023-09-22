@@ -6,6 +6,8 @@
 
 #include <container/vector.h>
 
+#define DEFAULT_ALIGNMENT 16
+
 struct xVector_t {
 	uint32_t nValueSize;
 	uint32_t nCapacity;
@@ -21,13 +23,14 @@ static void Vector_Expand(struct xVector_t* pxVector) {
 	uint32_t nNextBufferSize = pxVector->nBufferSize * 2;
 
 	pxVector->pBuffer = realloc(pxVector->pBuffer, nNextBufferSize);
-
 	pxVector->nBufferCount = nNextBufferCount;
 	pxVector->nBufferSize = nNextBufferSize;
 }
 
 struct xVector_t* Vector_Alloc(uint32_t nValueSize, uint32_t nCapacity) {
 	struct xVector_t* pxVector = (struct xVector_t*)calloc(1, sizeof(struct xVector_t));
+
+	nCapacity = ALIGN_UP(nCapacity, DEFAULT_ALIGNMENT);
 
 	pxVector->nValueSize = nValueSize;
 	pxVector->nCapacity = nCapacity;
@@ -59,15 +62,14 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 }
 
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
-	// TODO: Resize count is not the new buffer count
+	nCount = ALIGN_UP(nCount, DEFAULT_ALIGNMENT);
+
 	if (nCount > pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
-
 		pxVector->nBufferCount = nCount;
 		pxVector->nBufferSize = nCount * pxVector->nValueSize;
 	} else if (nCount < pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);
-
 		pxVector->nBufferCount = nCount;
 		pxVector->nBufferSize = nCount * pxVector->nValueSize;
 		pxVector->nBufferIndex = MIN(pxVector->nBufferIndex, nCount);
@@ -88,5 +90,5 @@ bool Vector_Empty(struct xVector_t* pxVector) {
 }
 
 uint32_t Vector_Count(struct xVector_t* pxVector) {
-	return pxVector->nBufferCount;
+	return pxVector->nBufferIndex;
 }

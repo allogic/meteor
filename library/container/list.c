@@ -46,7 +46,10 @@ void* List_Add(struct xList_t* pxList, void* pData) {
 	struct xNode_t* pxNode = (struct xNode_t*)calloc(1, sizeof(struct xNode_t));
 
 	pxNode->pBuffer = malloc(pxList->nValueSize);
-	memcpy(pxNode->pBuffer, pData, pxList->nValueSize);
+
+	if (pData) {
+		memcpy(pxNode->pBuffer, pData, pxList->nValueSize);
+	}
 
 	if (pxList->pxHead) {
 		pxNode->pxPrev = pxList->pxTail;

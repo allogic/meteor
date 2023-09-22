@@ -8,6 +8,9 @@
 
 #define ARRAY_LENGTH(X) (sizeof(X) / sizeof(X[0]))
 
+#define ALIGN_DOWN(VALUE, ALIGNMENT) (VALUE & ~(ALIGNMENT - 1))
+#define ALIGN_UP(VALUE, ALIGNMENT) ((VALUE + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
+
 #ifdef DEBUG
 #	define VK_CHECK(EXPR) { \
 		VkResult result = (EXPR); \

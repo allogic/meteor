@@ -1,10 +1,7 @@
 #ifndef METEOR_COMMON_STRINGUTIL_H
 #define METEOR_COMMON_STRINGUTIL_H
 
-void StringUtil_ReplaceChar(char* pcSubject, char cFrom, char cTo);
-
-char* StringUtil_NormalizePath(const char* pcFilePath, uint64_t* pwFilePathLength, uint64_t wScratch);
-
-char* StringUtil_JoinPath(const char* pcFirstPath, const char* pcSecondPath);
+void StringUtil_ReplaceChar(char* pcString, char cFrom, char cTo);
+int32_t StringUtil_FindFirstOf(const char* pcString, char cValue);
 
 #endif
