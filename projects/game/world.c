@@ -47,17 +47,13 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
 			pxWorld->apEntities[i][j] = Scene_AllocEntity(pxScene, "chunk", 0);
 
-			xRenderable_t xRenderable = {
-				pxWorld->pxSharedVertexBuffer,
-				pxWorld->pxSharedIndexBuffer,
-				6,
-				StorageImage_Alloc(pxInstance, "assets/chunk.bmp"),
-			};
-
 			Entity_SetTransform(pxWorld->apEntities[i][j], 0);
-			Entity_SetRenderable(pxWorld->apEntities[i][j], &xRenderable);
+			Entity_SetRenderable(pxWorld->apEntities[i][j], 0);
+			Entity_SetPixelSystem(pxWorld->apEntities[i][j], 0);
 
 			xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apEntities[i][j]);
+			xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apEntities[i][j]);
+			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apEntities[i][j]);
 
 			float hw = (float)NUM_CHUNKS_X * CHUNK_WIDTH / 2;
 			float hh = (float)NUM_CHUNKS_Y * CHUNK_HEIGHT / 2;
@@ -70,22 +66,43 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 
 			Vector_Set(pxTransform->xPosition, x, y, 0.0F);
 			Vector_Set(pxTransform->xScale, CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1, 1.0F);
+
+			pxRenderable->pxAlbedoImage = StorageImage_Alloc(pxInstance, "assets/sand_albedo.bmp");
+			pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+			pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+			pxRenderable->nIndexCount = 6;
+
+			pxPixelSystem->nWidth = Image_GetWidth(pxRenderable->pxAlbedoImage);
+			pxPixelSystem->nHeight = Image_GetHeight(pxRenderable->pxAlbedoImage);
+			pxPixelSystem->pxAlbedoImage = pxRenderable->pxAlbedoImage;
+			pxPixelSystem->pxStateImage = StorageImage_Alloc(pxInstance, "assets/sand_state.bmp");
 		}
 	}
 
-	for (uint32_t i = 1; i < (NUM_CHUNKS_X - 1); ++i) {
-		for (uint32_t j = 1; j < (NUM_CHUNKS_Y - 1); ++j) {
-			xPixelSystem_t xPixelSystem = {
-				Image_GetWidth(Entity_GetRenderable(pxWorld->apEntities[i][j])->pxAlbedoImage),
-				Image_GetHeight(Entity_GetRenderable(pxWorld->apEntities[i][j])->pxAlbedoImage),
-				Entity_GetRenderable(pxWorld->apEntities[i][j])->pxAlbedoImage,
-				Entity_GetRenderable(pxWorld->apEntities[i][j - 1])->pxAlbedoImage,
-				Entity_GetRenderable(pxWorld->apEntities[i][j + 1])->pxAlbedoImage,
-				Entity_GetRenderable(pxWorld->apEntities[i - 1][j])->pxAlbedoImage,
-				Entity_GetRenderable(pxWorld->apEntities[i + 1][j])->pxAlbedoImage,
-			};
+	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
+		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
+			uint32_t in = i - 1;
+			uint32_t ip = i + 1;
+			uint32_t jn = j - 1;
+			uint32_t jp = j + 1;
 
-			Entity_SetPixelSystem(pxWorld->apEntities[i][j], &xPixelSystem);
+			if (i == 0) in = (NUM_CHUNKS_X - 1);
+			if (j == 0) jn = (NUM_CHUNKS_Y - 1);
+
+			if (i == (NUM_CHUNKS_X - 1)) ip = 0;
+			if (j == (NUM_CHUNKS_Y - 1)) jp = 0;
+
+			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apEntities[i][j]);
+
+			pxPixelSystem->pxAlbedoImageN = Entity_GetRenderable(pxWorld->apEntities[i][jn])->pxAlbedoImage;
+			pxPixelSystem->pxAlbedoImageS = Entity_GetRenderable(pxWorld->apEntities[i][jp])->pxAlbedoImage;
+			pxPixelSystem->pxAlbedoImageW = Entity_GetRenderable(pxWorld->apEntities[in][j])->pxAlbedoImage;
+			pxPixelSystem->pxAlbedoImageE = Entity_GetRenderable(pxWorld->apEntities[ip][j])->pxAlbedoImage;
+
+			pxPixelSystem->pxStateImageN = Entity_GetPixelSystem(pxWorld->apEntities[i][jn])->pxStateImage;
+			pxPixelSystem->pxStateImageS = Entity_GetPixelSystem(pxWorld->apEntities[i][jp])->pxStateImage;
+			pxPixelSystem->pxStateImageW = Entity_GetPixelSystem(pxWorld->apEntities[in][j])->pxStateImage;
+			pxPixelSystem->pxStateImageE = Entity_GetPixelSystem(pxWorld->apEntities[ip][j])->pxStateImage;
 		}
 	}
 
@@ -96,8 +113,10 @@ void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct
 	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
 		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
 			xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apEntities[i][j]);
+			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apEntities[i][j]);
 
 			Image_Free(pxRenderable->pxAlbedoImage, pxInstance);
+			Image_Free(pxPixelSystem->pxStateImage, pxInstance);
 
 			Scene_FreeEntity(pxScene, pxWorld->apEntities[i][j]);
 		}

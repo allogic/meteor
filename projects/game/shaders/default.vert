@@ -11,7 +11,7 @@ layout(push_constant) uniform PerEntityData {
 layout(set = 0, binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
-} mvp;
+} vp;
 
 layout(location = 0) out Vertex {
 	vec4 position;
@@ -20,7 +20,7 @@ layout(location = 0) out Vertex {
 } outputVertex;
 
 void main() {
-	vec4 position = mvp.projection * mvp.view * perEntityData.model * vec4(inputPosition, 1.0);
+	vec4 position = vp.projection * vp.view * perEntityData.model * vec4(inputPosition, 1.0);
 	vec4 color = inputColor;
 
 	outputVertex.position = position;

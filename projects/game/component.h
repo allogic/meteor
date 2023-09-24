@@ -62,13 +62,18 @@ typedef struct {
 } xParticleAffector_t;
 
 typedef struct {
-	uint32_t nImageWidth;
-	uint32_t nImageHeight;
-	struct xImage_t* pxImage;
-	struct xImage_t* pxImageN;
-	struct xImage_t* pxImageS;
-	struct xImage_t* pxImageW;
-	struct xImage_t* pxImageE;
+	uint32_t nWidth;
+	uint32_t nHeight;
+	struct xImage_t* pxAlbedoImage;
+	struct xImage_t* pxAlbedoImageN;
+	struct xImage_t* pxAlbedoImageS;
+	struct xImage_t* pxAlbedoImageW;
+	struct xImage_t* pxAlbedoImageE;
+	struct xImage_t* pxStateImage;
+	struct xImage_t* pxStateImageN;
+	struct xImage_t* pxStateImageS;
+	struct xImage_t* pxStateImageW;
+	struct xImage_t* pxStateImageE;
 } xPixelSystem_t;
 
 typedef struct {

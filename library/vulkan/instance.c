@@ -298,7 +298,7 @@ static void Instance_CheckSurfaceCapabilities(struct xInstance_t* pxInstance) {
 	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(pxInstance->xPhysicalDevice, pxInstance->xSurface, &nPresentModeCount, pxPresentModes));
 
 	for (uint32_t i = 0; i < nSurfaceFormatCount; ++i) {
-		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
+		if ((pxSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_UNORM) && (pxSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
 			memcpy(&pxInstance->xPreferedSurfaceFormat, &pxSurfaceFormats[i], sizeof(pxInstance->xPreferedSurfaceFormat));
 			break;
 		}

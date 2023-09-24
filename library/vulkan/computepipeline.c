@@ -14,7 +14,7 @@ struct xComputePipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, VkDescriptorSetLayout xDescriptorSetLayout) {
+struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance, VkShaderModule xCompModule, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
 	struct xComputePipeline_t* pxComputePipeline = (struct xComputePipeline_t*)calloc(1, sizeof(struct xComputePipeline_t));
 
 	VkPipelineShaderStageCreateInfo xCompShaderStageCreateInfo;
@@ -29,8 +29,8 @@ struct xComputePipeline_t* ComputePipeline_Alloc(struct xInstance_t* pxInstance,
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	xPipelineLayoutCreateInfo.setLayoutCount = 1;
 	xPipelineLayoutCreateInfo.pSetLayouts = &xDescriptorSetLayout;
-	xPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	xPipelineLayoutCreateInfo.pPushConstantRanges = 0;
+	xPipelineLayoutCreateInfo.pushConstantRangeCount = nPushConstantRangeCount;
+	xPipelineLayoutCreateInfo.pPushConstantRanges = pxPushConstantRanges;
 
 	VK_CHECK(vkCreatePipelineLayout(Instance_GetDevice(pxInstance), &xPipelineLayoutCreateInfo, 0, &pxComputePipeline->xPipelineLayout));
 

@@ -1,24 +1,69 @@
 #version 450 core
 
+layout(push_constant) uniform Dimensions {
+	uint nWidth;
+	uint nHeight;
+} dimensions;
+
 layout(set = 0, binding = 0) uniform TimeInfo {
 	float time;
 	float deltaTime;
 } timeInfo;
 
-layout(set = 0, binding = 1, rgba8) coherent uniform image2D inputImageN;
-layout(set = 0, binding = 2, rgba8) coherent uniform image2D inputImageS;
-layout(set = 0, binding = 3, rgba8) coherent uniform image2D inputImageW;
-layout(set = 0, binding = 4, rgba8) coherent uniform image2D inputImageE;
-layout(set = 0, binding = 5, rgba8) coherent uniform image2D inputImage;
+layout(set = 0, binding = 1, rgba8) coherent readonly uniform image2D inputColorImageN;
+layout(set = 0, binding = 2, rgba8) coherent readonly uniform image2D inputColorImageS;
+layout(set = 0, binding = 3, rgba8) coherent readonly uniform image2D inputColorImageW;
+layout(set = 0, binding = 4, rgba8) coherent readonly uniform image2D inputColorImageE;
+layout(set = 0, binding = 5, rgba8) coherent readonly uniform image2D inputColorImage;
 
-layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(set = 0, binding = 6, rgba8) coherent readonly uniform image2D inputStateImageN;
+layout(set = 0, binding = 7, rgba8) coherent readonly uniform image2D inputStateImageS;
+layout(set = 0, binding = 8, rgba8) coherent readonly uniform image2D inputStateImageW;
+layout(set = 0, binding = 9, rgba8) coherent readonly uniform image2D inputStateImageE;
+layout(set = 0, binding = 10, rgba8) coherent readonly uniform image2D inputStateImage;
+
+layout(set = 0, binding = 11, rgba8) coherent uniform image2D outputColorImage;
+layout(set = 0, binding = 12, rgba8) coherent uniform image2D outputStateImage;
+
+layout (local_size_x = 32, local_size_y = 32) in;
+
+ivec4 getState(in ivec2 coord) {
+	return ivec4(imageLoad(inputStateImage, coord) * 255);
+}
+
+void setState(in ivec2 coord, in ivec4 state) {
+	imageStore(outputStateImage, coord, state);
+}
+
+ivec4 getColor(in ivec2 coord) {
+	return ivec4(imageLoad(inputColorImage, coord) * 255);
+}
+
+void setColor(in ivec2 coord, in ivec4 state) {
+	imageStore(outputColorImage, coord, state);
+}
+
+bool isSolid(in ivec2 coord) {
+	return getState(coord).r == 255;
+}
+
+void applyGravity(in ivec2 coord) {
+	ivec2 below = ivec2(coord.x, coord.y - 1);
+
+	if (coord.y > 0) {
+		if (isSolid(coord) && !isSolid(below)) {
+
+			setState(below, getState(coord));
+			setState(coord, ivec4(0));
+
+			setColor(below, getColor(coord));
+			setColor(coord, ivec4(0));
+		}
+	}
+}
 
 void main() {
-	ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+	ivec2 coord = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
-	vec4 color = imageLoad(inputImage, pixelCoord);
-	color.x -= timeInfo.deltaTime;
-	color.y -= timeInfo.deltaTime;
-	color.z -= timeInfo.deltaTime;
-	imageStore(inputImage, pixelCoord, color);
+	applyGravity(coord);
 }

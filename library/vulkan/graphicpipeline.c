@@ -16,7 +16,7 @@ struct xGraphicPipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantCount) {
+struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
 	struct xGraphicPipeline_t* pxGraphicPipeline = (struct xGraphicPipeline_t*)calloc(1, sizeof(struct xGraphicPipeline_t));
 
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
@@ -133,7 +133,7 @@ struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance,
 	xPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	xPipelineLayoutCreateInfo.setLayoutCount = 1;
 	xPipelineLayoutCreateInfo.pSetLayouts = &xDescriptorSetLayout;
-	xPipelineLayoutCreateInfo.pushConstantRangeCount = nPushConstantCount;
+	xPipelineLayoutCreateInfo.pushConstantRangeCount = nPushConstantRangeCount;
 	xPipelineLayoutCreateInfo.pPushConstantRanges = pxPushConstantRanges;
 
 	VK_CHECK(vkCreatePipelineLayout(Instance_GetDevice(pxInstance), &xPipelineLayoutCreateInfo, 0, &pxGraphicPipeline->xPipelineLayout));
