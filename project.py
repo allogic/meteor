@@ -61,9 +61,14 @@ def build_shader(project):
 			file_stem,file_ext=os.path.splitext(file_name)
 			file_path=f'{shader_path}/{file_stem}'
 			if file_ext=='.vert' or file_ext=='.frag' or file_ext=='.comp':
+				print(f'{file_stem}{file_ext} -> {file_stem}{file_ext}.spv')
 				os.system(f'glslc {file_path}{file_ext} -o {file_path}{file_ext}.spv')
 
 cmd=sys.argv[1]
+
+if 's' in cmd:
+	project = sys.argv[2]
+	build_shader(project)
 
 if 'c' in cmd:
 	project = sys.argv[2]
@@ -74,10 +79,6 @@ if 'b' in cmd:
 	project = sys.argv[2]
 	configuration = sys.argv[3]
 	build_project(project, configuration)
-
-if 's' in cmd:
-	project = sys.argv[2]
-	build_shader(project)
 
 if 'r' in cmd:
 	project = sys.argv[2]

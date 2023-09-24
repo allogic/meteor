@@ -14,6 +14,7 @@ void Scene_FreeEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity);
 void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance);
 
 void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance);
+void Scene_Update(struct xScene_t* pxScene, struct xTimer_t* pxTimer);
 void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct xTimer_t* pxTimer);
 
 #endif

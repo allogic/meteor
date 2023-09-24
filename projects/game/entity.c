@@ -9,6 +9,15 @@
 
 #define ENTITY_NAME_LENGTH 32
 
+#define SETUP_COMPONENT_AND_COPY_IF(NIBBLE, INDEX, TYPE, POINTER) \
+	if ((pxEntity->wMask & NIBBLE) == 0) { \
+		pxEntity->wMask |= NIBBLE; \
+		pxEntity->apComponents[INDEX] = calloc(1, sizeof(TYPE)); \
+	} \
+	if (POINTER) { \
+		memcpy(pxEntity->apComponents[INDEX], POINTER, sizeof(TYPE)); \
+	}
+
 struct xEntity_t {
 	char acName[ENTITY_NAME_LENGTH];
 	struct xEntity_t* pxParent;
@@ -31,6 +40,18 @@ struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent) {
 }
 
 void Entity_Free(struct xEntity_t* pxEntity) {
+	if (pxEntity->wMask & COMPONENT_PIXELAFFECTOR_BIT) {
+		free(pxEntity->apComponents[COMPONENT_PIXELAFFECTOR_IDX]);
+	}
+
+	if (pxEntity->wMask & COMPONENT_PIXELSYSTEM_BIT) {
+		free(pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX]);
+	}
+
+	if (pxEntity->wMask & COMPONENT_PARTICLEAFFECTOR_BIT) {
+		free(pxEntity->apComponents[COMPONENT_PARTICLEAFFECTOR_IDX]);
+	}
+
 	if (pxEntity->wMask & COMPONENT_PARTICLESYSTEM_BIT) {
 		free(pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX]);
 	}
@@ -84,8 +105,16 @@ xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX];
 }
 
+xParticleAffector_t* Entity_GetParticleAffector(struct xEntity_t* pxEntity) {
+	return pxEntity->apComponents[COMPONENT_PARTICLEAFFECTOR_IDX];
+}
+
 xPixelSystem_t* Entity_GetPixelSystem(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX];
+}
+
+xPixelAffector_t* Entity_GetPixelAffector(struct xEntity_t* pxEntity) {
+	return pxEntity->apComponents[COMPONENT_PIXELAFFECTOR_IDX];
 }
 
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
@@ -96,69 +125,35 @@ void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
 }
 
 void Entity_SetTransform(struct xEntity_t* pxEntity, xTransform_t* pxTransform) {
-	if ((pxEntity->wMask & COMPONENT_TRANSFORM_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_TRANSFORM_BIT;
-		pxEntity->apComponents[COMPONENT_TRANSFORM_IDX] = calloc(1, sizeof(xTransform_t));
-	}
-
-	if (pxTransform) {
-		memcpy(pxEntity->apComponents[COMPONENT_TRANSFORM_IDX], pxTransform, sizeof(xTransform_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_TRANSFORM_BIT, COMPONENT_TRANSFORM_IDX, xTransform_t, pxTransform)
 }
 
 void Entity_SetCamera(struct xEntity_t* pxEntity, xCamera_t* pxCamera) {
-	if ((pxEntity->wMask & COMPONENT_CAMERA_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_CAMERA_BIT;
-		pxEntity->apComponents[COMPONENT_CAMERA_IDX] = calloc(1, sizeof(xCamera_t));
-	}
-
-	if (pxCamera) {
-		memcpy(pxEntity->apComponents[COMPONENT_CAMERA_IDX], pxCamera, sizeof(xCamera_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_CAMERA_BIT, COMPONENT_CAMERA_IDX, xCamera_t, pxCamera)
 }
 
 void Entity_SetRigidbody(struct xEntity_t* pxEntity, xRigidBody_t* pxRigidBody) {
-	if ((pxEntity->wMask & COMPONENT_RIGIDBODY_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_RIGIDBODY_BIT;
-		pxEntity->apComponents[COMPONENT_RIGIDBODY_IDX] = calloc(1, sizeof(xRigidBody_t));
-	}
-
-	if (pxRigidBody) {
-		memcpy(pxEntity->apComponents[COMPONENT_RIGIDBODY_IDX], pxRigidBody, sizeof(xRigidBody_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_RIGIDBODY_BIT, COMPONENT_RIGIDBODY_IDX, xRigidBody_t, pxRigidBody)
 }
 
 void Entity_SetRenderable(struct xEntity_t* pxEntity, xRenderable_t* pxRenderable) {
-	if ((pxEntity->wMask & COMPONENT_RENDERABLE_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_RENDERABLE_BIT;
-		pxEntity->apComponents[COMPONENT_RENDERABLE_IDX] = calloc(1, sizeof(xRenderable_t));
-	}
-
-	if (pxRenderable) {
-		memcpy(pxEntity->apComponents[COMPONENT_RENDERABLE_IDX], pxRenderable, sizeof(xRenderable_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_RENDERABLE_BIT, COMPONENT_RENDERABLE_IDX, xRenderable_t, pxRenderable)
 }
 
 void Entity_SetParticleSystem(struct xEntity_t* pxEntity, xParticleSystem_t* pxParticleSystem) {
-	if ((pxEntity->wMask & COMPONENT_PARTICLESYSTEM_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_PARTICLESYSTEM_BIT;
-		pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX] = calloc(1, sizeof(xParticleSystem_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_PARTICLESYSTEM_BIT, COMPONENT_PARTICLESYSTEM_IDX, xParticleSystem_t, pxParticleSystem)
+}
 
-	if (pxParticleSystem) {
-		memcpy(pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX], pxParticleSystem, sizeof(xParticleSystem_t));
-	}
+void Entity_SetParticleAffector(struct xEntity_t* pxEntity, xParticleAffector_t* pxParticleAffector) {
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_PARTICLEAFFECTOR_BIT, COMPONENT_PARTICLEAFFECTOR_IDX, xParticleAffector_t, pxParticleAffector)
 }
 
 void Entity_SetPixelSystem(struct xEntity_t* pxEntity, xPixelSystem_t* pxPixelSystem) {
-	if ((pxEntity->wMask & COMPONENT_PIXELSYSTEM_BIT) == 0) {
-		pxEntity->wMask |= COMPONENT_PIXELSYSTEM_BIT;
-		pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX] = calloc(1, sizeof(xPixelSystem_t));
-	}
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_PIXELSYSTEM_BIT, COMPONENT_PIXELSYSTEM_IDX, xPixelSystem_t, pxPixelSystem)
+}
 
-	if (pxPixelSystem) {
-		memcpy(pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX], pxPixelSystem, sizeof(xPixelSystem_t));
-	}
+void Entity_SetPixelAffector(struct xEntity_t* pxEntity, xPixelAffector_t* pxPixelAffector) {
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_PIXELAFFECTOR_BIT, COMPONENT_PIXELAFFECTOR_IDX, xPixelAffector_t, pxPixelAffector)
 }
 
 bool Entity_HasComponents(struct xEntity_t* pxEntity, uint64_t wMask) {

@@ -5,6 +5,10 @@ struct Particle {
 	vec3 velocity;
 };
 
+layout(push_constant) uniform Dimensions {
+	vec3 size;
+} dimensions;
+
 layout(set = 0, binding = 0) uniform TimeInfo {
 	float time;
 	float deltaTime;
@@ -18,21 +22,24 @@ layout(set = 0, binding = 2, std430) buffer OutputParticle {
 	Particle outputParticles[];
 };
 
-layout (local_size_x = 256) in;
+layout (local_size_x = 32) in;
 
 void main() {
 	uint index = gl_GlobalInvocationID.x;
 
 	Particle inputParticle = inputParticles[index];
 
-	outputParticles[index].position = inputParticle.position + inputParticle.velocity * timeInfo.deltaTime;
+	outputParticles[index].position = inputParticle.position + inputParticle.velocity * 0.01;
 	outputParticles[index].velocity = inputParticle.velocity;
 
-	if ((outputParticles[index].position.x <= -50.0) || (outputParticles[index].position.x >= 50.0)) {
+	float hsx = dimensions.size.x / 2;
+	float hsy = dimensions.size.y / 2;
+
+	if ((outputParticles[index].position.x <= -hsx) || (outputParticles[index].position.x >= hsx)) {
 		outputParticles[index].velocity.x = -outputParticles[index].velocity.x;
 	}
 
-	if ((outputParticles[index].position.y <= -50.0) || (outputParticles[index].position.y >= 50.0)) {
+	if ((outputParticles[index].position.y <= -hsy) || (outputParticles[index].position.y >= hsy)) {
 		outputParticles[index].velocity.y = -outputParticles[index].velocity.y;
 	}
 }

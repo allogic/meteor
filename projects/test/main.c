@@ -110,7 +110,7 @@ static void List_Test(void) {
 static void Vector_Test(void) {
 	PRINT_TEST_BEGIN(Vector_Test);
 
-	struct xVector_t* pxVector = Vector_Alloc(sizeof(uint32_t), 4);
+	struct xVector_t* pxVector = Vector_Alloc(sizeof(uint32_t));
 
 	printf("Insert\n");
 	for (uint32_t i = 0; i < 33; ++i) {

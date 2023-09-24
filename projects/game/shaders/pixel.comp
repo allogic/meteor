@@ -1,8 +1,7 @@
 #version 450 core
 
 layout(push_constant) uniform Dimensions {
-	uint nWidth;
-	uint nHeight;
+	vec3 size;
 } dimensions;
 
 layout(set = 0, binding = 0) uniform TimeInfo {

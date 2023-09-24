@@ -41,6 +41,5 @@ list(APPEND SOURCES "${VULKAN_DIR}/imagevariance.c")
 list(APPEND SOURCES "${VULKAN_DIR}/command.c")
 list(APPEND SOURCES "${VULKAN_DIR}/computepipeline.c")
 list(APPEND SOURCES "${VULKAN_DIR}/graphicpipeline.c")
-list(APPEND SOURCES "${VULKAN_DIR}/vertex.c")
 
 add_executable(${PROJECT_NAME} ${SOURCES})

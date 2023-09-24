@@ -4,9 +4,10 @@
 
 #include <container/queue.h>
 
+#define DEFAULT_CAPACITY 16
+
 struct xQueue_t {
 	uint32_t nValueSize;
-	uint32_t nCapacity;
 	uint32_t nBufferSize;
 	uint32_t nBufferCount;
 	void* pBuffer;
@@ -35,14 +36,13 @@ static void Queue_Expand(struct xQueue_t* pxQueue) {
 	pxQueue->nBufferSize = nNextBufferSize;
 }
 
-struct xQueue_t* Queue_Alloc(uint32_t nValueSize, uint32_t nCapacity) {
+struct xQueue_t* Queue_Alloc(uint32_t nValueSize) {
 	struct xQueue_t* pxQueue = (struct xQueue_t*)calloc(1, sizeof(struct xQueue_t));
 
 	pxQueue->nValueSize = nValueSize;
-	pxQueue->nCapacity = nCapacity;
-	pxQueue->nBufferSize = nCapacity * nValueSize;
-	pxQueue->nBufferCount = nCapacity;
-	pxQueue->pBuffer = malloc(nCapacity * nValueSize);
+	pxQueue->nBufferSize = DEFAULT_CAPACITY * nValueSize;
+	pxQueue->nBufferCount = DEFAULT_CAPACITY;
+	pxQueue->pBuffer = malloc(DEFAULT_CAPACITY * nValueSize);
 
 	return pxQueue;
 }

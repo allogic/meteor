@@ -5,7 +5,7 @@
 void Orthographic_Projection(float fLeft, float fRight, float fBottom, float fTop, float fNearZ, float fFarZ, xMat4_t xRes) {
   float fRl, fTb, fFn;
 
-  Matrix_Zero(xRes);
+  Matrix4_Zero(xRes);
 
   fRl = 1.0F / (fRight - fLeft);
   fTb = 1.0F / (fTop - fBottom);

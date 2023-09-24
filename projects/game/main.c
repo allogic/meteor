@@ -57,6 +57,7 @@ int32_t main(void) {
 			Scene_Resize(pxScene, pxInstance);
 		}
 
+		Scene_Update(pxScene, pxTimer);
 		Scene_Draw(pxScene, pxInstance, pxTimer);
 	}
 

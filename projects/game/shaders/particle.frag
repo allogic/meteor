@@ -1,7 +1,5 @@
 #version 450 core
 
-#define TEXTURE_COUNT 1
-
 layout(location = 0) in Vertex {
 	vec4 position;
 	vec2 uv;

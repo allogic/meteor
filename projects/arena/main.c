@@ -90,7 +90,7 @@ int32_t main(void) {
 	s_xUsedIndices = List_Alloc(sizeof(uint32_t));
 	s_xFreeIndices = List_Alloc(sizeof(uint32_t));
 
-	s_xTransforms = Vector_Alloc(sizeof(uint32_t), 4);
+	s_xTransforms = Vector_Alloc(sizeof(uint32_t));
 
 	for (uint32_t i = 0; i < 4; ++i) {
 		List_Add(s_xFreeIndices, &i);

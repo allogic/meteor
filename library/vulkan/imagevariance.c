@@ -54,7 +54,7 @@ struct xImage_t* StorageImage_Alloc(struct xInstance_t* pxInstance, char const* 
 	Buffer_SetTo(pxStagingBuffer, pData, wSize);
 	Buffer_UnMap(pxStagingBuffer, pxInstance);
 
-	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_FILTER_NEAREST);
+	struct xImage_t* pxImage = Image_Alloc(pxInstance, nWidth, nHeight, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_LINEAR, VK_FILTER_NEAREST);
 
 	VkCommandBuffer xCommandBuffer = Command_BeginSingle(pxInstance);
 

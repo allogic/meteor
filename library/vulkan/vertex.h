@@ -3,24 +3,27 @@
 
 #include <math/vector.h>
 
-#include <vulkan/vulkan.h>
-
-#define VERTEX_STRUCT { \
+#define DEFAULT_VERTEX_STRUCT { \
     xVec3_t xPosition; \
     xVec2_t xUv; \
     xVec4_t xColor; \
 }
 
+#define DEBUG_VERTEX_STRUCT { \
+    xVec3_t xPosition; \
+    xVec4_t xColor; \
+}
+
 #ifdef OS_WINDOWS
 #pragma pack(push, 1)
-	typedef struct VERTEX_STRUCT xVertex_t;
+	typedef struct DEFAULT_VERTEX_STRUCT xDefaultVertex_t;
+    typedef struct DEBUG_VERTEX_STRUCT xDebugVertex_t;
 #pragma pack(pop)
 #endif
 
 #ifdef OS_LINUX
-	typedef struct __attribute__((packed)) VERTEX_STRUCT xVertex_t;
+	typedef struct __attribute__((packed)) DEFAULT_VERTEX_STRUCT xDefaultVertex_t;
+    typedef struct __attribute__((packed)) DEBUG_VERTEX_STRUCT xDebugVertex_t;
 #endif
-
-void Vertex_AllocDescription(VkVertexInputBindingDescription* pxVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions);
 
 #endif

@@ -6,8 +6,11 @@
 struct xInstance_t;
 struct xScene_t;
 struct xWorld_t;
+struct xTimer_t;
 
 struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* pxScene);
 void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene);
+
+void World_Update(struct xWorld_t* pxWorld, struct xTimer_t* pxTimer);
 
 #endif
