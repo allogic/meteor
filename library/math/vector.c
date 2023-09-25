@@ -18,6 +18,22 @@ void Vector4_Set(xVec4_t xVec, float fX, float fY, float fZ, float fW) {
 	xVec[3] = fW;
 }
 
+void Vector2_Add(xVec2_t xVecA, xVec2_t xVecB, xVec2_t xRes) {
+	xRes[0] = xVecA[0] + xVecB[0];
+	xRes[1] = xVecA[1] + xVecB[1];
+}
+void Vector3_Add(xVec3_t xVecA, xVec3_t xVecB, xVec3_t xRes) {
+	xRes[0] = xVecA[0] + xVecB[0];
+	xRes[1] = xVecA[1] + xVecB[1];
+	xRes[2] = xVecA[2] + xVecB[2];
+}
+void Vector4_Add(xVec4_t xVecA, xVec4_t xVecB, xVec4_t xRes) {
+	xRes[0] = xVecA[0] + xVecB[0];
+	xRes[1] = xVecA[1] + xVecB[1];
+	xRes[2] = xVecA[2] + xVecB[2];
+	xRes[3] = xVecA[3] + xVecB[3];
+}
+
 void Vector2_DivScalar(xVec2_t xVec, float fScalar, xVec2_t xRes) {
 	xRes[0] = xVec[0] / fScalar;
 	xRes[1] = xVec[1] / fScalar;

@@ -59,7 +59,7 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 
 uint32_t Vector_Pop(struct xVector_t* pxVector, void* pData) {
 	pxVector->nBufferIndex -= 1;
-	pxVertex->nBufferOffset -= pxVector->nValueSize;
+	pxVector->nBufferOffset -= pxVector->nValueSize;
 
 	memcpy(pData, ((uint8_t*)pxVector->pBuffer) + pxVector->nBufferOffset, pxVector->nValueSize);
 

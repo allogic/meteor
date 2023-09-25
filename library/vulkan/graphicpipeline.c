@@ -16,7 +16,7 @@ struct xGraphicPipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
+struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkPrimitiveTopology xPrimitiveTopology, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
 	struct xGraphicPipeline_t* pxGraphicPipeline = (struct xGraphicPipeline_t*)calloc(1, sizeof(struct xGraphicPipeline_t));
 
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
@@ -46,7 +46,7 @@ struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance,
 	VkPipelineInputAssemblyStateCreateInfo xInputAssemblyCreateInfo;
 	memset(&xInputAssemblyCreateInfo, 0, sizeof(xInputAssemblyCreateInfo));
 	xInputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	xInputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	xInputAssemblyCreateInfo.topology = xPrimitiveTopology;
 	xInputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport xViewport;

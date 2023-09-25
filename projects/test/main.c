@@ -30,7 +30,7 @@ static void List_Test(void) {
 
 		printf("Insert\n");
 		for (uint32_t i = 0; i < 8; ++i) {
-			List_Add(pxList, &i);
+			List_Push(pxList, &i);
 			printf("%u\n", i);
 		}
 		printf("\n");
@@ -51,7 +51,7 @@ static void List_Test(void) {
 
 		printf("Insert\n");
 		uint32_t i42 = 42;
-		void* pIter42 = List_Add(pxList, &i42);
+		void* pIter42 = List_Push(pxList, &i42);
 		printf("%u\n", i42);
 		printf("\n");
 
@@ -78,9 +78,9 @@ static void List_Test(void) {
 		uint32_t i42 = 42;
 		uint32_t i43 = 43;
 		uint32_t i44 = 44;
-		void* pIter42 = List_Add(pxList, &i42);
-		void* pIter43 = List_Add(pxList, &i43);
-		void* pIter44 = List_Add(pxList, &i44);
+		void* pIter42 = List_Push(pxList, &i42);
+		void* pIter43 = List_Push(pxList, &i43);
+		void* pIter44 = List_Push(pxList, &i44);
 		printf("%u\n", i42);
 		printf("%u\n", i43);
 		printf("%u\n", i44);

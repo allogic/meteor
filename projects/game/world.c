@@ -24,6 +24,7 @@
 #include <game/scene.h>
 #include <game/storage.h>
 #include <game/world.h>
+#include <game/renderer.h>
 
 #define NUM_CHUNKS_X 5
 #define NUM_CHUNKS_Y 5
@@ -35,7 +36,7 @@ struct xWorld_t {
 	struct xBuffer_t* pxSharedVertexBuffer;
 	struct xBuffer_t* pxSharedIndexBuffer;
 	struct xEntity_t* apChunks[NUM_CHUNKS_X][NUM_CHUNKS_Y];
-	struct xEntity_t* apParticles[1];
+	struct xEntity_t* apParticles[4];
 	struct xEntity_t* apAffectors[1];
 };
 
@@ -126,29 +127,20 @@ static void World_AllocChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxIn
 static void World_AllocParticles(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	XorShift128_Init(0x42);
 
-	struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
+	{
+		struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
 
-	for (uint32_t i = 0; i < 32; ++i) {
-		xParticle_t xParticle;
+		pxWorld->apParticles[0] = Scene_AllocEntity(pxScene, "", 0);
 
-		Vector3_Set(xParticle.xPosition, XorShift128_Float(-2.5F, 2.5F), XorShift128_Float(-2.5F, 2.5F), 0.0F);
-		Vector3_Set(xParticle.xVelocity, 0.0F, 1.0F, 0.0F);
+		Entity_SetTransform(pxWorld->apParticles[0], 0);
+		Entity_SetRenderable(pxWorld->apParticles[0], 0);
+		Entity_SetParticleSystem(pxWorld->apParticles[0], 0);
 
-		Vector_Push(pxParticles, &xParticle);
-	}
+		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[0]);
+		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[0]);
+		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[0]);
 
-	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apParticles); ++i) {
-		pxWorld->apParticles[i] = Scene_AllocEntity(pxScene, "", 0);
-
-		Entity_SetTransform(pxWorld->apParticles[i], 0);
-		Entity_SetRenderable(pxWorld->apParticles[i], 0);
-		Entity_SetParticleSystem(pxWorld->apParticles[i], 0);
-
-		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[i]);
-		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[i]);
-		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[i]);
-
-		Vector3_Set(pxTransform->xPosition, 0.0F, 0.0F, 1.0F);
+		Vector3_Set(pxTransform->xPosition, -5.0F, 0.0F, -5.0F);
 		Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
 
 		pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
@@ -156,13 +148,172 @@ static void World_AllocParticles(struct xWorld_t* pxWorld, struct xInstance_t* p
 		pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
 		pxRenderable->nIndexCount = 6;
 
-		pxParticleSystem->nWidth = 10;
-		pxParticleSystem->nHeight = 10;
-		pxParticleSystem->pxParticleBuffer = StorageBuffer_Alloc(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
+		for (uint32_t i = 0; i < 1; ++i) {
+			xParticle_t xParticle;
+
+			Vector3_Set(xParticle.xPosition,
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F));
+
+			Vector3_Set(xParticle.xVelocity,
+				XorShift128_Float(-10.0F, 10.0F),
+				XorShift128_Float(-10.0F, 10.0F),
+				XorShift128_Float(-10.0F, 10.0F));
+
+			Vector_Push(pxParticles, &xParticle);
+		}
+
+		pxParticleSystem->bDebug = true;
+		pxParticleSystem->fWidth = 5.0F;
+		pxParticleSystem->fHeight = 5.0F;
+		pxParticleSystem->fDepth = 5.0F;
+		pxParticleSystem->pxParticleBuffer = StorageBuffer_AllocDevice(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
 		pxParticleSystem->nParticleCount = Vector_Count(pxParticles);
+
+		Vector_Free(pxParticles);
 	}
 
-	Vector_Free(pxParticles);
+	{
+		struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
+
+		pxWorld->apParticles[1] = Scene_AllocEntity(pxScene, "", 0);
+
+		Entity_SetTransform(pxWorld->apParticles[1], 0);
+		Entity_SetRenderable(pxWorld->apParticles[1], 0);
+		Entity_SetParticleSystem(pxWorld->apParticles[1], 0);
+
+		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[1]);
+		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[1]);
+		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[1]);
+
+		Vector3_Set(pxTransform->xPosition, 5.0F, 0.0F, -5.0F);
+		Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
+
+		pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
+		pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+		pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+		pxRenderable->nIndexCount = 6;
+
+		for (uint32_t i = 0; i < 1; ++i) {
+			xParticle_t xParticle;
+
+			Vector3_Set(xParticle.xPosition,
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F));
+
+			Vector3_Set(xParticle.xVelocity,
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F));
+
+			Vector_Push(pxParticles, &xParticle);
+		}
+
+		pxParticleSystem->bDebug = true;
+		pxParticleSystem->fWidth = 5.0F;
+		pxParticleSystem->fHeight = 5.0F;
+		pxParticleSystem->fDepth = 5.0F;
+		pxParticleSystem->pxParticleBuffer = StorageBuffer_AllocDevice(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
+		pxParticleSystem->nParticleCount = Vector_Count(pxParticles);
+
+		Vector_Free(pxParticles);
+	}
+
+	{
+		struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
+
+		pxWorld->apParticles[2] = Scene_AllocEntity(pxScene, "", 0);
+
+		Entity_SetTransform(pxWorld->apParticles[2], 0);
+		Entity_SetRenderable(pxWorld->apParticles[2], 0);
+		Entity_SetParticleSystem(pxWorld->apParticles[2], 0);
+
+		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[2]);
+		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[2]);
+		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[2]);
+
+		Vector3_Set(pxTransform->xPosition, -5.0F, 0.0F, 5.0F);
+		Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
+
+		pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
+		pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+		pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+		pxRenderable->nIndexCount = 6;
+
+		for (uint32_t i = 0; i < 1; ++i) {
+			xParticle_t xParticle;
+
+			Vector3_Set(xParticle.xPosition,
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F));
+
+			Vector3_Set(xParticle.xVelocity,
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F));
+
+			Vector_Push(pxParticles, &xParticle);
+		}
+
+		pxParticleSystem->bDebug = true;
+		pxParticleSystem->fWidth = 5.0F;
+		pxParticleSystem->fHeight = 5.0F;
+		pxParticleSystem->fDepth = 5.0F;
+		pxParticleSystem->pxParticleBuffer = StorageBuffer_AllocDevice(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
+		pxParticleSystem->nParticleCount = Vector_Count(pxParticles);
+
+		Vector_Free(pxParticles);
+	}
+
+	{
+		struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
+
+		pxWorld->apParticles[3] = Scene_AllocEntity(pxScene, "", 0);
+
+		Entity_SetTransform(pxWorld->apParticles[3], 0);
+		Entity_SetRenderable(pxWorld->apParticles[3], 0);
+		Entity_SetParticleSystem(pxWorld->apParticles[3], 0);
+
+		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[3]);
+		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[3]);
+		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[3]);
+
+		Vector3_Set(pxTransform->xPosition, 5.0F, 0.0F, 5.0F);
+		Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
+
+		pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
+		pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+		pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+		pxRenderable->nIndexCount = 6;
+
+		for (uint32_t i = 0; i < 1; ++i) {
+			xParticle_t xParticle;
+
+			Vector3_Set(xParticle.xPosition,
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F),
+				XorShift128_Float(-2.5F, 2.5F));
+
+			Vector3_Set(xParticle.xVelocity,
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F),
+				XorShift128_Float(-2.0F, 2.0F));
+
+			Vector_Push(pxParticles, &xParticle);
+		}
+
+		pxParticleSystem->bDebug = true;
+		pxParticleSystem->fWidth = 5.0F;
+		pxParticleSystem->fHeight = 5.0F;
+		pxParticleSystem->fDepth = 5.0F;
+		pxParticleSystem->pxParticleBuffer = StorageBuffer_AllocDevice(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
+		pxParticleSystem->nParticleCount = Vector_Count(pxParticles);
+
+		Vector_Free(pxParticles);
+	}
 }
 
 static void World_FreeChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
@@ -194,10 +345,10 @@ static void World_FreeParticles(struct xWorld_t* pxWorld, struct xInstance_t* px
 struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	struct xWorld_t* pxWorld = (struct xWorld_t*)calloc(1, sizeof(struct xWorld_t));
 
-	pxWorld->pxSharedVertexBuffer = VertexBuffer_Alloc(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
-	pxWorld->pxSharedIndexBuffer = IndexBuffer_Alloc(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
+	pxWorld->pxSharedVertexBuffer = VertexBuffer_AllocDevice(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
+	pxWorld->pxSharedIndexBuffer = IndexBuffer_AllocDevice(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
 
-	World_AllocChunks(pxWorld, pxInstance, pxScene);
+	//World_AllocChunks(pxWorld, pxInstance, pxScene);
 	World_AllocParticles(pxWorld, pxInstance, pxScene);
 
 	return pxWorld;
@@ -205,7 +356,7 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 
 void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	World_FreeParticles(pxWorld, pxInstance, pxScene);
-	World_FreeChunks(pxWorld, pxInstance, pxScene);
+	//World_FreeChunks(pxWorld, pxInstance, pxScene);
 
 	Buffer_Free(pxWorld->pxSharedIndexBuffer, pxInstance);
 	Buffer_Free(pxWorld->pxSharedVertexBuffer, pxInstance);
@@ -213,10 +364,10 @@ void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct
 	free(pxWorld);
 }
 
-void World_Update(struct xWorld_t* pxWorld, struct xTimer_t* pxTimer) {
-	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
-		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apAffectors[i]);
-		
-		Vector3_Set(pxTransform->xPosition, sinf(Timer_GetTime(pxTimer)) * 2.0F, 0.0F, 0.0F);
-	}
+void World_Update(struct xWorld_t* pxWorld, struct xRenderer_t* pxRenderer, struct xTimer_t* pxTimer) {
+	//for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
+	//	xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apAffectors[i]);
+	//	
+	//	Vector3_Set(pxTransform->xPosition, sinf(Timer_GetTime(pxTimer)) * 2.0F, 0.0F, 0.0F);
+	//}
 }

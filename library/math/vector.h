@@ -11,6 +11,10 @@ void Vector2_Set(xVec2_t xVec, float fX, float fY);
 void Vector3_Set(xVec3_t xVec, float fX, float fY, float fZ);
 void Vector4_Set(xVec4_t xVec, float fX, float fY, float fZ, float fW);
 
+void Vector2_Add(xVec2_t xVecA, xVec2_t xVecB, xVec2_t xRes);
+void Vector3_Add(xVec3_t xVecA, xVec3_t xVecB, xVec3_t xRes);
+void Vector4_Add(xVec4_t xVecA, xVec4_t xVecB, xVec4_t xRes);
+
 void Vector2_DivScalar(xVec2_t xVec, float fScalar, xVec2_t xRes);
 void Vector3_DivScalar(xVec3_t xVec, float fScalar, xVec3_t xRes);
 void Vector4_DivScalar(xVec4_t xVec, float fScalar, xVec4_t xRes);

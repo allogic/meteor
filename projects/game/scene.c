@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include <common/timer.h>
 
@@ -50,7 +51,7 @@ void Scene_Free(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 struct xEntity_t* Scene_AllocEntity(struct xScene_t* pxScene, const char* pcName, struct xEntity_t* pxParent) {
 	struct xEntity_t* pxEntity = Entity_Alloc(pcName, pxParent);
 
-	List_Add(pxScene->pxEntities, &pxEntity);
+	List_Push(pxScene->pxEntities, &pxEntity);
 
 	return pxEntity;
 }
@@ -78,7 +79,7 @@ void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 }
 
 void Scene_Update(struct xScene_t* pxScene, struct xTimer_t* pxTimer) {
-	World_Update(pxScene->pxWorld, pxTimer);
+	World_Update(pxScene->pxWorld, pxScene->pxRenderer, pxTimer);
 }
 
 void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct xTimer_t* pxTimer) {
@@ -88,9 +89,9 @@ void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct
 	pxTimeInfo->fTime = Timer_GetTime(pxTimer);
 	pxTimeInfo->fDeltaTime = Timer_GetDeltaTime(pxTimer);
 
-	Orthographic_Projection(-15.0F, 15.0F, -15.0F, 15.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
+	Orthographic_Projection(-30.0F, 30.0F, -30.0F, 30.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
 
-	xVec3_t xEye = { 0.0F, 0.0F, -1.0F };
+	xVec3_t xEye = { sinf(Timer_GetTime(pxTimer)) * 30.0F, 15.0F, cosf(Timer_GetTime(pxTimer)) * 30.0F };
 	xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
 	xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
 	View_LookAt(xEye, xCenter, xUp, pxViewProjection->xView);

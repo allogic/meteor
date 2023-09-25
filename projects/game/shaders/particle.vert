@@ -29,7 +29,7 @@ layout(location = 0) out Vertex {
 } outputVertex;
 
 void main() {
-	uint index = gl_InstanceIndex;
+	int index = gl_InstanceIndex;
 
 	vec3 instancePosition = particles[index].position;
 

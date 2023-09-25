@@ -66,8 +66,24 @@ void* List_Push(struct xList_t* pxList, void* pData) {
 	return pxNode;
 }
 
-void* List_Pop(struct xList_t* pxList, void* pData) {
-	return 0;
+void List_Pop(struct xList_t* pxList, void* pData) {
+	if (pxList->pxHead == pxList->pxTail) {
+		free(pxList->pxHead->pBuffer);
+		free(pxList->pxHead);
+
+		pxList->nNodeCount -= 1;
+	} else {
+		struct xNode_t* pxPrev = pxList->pxTail->pxPrev;
+
+		pxPrev->pxNext = 0;
+
+		free(pxList->pxTail->pBuffer);
+		free(pxList->pxTail);
+
+		pxList->pxTail = pxPrev;
+
+		pxList->nNodeCount -= 1;
+	}
 }
 
 void* List_Remove(struct xList_t* pxList, void* pIter) {

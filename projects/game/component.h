@@ -57,8 +57,10 @@ typedef struct {
 } xRenderable_t;
 
 typedef struct {
-	uint32_t nWidth;
-	uint32_t nHeight;
+	bool bDebug;
+	float fWidth;
+	float fHeight;
+	float fDepth;
 	struct xBuffer_t* pxParticleBuffer;
 	uint32_t nParticleCount;
 } xParticleSystem_t;

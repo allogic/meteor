@@ -72,7 +72,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = bIsDirectory;
 
-		List_Add(pxList, &xFile);
+		List_Push(pxList, &xFile);
 	} while (FindNextFile(hFile, &xFindData) != 0);
 
 	FindClose(hFile);
@@ -114,7 +114,7 @@ struct xList_t* FileList_Alloc(const char* pcFilePath) {
 
 		xFile.bIsDirectory = bIsDirectory;
 
-		List_Add(pxList, &xFile);
+		List_Push(pxList, &xFile);
 
 		pxEntry = readdir(pxDir);
 	}

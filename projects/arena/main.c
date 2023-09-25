@@ -27,10 +27,10 @@ static struct xEntity_t* Insert(void) {
 		List_Remove(s_xFreeIndices, pFreeIndexIter);
 
 		// Transform index is now in use
-		void* pUsedIndexIter = List_Add(s_xUsedIndices, &nTransformIndex);
+		void* pUsedIndexIter = List_Push(s_xUsedIndices, &nTransformIndex);
 
 		// Create new entity
-		void* pEntityIter = List_Add(s_xEntities, 0);
+		void* pEntityIter = List_Push(s_xEntities, 0);
 		struct xEntity_t* pxEntity = (struct xEntity_t*)List_Value(pEntityIter);
 		pxEntity->pEntityIter = pEntityIter;
 		pxEntity->pUsedIndexIter = pUsedIndexIter;
@@ -47,7 +47,7 @@ static void Remove(struct xEntity_t* pxEntity) {
 	List_Remove(s_xUsedIndices, pxEntity->pUsedIndexIter);
 
 	// Transform index is not in use anymore
-	List_Add(s_xFreeIndices, &nTransformIndex);
+	List_Push(s_xFreeIndices, &nTransformIndex);
 
 	// Remove entity
 	List_Remove(s_xEntities, pxEntity->pEntityIter);
@@ -93,7 +93,7 @@ int32_t main(void) {
 	s_xTransforms = Vector_Alloc(sizeof(uint32_t));
 
 	for (uint32_t i = 0; i < 4; ++i) {
-		List_Add(s_xFreeIndices, &i);
+		List_Push(s_xFreeIndices, &i);
 	}
 
 	Dump();

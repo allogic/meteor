@@ -6,7 +6,9 @@ struct Particle {
 };
 
 layout(push_constant) uniform Dimensions {
-	vec3 size;
+	float width;
+	float height;
+	float depth;
 } dimensions;
 
 layout(set = 0, binding = 0) uniform TimeInfo {
@@ -29,11 +31,12 @@ void main() {
 
 	Particle inputParticle = inputParticles[index];
 
-	outputParticles[index].position = inputParticle.position + inputParticle.velocity * 0.01;
+	outputParticles[index].position = inputParticle.position + inputParticle.velocity * 0.005;
 	outputParticles[index].velocity = inputParticle.velocity;
 
-	float hsx = dimensions.size.x / 2;
-	float hsy = dimensions.size.y / 2;
+	float hsx = dimensions.width / 2;
+	float hsy = dimensions.height / 2;
+	float hsz = dimensions.depth / 2;
 
 	if ((outputParticles[index].position.x <= -hsx) || (outputParticles[index].position.x >= hsx)) {
 		outputParticles[index].velocity.x = -outputParticles[index].velocity.x;
@@ -41,5 +44,9 @@ void main() {
 
 	if ((outputParticles[index].position.y <= -hsy) || (outputParticles[index].position.y >= hsy)) {
 		outputParticles[index].velocity.y = -outputParticles[index].velocity.y;
+	}
+
+	if ((outputParticles[index].position.z <= -hsz) || (outputParticles[index].position.z >= hsz)) {
+		outputParticles[index].velocity.z = -outputParticles[index].velocity.z;
 	}
 }
