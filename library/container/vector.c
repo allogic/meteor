@@ -57,6 +57,15 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 	return nIndex;
 }
 
+uint32_t Vector_Pop(struct xVector_t* pxVector, void* pData) {
+	pxVector->nBufferIndex -= 1;
+	pxVertex->nBufferOffset -= pxVector->nValueSize;
+
+	memcpy(pData, ((uint8_t*)pxVector->pBuffer) + pxVector->nBufferOffset, pxVector->nValueSize);
+
+	return pxVector->nBufferIndex;
+}
+
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
 	if (nCount > pxVector->nBufferCount) {
 		pxVector->pBuffer = realloc(pxVector->pBuffer, nCount * pxVector->nValueSize);

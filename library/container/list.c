@@ -42,7 +42,7 @@ void List_Free(struct xList_t* pxList) {
 	free(pxList);
 }
 
-void* List_Add(struct xList_t* pxList, void* pData) {
+void* List_Push(struct xList_t* pxList, void* pData) {
 	struct xNode_t* pxNode = (struct xNode_t*)calloc(1, sizeof(struct xNode_t));
 
 	pxNode->pBuffer = malloc(pxList->nValueSize);
@@ -64,6 +64,10 @@ void* List_Add(struct xList_t* pxList, void* pData) {
 	pxList->nNodeCount += 1;
 
 	return pxNode;
+}
+
+void* List_Pop(struct xList_t* pxList, void* pData) {
+	return 0;
 }
 
 void* List_Remove(struct xList_t* pxList, void* pIter) {

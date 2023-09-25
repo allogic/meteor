@@ -75,14 +75,14 @@ static void World_AllocChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxIn
 			Vector3_Set(pxTransform->xPosition, x, y, 0.0F);
 			Vector3_Set(pxTransform->xScale, CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1, 1.0F);
 
-			pxRenderable->pxAlbedoImage = StorageImage_Alloc(pxInstance, "assets/sand_albedo.bmp");
+			pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/sand_color.bmp");
 			pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
 			pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
 			pxRenderable->nIndexCount = 6;
 
-			pxPixelSystem->nWidth = Image_GetWidth(pxRenderable->pxAlbedoImage);
-			pxPixelSystem->nHeight = Image_GetHeight(pxRenderable->pxAlbedoImage);
-			pxPixelSystem->pxAlbedoImage = pxRenderable->pxAlbedoImage;
+			pxPixelSystem->nWidth = Image_GetWidth(pxRenderable->pxColorImage);
+			pxPixelSystem->nHeight = Image_GetHeight(pxRenderable->pxColorImage);
+			pxPixelSystem->pxColorImage = pxRenderable->pxColorImage;
 			pxPixelSystem->pxStateImage = StorageImage_Alloc(pxInstance, "assets/sand_state.bmp");
 		}
 	}
@@ -102,10 +102,10 @@ static void World_AllocChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxIn
 
 			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apChunks[i][j]);
 
-			pxPixelSystem->pxAlbedoImageN = Entity_GetRenderable(pxWorld->apChunks[i][jn])->pxAlbedoImage;
-			pxPixelSystem->pxAlbedoImageS = Entity_GetRenderable(pxWorld->apChunks[i][jp])->pxAlbedoImage;
-			pxPixelSystem->pxAlbedoImageW = Entity_GetRenderable(pxWorld->apChunks[in][j])->pxAlbedoImage;
-			pxPixelSystem->pxAlbedoImageE = Entity_GetRenderable(pxWorld->apChunks[ip][j])->pxAlbedoImage;
+			pxPixelSystem->pxColorImageN = Entity_GetRenderable(pxWorld->apChunks[i][jn])->pxColorImage;
+			pxPixelSystem->pxColorImageS = Entity_GetRenderable(pxWorld->apChunks[i][jp])->pxColorImage;
+			pxPixelSystem->pxColorImageW = Entity_GetRenderable(pxWorld->apChunks[in][j])->pxColorImage;
+			pxPixelSystem->pxColorImageE = Entity_GetRenderable(pxWorld->apChunks[ip][j])->pxColorImage;
 
 			pxPixelSystem->pxStateImageN = Entity_GetPixelSystem(pxWorld->apChunks[i][jn])->pxStateImage;
 			pxPixelSystem->pxStateImageS = Entity_GetPixelSystem(pxWorld->apChunks[i][jp])->pxStateImage;
@@ -151,7 +151,7 @@ static void World_AllocParticles(struct xWorld_t* pxWorld, struct xInstance_t* p
 		Vector3_Set(pxTransform->xPosition, 0.0F, 0.0F, 1.0F);
 		Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
 
-		pxRenderable->pxAlbedoImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
+		pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
 		pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
 		pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
 		pxRenderable->nIndexCount = 6;
@@ -171,7 +171,7 @@ static void World_FreeChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxIns
 			xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apChunks[i][j]);
 			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apChunks[i][j]);
 
-			Image_Free(pxRenderable->pxAlbedoImage, pxInstance);
+			Image_Free(pxRenderable->pxColorImage, pxInstance);
 			Image_Free(pxPixelSystem->pxStateImage, pxInstance);
 
 			Scene_FreeEntity(pxScene, pxWorld->apChunks[i][j]);
@@ -183,7 +183,7 @@ static void World_FreeParticles(struct xWorld_t* pxWorld, struct xInstance_t* px
 		xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[i]);
 		xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[i]);
 
-		Image_Free(pxRenderable->pxAlbedoImage, pxInstance);
+		Image_Free(pxRenderable->pxColorImage, pxInstance);
 
 		Buffer_Free(pxParticleSystem->pxParticleBuffer, pxInstance);
 

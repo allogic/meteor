@@ -86,7 +86,7 @@ struct xRenderer_t {
 	struct xBuffer_t* pxDebugIndexBuffer;
 
 	xDebugVertex_t* pxDebugVertices;
-	uint32_t* pxDebugIndices;
+	uint32_t* pnDebugIndices;
 
 	uint32_t nDebugVertexOffset;
 	uint32_t nDebugIndexOffset;
@@ -476,8 +476,8 @@ static void Renderer_UpdateDefaultGraphicDescriptorSet(struct xRenderer_t* pxRen
 	VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
 	memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
 	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxAlbedoImage);
-	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxAlbedoImage);
+	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxColorImage);
+	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxColorImage);
 
 	VkWriteDescriptorSet axWriteDescriptorSets[2];
 
@@ -521,8 +521,8 @@ static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRe
 	VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
 	memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
 	xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxAlbedoImage);
-	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxAlbedoImage);
+	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxColorImage);
+	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxColorImage);
 
 	VkWriteDescriptorSet axWriteDescriptorSets[3];
 
@@ -618,35 +618,35 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	xTimeInfoDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->pxTimeInfoBuffer);
 	xTimeInfoDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxTimeInfoBuffer);
 
-	VkDescriptorImageInfo xNorthAlbedoDescriptorImageInfo;
-	memset(&xNorthAlbedoDescriptorImageInfo, 0, sizeof(xNorthAlbedoDescriptorImageInfo));
-	xNorthAlbedoDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xNorthAlbedoDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxAlbedoImageN);
-	xNorthAlbedoDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxAlbedoImageN);
+	VkDescriptorImageInfo xNorthColorDescriptorImageInfo;
+	memset(&xNorthColorDescriptorImageInfo, 0, sizeof(xNorthColorDescriptorImageInfo));
+	xNorthColorDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	xNorthColorDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxColorImageN);
+	xNorthColorDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxColorImageN);
 
-	VkDescriptorImageInfo xSouthAlbedoDescriptorImageInfo;
-	memset(&xSouthAlbedoDescriptorImageInfo, 0, sizeof(xSouthAlbedoDescriptorImageInfo));
-	xSouthAlbedoDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xSouthAlbedoDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxAlbedoImageS);
-	xSouthAlbedoDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxAlbedoImageS);
+	VkDescriptorImageInfo xSouthColorDescriptorImageInfo;
+	memset(&xSouthColorDescriptorImageInfo, 0, sizeof(xSouthColorDescriptorImageInfo));
+	xSouthColorDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	xSouthColorDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxColorImageS);
+	xSouthColorDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxColorImageS);
 
-	VkDescriptorImageInfo xWestAlbedoDescriptorImageInfo;
-	memset(&xWestAlbedoDescriptorImageInfo, 0, sizeof(xWestAlbedoDescriptorImageInfo));
-	xWestAlbedoDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xWestAlbedoDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxAlbedoImageW);
-	xWestAlbedoDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxAlbedoImageW);
+	VkDescriptorImageInfo xWestColorDescriptorImageInfo;
+	memset(&xWestColorDescriptorImageInfo, 0, sizeof(xWestColorDescriptorImageInfo));
+	xWestColorDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	xWestColorDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxColorImageW);
+	xWestColorDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxColorImageW);
 
-	VkDescriptorImageInfo xEastAlbedoDescriptorImageInfo;
-	memset(&xEastAlbedoDescriptorImageInfo, 0, sizeof(xEastAlbedoDescriptorImageInfo));
-	xEastAlbedoDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xEastAlbedoDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxAlbedoImageE);
-	xEastAlbedoDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxAlbedoImageE);
+	VkDescriptorImageInfo xEastColorDescriptorImageInfo;
+	memset(&xEastColorDescriptorImageInfo, 0, sizeof(xEastColorDescriptorImageInfo));
+	xEastColorDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	xEastColorDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxColorImageE);
+	xEastColorDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxColorImageE);
 
-	VkDescriptorImageInfo xAlbedoDescriptorImageInfo;
-	memset(&xAlbedoDescriptorImageInfo, 0, sizeof(xAlbedoDescriptorImageInfo));
-	xAlbedoDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	xAlbedoDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxAlbedoImage);
-	xAlbedoDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxAlbedoImage);
+	VkDescriptorImageInfo xColorDescriptorImageInfo;
+	memset(&xColorDescriptorImageInfo, 0, sizeof(xColorDescriptorImageInfo));
+	xColorDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	xColorDescriptorImageInfo.imageView = Image_GetImageView(pxPixelSystem->pxColorImage);
+	xColorDescriptorImageInfo.sampler = Image_GetSampler(pxPixelSystem->pxColorImage);
 
 	VkDescriptorImageInfo xNorthStateDescriptorImageInfo;
 	memset(&xNorthStateDescriptorImageInfo, 0, sizeof(xNorthStateDescriptorImageInfo));
@@ -698,7 +698,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[1].dstArrayElement = 0;
 	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[1].descriptorCount = 1;
-	axWriteDescriptorSets[1].pImageInfo = &xNorthAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[1].pImageInfo = &xNorthColorDescriptorImageInfo;
 	axWriteDescriptorSets[1].pBufferInfo = 0;
 	axWriteDescriptorSets[1].pTexelBufferView = 0;
 
@@ -709,7 +709,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[2].dstArrayElement = 0;
 	axWriteDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[2].descriptorCount = 1;
-	axWriteDescriptorSets[2].pImageInfo = &xSouthAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[2].pImageInfo = &xSouthColorDescriptorImageInfo;
 	axWriteDescriptorSets[2].pBufferInfo = 0;
 	axWriteDescriptorSets[2].pTexelBufferView = 0;
 
@@ -720,7 +720,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[3].dstArrayElement = 0;
 	axWriteDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[3].descriptorCount = 1;
-	axWriteDescriptorSets[3].pImageInfo = &xWestAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[3].pImageInfo = &xWestColorDescriptorImageInfo;
 	axWriteDescriptorSets[3].pBufferInfo = 0;
 	axWriteDescriptorSets[3].pTexelBufferView = 0;
 
@@ -731,7 +731,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[4].dstArrayElement = 0;
 	axWriteDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[4].descriptorCount = 1;
-	axWriteDescriptorSets[4].pImageInfo = &xEastAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[4].pImageInfo = &xEastColorDescriptorImageInfo;
 	axWriteDescriptorSets[4].pBufferInfo = 0;
 	axWriteDescriptorSets[4].pTexelBufferView = 0;
 
@@ -742,7 +742,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[5].dstArrayElement = 0;
 	axWriteDescriptorSets[5].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[5].descriptorCount = 1;
-	axWriteDescriptorSets[5].pImageInfo = &xAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[5].pImageInfo = &xColorDescriptorImageInfo;
 	axWriteDescriptorSets[5].pBufferInfo = 0;
 	axWriteDescriptorSets[5].pTexelBufferView = 0;
 
@@ -808,7 +808,7 @@ static void Renderer_UpdatePixelComputeDescriptorSet(struct xRenderer_t* pxRende
 	axWriteDescriptorSets[11].dstArrayElement = 0;
 	axWriteDescriptorSets[11].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	axWriteDescriptorSets[11].descriptorCount = 1;
-	axWriteDescriptorSets[11].pImageInfo = &xAlbedoDescriptorImageInfo;
+	axWriteDescriptorSets[11].pImageInfo = &xColorDescriptorImageInfo;
 	axWriteDescriptorSets[11].pBufferInfo = 0;
 	axWriteDescriptorSets[11].pTexelBufferView = 0;
 
@@ -1291,7 +1291,7 @@ static void Renderer_AllocDebugLineBuffers(struct xRenderer_t* pxRenderer, struc
 	//Buffer_Map(pxRenderer->pxDebugIndexBuffer, pxInstance);
 
 	//pxRenderer->pxDebugVertices = Buffer_GetMappedData(pxRenderer->pxDebugVertexBuffer);
-	//pxRenderer->pxDebugIndices = Buffer_GetMappedData(pxRenderer->pxDebugIndexBuffer);
+	//pxRenderer->pnDebugIndices = Buffer_GetMappedData(pxRenderer->pxDebugIndexBuffer);
 
 	pxRenderer->nDebugVertexOffset = 0;
 	pxRenderer->nDebugIndexOffset = 0;
@@ -1436,79 +1436,88 @@ void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstanc
 	}
 }
 
-void Renderer_DrawDebugLine(struct xRenderer_t* pxRenderer, xVec3_t xVecA, xVec3_t xVecB, xVec4_t xColorA, xVec4_t xColorB) {
-	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 0].xPosition, xVecA[0], xVecA[1], xVecA[2]);
-	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 1].xPosition, xVecB[0], xVecB[1], xVecB[2]);
+void Renderer_DrawDebugLine(struct xRenderer_t* pxRenderer, xVec3_t xPositionA, xVec3_t xPositionB, xVec4_t xColorA, xVec4_t xColorB) {
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 0].xPosition, xPositionA[0], xPositionA[1], xPositionA[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 1].xPosition, xPositionB[0], xPositionB[1], xPositionB[2]);
 
 	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 0].xColor, xColorA[0], xColorA[1], xColorA[2], xColorA[3]);
 	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 1].xColor, xColorB[0], xColorB[1], xColorB[2], xColorB[3]);
 
-	pxRenderer->pxDebugIndices[pxRenderer->nDebugIndexOffset + 0] = pxRenderer->nDebugVertexOffset + 0;
-	pxRenderer->pxDebugIndices[pxRenderer->nDebugIndexOffset + 1] = pxRenderer->nDebugVertexOffset + 1;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 0] = pxRenderer->nDebugVertexOffset + 0;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 1] = pxRenderer->nDebugVertexOffset + 1;
 
 	pxRenderer->nDebugVertexOffset += 2;
 	pxRenderer->nDebugIndexOffset += 2;
 }
 
-/*
-void Renderer_DebugBox(const R32V3& P, const R32V3& S, const R32V4& C, const R32Q& R)
-{
-	R32V3 h{ S / 2.0F };
+void Renderer_DrawDebugBox(struct xRenderer_t* pxRenderer, xVec3_t xPosition, xVec3_t xSize, xVec4_t xColor, xVec4_t xRotation) {
+	xVec3_t xHs;
 
-	mVertexBuffer[mVertexOffset + 0].Position = P + R * R32V3{ -h.x, -h.y, -h.z };
-	mVertexBuffer[mVertexOffset + 1].Position = P + R * R32V3{ h.x, -h.y, -h.z };
-	mVertexBuffer[mVertexOffset + 2].Position = P + R * R32V3{ -h.x, h.y, -h.z };
-	mVertexBuffer[mVertexOffset + 3].Position = P + R * R32V3{ h.x, h.y, -h.z };
+	Vector3_DivScalar(xSize, 2.0F, xHs);
 
-	mVertexBuffer[mVertexOffset + 4].Position = P + R * R32V3{ -h.x, -h.y, h.z };
-	mVertexBuffer[mVertexOffset + 5].Position = P + R * R32V3{ h.x, -h.y, h.z };
-	mVertexBuffer[mVertexOffset + 6].Position = P + R * R32V3{ -h.x, h.y, h.z };
-	mVertexBuffer[mVertexOffset + 7].Position = P + R * R32V3{ h.x, h.y, h.z };
+	xVex3_t xBlb = { -xHs[0], -xHs[1], -xHs[2] };
+	xVex3_t xBrb = {  xHs[0], -xHs[1], -xHs[2] };
+	xVex3_t xTlb = { -xHs[0],  xHs[1], -xHs[2] };
+	xVex3_t xTrb = {  xHs[0],  xHs[1], -xHs[2] };
 
-	mVertexBuffer[mVertexOffset + 0].Color = C;
-	mVertexBuffer[mVertexOffset + 1].Color = C;
-	mVertexBuffer[mVertexOffset + 2].Color = C;
-	mVertexBuffer[mVertexOffset + 3].Color = C;
+	xVex3_t xBlf = { -xHs[0], -xHs[1],  xHs[2] };
+	xVex3_t xBrf = {  xHs[0], -xHs[1],  xHs[2] };
+	xVex3_t xTlf = { -xHs[0],  xHs[1],  xHs[2] };
+	xVex3_t xTrf = {  xHs[0],  xHs[1],  xHs[2] };
 
-	mVertexBuffer[mVertexOffset + 4].Color = C;
-	mVertexBuffer[mVertexOffset + 5].Color = C;
-	mVertexBuffer[mVertexOffset + 6].Color = C;
-	mVertexBuffer[mVertexOffset + 7].Color = C;
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 0].xPosition, xBlb[0], xBlb[1], xBlb[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 1].xPosition, xBrb[0], xBrb[1], xBrb[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 2].xPosition, xTlb[0], xTlb[1], xTlb[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 3].xPosition, xTrb[0], xTrb[1], xTrb[2]);
 
-	mElementBuffer[mElementOffset + 0] = mVertexOffset + 0;
-	mElementBuffer[mElementOffset + 1] = mVertexOffset + 1;
-	mElementBuffer[mElementOffset + 2] = mVertexOffset + 0;
-	mElementBuffer[mElementOffset + 3] = mVertexOffset + 2;
-	mElementBuffer[mElementOffset + 4] = mVertexOffset + 2;
-	mElementBuffer[mElementOffset + 5] = mVertexOffset + 3;
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 4].xPosition, xBlf[0], xBlf[1], xBlf[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 5].xPosition, xBrf[0], xBrf[1], xBrf[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 6].xPosition, xTlf[0], xTlf[1], xTlf[2]);
+	Vector3_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 7].xPosition, xTrf[0], xTrf[1], xTrf[2]);
 
-	mElementBuffer[mElementOffset + 6] = mVertexOffset + 3;
-	mElementBuffer[mElementOffset + 7] = mVertexOffset + 1;
-	mElementBuffer[mElementOffset + 8] = mVertexOffset + 4;
-	mElementBuffer[mElementOffset + 9] = mVertexOffset + 5;
-	mElementBuffer[mElementOffset + 10] = mVertexOffset + 4;
-	mElementBuffer[mElementOffset + 11] = mVertexOffset + 6;
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 0].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 1].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 2].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 3].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
 
-	mElementBuffer[mElementOffset + 12] = mVertexOffset + 6;
-	mElementBuffer[mElementOffset + 13] = mVertexOffset + 7;
-	mElementBuffer[mElementOffset + 14] = mVertexOffset + 7;
-	mElementBuffer[mElementOffset + 15] = mVertexOffset + 5;
-	mElementBuffer[mElementOffset + 16] = mVertexOffset + 0;
-	mElementBuffer[mElementOffset + 17] = mVertexOffset + 4;
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 4].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 5].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 6].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
+	Vector4_Set(pxRenderer->pxDebugVertices[pxRenderer->nDebugVertexOffset + 7].xColor, xColor[0], xColor[1], xColor[2], xColor[3]);
 
-	mElementBuffer[mElementOffset + 18] = mVertexOffset + 1;
-	mElementBuffer[mElementOffset + 19] = mVertexOffset + 5;
-	mElementBuffer[mElementOffset + 20] = mVertexOffset + 2;
-	mElementBuffer[mElementOffset + 21] = mVertexOffset + 6;
-	mElementBuffer[mElementOffset + 22] = mVertexOffset + 3;
-	mElementBuffer[mElementOffset + 23] = mVertexOffset + 7;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 0] = pxRenderer->nDebugVertexOffset + 0;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 1] = pxRenderer->nDebugVertexOffset + 1;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 2] = pxRenderer->nDebugVertexOffset + 0;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 3] = pxRenderer->nDebugVertexOffset + 2;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 4] = pxRenderer->nDebugVertexOffset + 2;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 5] = pxRenderer->nDebugVertexOffset + 3;
 
-	mVertexOffset += 8;
-	mElementOffset += 24;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 6] = pxRenderer->nDebugVertexOffset + 3;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 7] = pxRenderer->nDebugVertexOffset + 1;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 8] = pxRenderer->nDebugVertexOffset + 4;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 9] = pxRenderer->nDebugVertexOffset + 5;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 10] = pxRenderer->nDebugVertexOffset + 4;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 11] = pxRenderer->nDebugVertexOffset + 6;
+
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 12] = pxRenderer->nDebugVertexOffset + 6;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 13] = pxRenderer->nDebugVertexOffset + 7;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 14] = pxRenderer->nDebugVertexOffset + 7;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 15] = pxRenderer->nDebugVertexOffset + 5;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 16] = pxRenderer->nDebugVertexOffset + 0;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 17] = pxRenderer->nDebugVertexOffset + 4;
+
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 18] = pxRenderer->nDebugVertexOffset + 1;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 19] = pxRenderer->nDebugVertexOffset + 5;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 20] = pxRenderer->nDebugVertexOffset + 2;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 21] = pxRenderer->nDebugVertexOffset + 6;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 22] = pxRenderer->nDebugVertexOffset + 3;
+	pxRenderer->pnDebugIndices[pxRenderer->nDebugIndexOffset + 23] = pxRenderer->nDebugVertexOffset + 7;
+
+	pxRenderer->nDebugVertexOffset += 8;
+	pxRenderer->nDebugIndexOffset += 24;
 }
-*/
 
-void Renderer_InvalidateEntities(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
+void Renderer_CommitEntities(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, struct xList_t* pxEntities) {
 	uint32_t nDefaultGraphicDescriptorCount = 0;
 	uint32_t nParticleGraphicDescriptorCount = 0;
 	uint32_t nParticleComputeDescriptorCount = 0;

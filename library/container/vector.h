@@ -10,6 +10,7 @@ struct xVector_t* Vector_Alloc(uint32_t nValueSize);
 void Vector_Free(struct xVector_t* pxVector);
 
 uint32_t Vector_Push(struct xVector_t* pxVector, void* pData);
+uint32_t Vector_Pop(struct xVector_t* pxVector, void* pData);
 
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount);
 

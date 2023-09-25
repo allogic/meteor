@@ -53,7 +53,7 @@ typedef struct {
 	struct xBuffer_t* pxVertexBuffer;
 	struct xBuffer_t* pxIndexBuffer;
 	uint32_t nIndexCount;
-	struct xImage_t* pxAlbedoImage;
+	struct xImage_t* pxColorImage;
 } xRenderable_t;
 
 typedef struct {
@@ -70,11 +70,11 @@ typedef struct {
 typedef struct {
 	uint32_t nWidth;
 	uint32_t nHeight;
-	struct xImage_t* pxAlbedoImage;
-	struct xImage_t* pxAlbedoImageN;
-	struct xImage_t* pxAlbedoImageS;
-	struct xImage_t* pxAlbedoImageW;
-	struct xImage_t* pxAlbedoImageE;
+	struct xImage_t* pxColorImage;
+	struct xImage_t* pxColorImageN;
+	struct xImage_t* pxColorImageS;
+	struct xImage_t* pxColorImageW;
+	struct xImage_t* pxColorImageE;
 	struct xImage_t* pxStateImage;
 	struct xImage_t* pxStateImageN;
 	struct xImage_t* pxStateImageS;

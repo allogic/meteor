@@ -64,7 +64,7 @@ void Scene_FreeEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity) {
 }
 
 void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
-	Renderer_InvalidateEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
+	Renderer_CommitEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
 }
 
 void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
@@ -74,7 +74,7 @@ void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 	pxScene->pxSwapChain = SwapChain_Alloc(pxInstance);
 	pxScene->pxRenderer = Renderer_Alloc(pxInstance, pxScene->pxSwapChain);
 
-	Renderer_InvalidateEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
+	Renderer_CommitEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
 }
 
 void Scene_Update(struct xScene_t* pxScene, struct xTimer_t* pxTimer) {
