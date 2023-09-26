@@ -11,6 +11,7 @@ struct xEntity_t;
 struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent);
 void Entity_Free(struct xEntity_t* pxEntity);
 
+void* Entity_GetEntityIter(struct xEntity_t* pxEntity);
 const char* Entity_GetName(struct xEntity_t* pxEntity);
 uint64_t Entity_GetMask(struct xEntity_t* pxEntity);
 xTransform_t* Entity_GetTransform(struct xEntity_t* pxEntity);
@@ -22,6 +23,7 @@ xParticleAffector_t* Entity_GetParticleAffector(struct xEntity_t* pxEntity);
 xPixelSystem_t* Entity_GetPixelSystem(struct xEntity_t* pxEntity);
 xPixelAffector_t* Entity_GetPixelAffector(struct xEntity_t* pxEntity);
 
+void Entity_SetEntityIter(struct xEntity_t* pxEntity, void* pEntityIter);
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName);
 void Entity_SetTransform(struct xEntity_t* pxEntity, xTransform_t* pxTransform);
 void Entity_SetCamera(struct xEntity_t* pxEntity, xCamera_t* pxCamera);

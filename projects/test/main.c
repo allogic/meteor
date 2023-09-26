@@ -148,7 +148,7 @@ static void Vector_Test(void) {
 static void Queue_Test(void) {
 	PRINT_TEST_BEGIN(Queue_Test);
 
-	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t), 4);
+	struct xQueue_t* pxQueue = Queue_Alloc(sizeof(uint32_t));
 
 	printf("Enqueue\n");
 	for (uint32_t i = 0; i < 8; ++i) {

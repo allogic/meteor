@@ -14,6 +14,8 @@ void List_Pop(struct xList_t* pxList, void* pData);
 
 void* List_Remove(struct xList_t* pxList, void* pIter);
 
+void List_Clear(struct xList_t* pxList);
+
 bool List_Empty(struct xList_t* pxList);
 uint32_t List_Count(struct xList_t* pxList);
 

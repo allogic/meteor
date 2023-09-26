@@ -51,17 +51,19 @@ void Scene_Free(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 struct xEntity_t* Scene_AllocEntity(struct xScene_t* pxScene, const char* pcName, struct xEntity_t* pxParent) {
 	struct xEntity_t* pxEntity = Entity_Alloc(pcName, pxParent);
 
-	List_Push(pxScene->pxEntities, &pxEntity);
+	void* pEntityIter = List_Push(pxScene->pxEntities, &pxEntity);
+
+	Entity_SetEntityIter(pxEntity, pEntityIter);
 
 	return pxEntity;
 }
 
 void Scene_FreeEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity) {
-	//List_Remove(pxScene->pxEntities, pxEntity);
+	void* pEntityIter = Entity_GetEntityIter(pxEntity);
+
+	List_Remove(pxScene->pxEntities, pEntityIter);
 
 	Entity_Free(pxEntity);
-
-	// TODO: Still not working..
 }
 
 void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
@@ -96,5 +98,5 @@ void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct
 	xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
 	View_LookAt(xEye, xCenter, xUp, pxViewProjection->xView);
 
-	Renderer_Draw(pxScene->pxRenderer, pxInstance, pxScene->pxSwapChain, pxScene->pxEntities);
+	Renderer_Draw(pxScene->pxRenderer, pxInstance, pxScene->pxSwapChain);
 }

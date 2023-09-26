@@ -68,14 +68,21 @@ void* List_Push(struct xList_t* pxList, void* pData) {
 
 void List_Pop(struct xList_t* pxList, void* pData) {
 	if (pxList->pxHead == pxList->pxTail) {
+		memcpy(pData, pxList->pxHead->pBuffer, pxList->nValueSize);
+
 		free(pxList->pxHead->pBuffer);
 		free(pxList->pxHead);
 
-		pxList->nNodeCount -= 1;
+		pxList->pxHead = 0;
+		pxList->pxTail = 0;
+
+		pxList->nNodeCount = 0;
 	} else {
 		struct xNode_t* pxPrev = pxList->pxTail->pxPrev;
 
 		pxPrev->pxNext = 0;
+
+		memcpy(pData, pxList->pxTail->pBuffer, pxList->nValueSize);
 
 		free(pxList->pxTail->pBuffer);
 		free(pxList->pxTail);
@@ -134,6 +141,24 @@ void* List_Remove(struct xList_t* pxList, void* pIter) {
 	}
 
 	return pxList->pxTail;
+}
+
+void List_Clear(struct xList_t* pxList) {
+	pxList->pxCurr = pxList->pxHead;
+
+	struct xNode_t* pxNext;
+	while (pxList->pxCurr) {
+		pxNext = pxList->pxCurr->pxNext;
+
+		free(pxList->pxCurr->pBuffer);
+		free(pxList->pxCurr);
+
+		pxList->pxCurr = pxNext;
+	}
+
+	pxList->pxHead = 0;
+	pxList->pxTail = 0;
+	pxList->nNodeCount = 0;
 }
 
 bool List_Empty(struct xList_t* pxList) {

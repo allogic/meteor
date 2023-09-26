@@ -17,14 +17,11 @@ static struct xList_t* s_xEntities;
 static struct xList_t* s_xUsedIndices;
 static struct xList_t* s_xFreeIndices;
 
-static struct xVector_t* s_xTransforms;
-
 static struct xEntity_t* Insert(void) {
 	if (!List_Empty(s_xFreeIndices)) {
 		// Remove free transform index
-		void* pFreeIndexIter = List_Begin(s_xFreeIndices);
-		uint32_t nTransformIndex = *(uint32_t*)List_Value(pFreeIndexIter);
-		List_Remove(s_xFreeIndices, pFreeIndexIter);
+		uint32_t nTransformIndex;
+		List_Pop(s_xFreeIndices, &nTransformIndex);
 
 		// Transform index is now in use
 		void* pUsedIndexIter = List_Push(s_xUsedIndices, &nTransformIndex);
@@ -90,8 +87,6 @@ int32_t main(void) {
 	s_xUsedIndices = List_Alloc(sizeof(uint32_t));
 	s_xFreeIndices = List_Alloc(sizeof(uint32_t));
 
-	s_xTransforms = Vector_Alloc(sizeof(uint32_t));
-
 	for (uint32_t i = 0; i < 4; ++i) {
 		List_Push(s_xFreeIndices, &i);
 	}
@@ -121,8 +116,6 @@ int32_t main(void) {
 	Remove(pxEntity3);
 
 	Dump();
-
-	Vector_Free(s_xTransforms);
 
 	List_Free(s_xFreeIndices);
 	List_Free(s_xUsedIndices);

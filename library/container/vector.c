@@ -57,13 +57,11 @@ uint32_t Vector_Push(struct xVector_t* pxVector, void* pData) {
 	return nIndex;
 }
 
-uint32_t Vector_Pop(struct xVector_t* pxVector, void* pData) {
+void Vector_Pop(struct xVector_t* pxVector, void* pData) {
 	pxVector->nBufferIndex -= 1;
 	pxVector->nBufferOffset -= pxVector->nValueSize;
 
 	memcpy(pData, ((uint8_t*)pxVector->pBuffer) + pxVector->nBufferOffset, pxVector->nValueSize);
-
-	return pxVector->nBufferIndex;
 }
 
 void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
@@ -78,6 +76,11 @@ void Vector_Resize(struct xVector_t* pxVector, uint32_t nCount) {
 		pxVector->nBufferIndex = MIN(pxVector->nBufferIndex, nCount);
 		pxVector->nBufferOffset = MIN(pxVector->nBufferIndex, nCount) * pxVector->nValueSize;
 	}
+}
+
+void Vector_Clear(struct xVector_t* pxVector) {
+	pxVector->nBufferIndex = 0;
+	pxVector->nBufferOffset = 0;
 }
 
 void* Vector_At(struct xVector_t* pxVector, uint32_t nIndex) {

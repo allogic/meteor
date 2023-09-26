@@ -348,7 +348,7 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 	pxWorld->pxSharedVertexBuffer = VertexBuffer_AllocDevice(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
 	pxWorld->pxSharedIndexBuffer = IndexBuffer_AllocDevice(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
 
-	//World_AllocChunks(pxWorld, pxInstance, pxScene);
+	World_AllocChunks(pxWorld, pxInstance, pxScene);
 	World_AllocParticles(pxWorld, pxInstance, pxScene);
 
 	return pxWorld;
@@ -356,7 +356,7 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 
 void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	World_FreeParticles(pxWorld, pxInstance, pxScene);
-	//World_FreeChunks(pxWorld, pxInstance, pxScene);
+	World_FreeChunks(pxWorld, pxInstance, pxScene);
 
 	Buffer_Free(pxWorld->pxSharedIndexBuffer, pxInstance);
 	Buffer_Free(pxWorld->pxSharedVertexBuffer, pxInstance);
@@ -365,9 +365,9 @@ void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct
 }
 
 void World_Update(struct xWorld_t* pxWorld, struct xRenderer_t* pxRenderer, struct xTimer_t* pxTimer) {
-	//for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
-	//	xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apAffectors[i]);
-	//	
-	//	Vector3_Set(pxTransform->xPosition, sinf(Timer_GetTime(pxTimer)) * 2.0F, 0.0F, 0.0F);
-	//}
+	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
+		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apAffectors[i]);
+		
+		Vector3_Set(pxTransform->xPosition, sinf(Timer_GetTime(pxTimer)) * 2.0F, 0.0F, 0.0F);
+	}
 }

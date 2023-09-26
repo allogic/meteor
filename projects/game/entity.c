@@ -19,6 +19,7 @@
 	}
 
 struct xEntity_t {
+	void* pEntityIter;
 	char acName[ENTITY_NAME_LENGTH];
 	struct xEntity_t* pxParent;
 	struct xList_t* pxChildren;
@@ -77,6 +78,10 @@ void Entity_Free(struct xEntity_t* pxEntity) {
 	free(pxEntity);
 }
 
+void* Entity_GetEntityIter(struct xEntity_t* pxEntity) {
+	return pxEntity->pEntityIter;
+}
+
 const char* Entity_GetName(struct xEntity_t* pxEntity) {
 	return pxEntity->acName;
 }
@@ -115,6 +120,10 @@ xPixelSystem_t* Entity_GetPixelSystem(struct xEntity_t* pxEntity) {
 
 xPixelAffector_t* Entity_GetPixelAffector(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_PIXELAFFECTOR_IDX];
+}
+
+void Entity_SetEntityIter(struct xEntity_t* pxEntity, void* pEntityIter) {
+	pxEntity->pEntityIter = pEntityIter;
 }
 
 void Entity_SetName(struct xEntity_t* pxEntity, const char* pcName) {
