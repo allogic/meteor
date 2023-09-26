@@ -1,14 +1,15 @@
 #version 450 core
 
 struct Particle {
-	vec3 position;
-	vec3 velocity;
+	vec4 position;
+	vec4 velocity;
 };
 
 layout(push_constant) uniform Dimensions {
 	float width;
 	float height;
 	float depth;
+	float reserved;
 } dimensions;
 
 layout(set = 0, binding = 0) uniform TimeInfo {
@@ -16,37 +17,61 @@ layout(set = 0, binding = 0) uniform TimeInfo {
 	float deltaTime;
 } timeInfo;
 
-layout(set = 0, binding = 1, std430) readonly buffer InputParticle {
+layout(set = 0, binding = 1) uniform ParticleBehaviour {
+	float lifetime;
+	float reserved0;
+	float reserved1;
+	float reserved2;
+	vec4 velocity;
+	vec4 startColor;
+	vec4 endColor;
+	vec4 startScale;
+	vec4 endScale;
+} particleBehaviour;
+
+layout(set = 0, binding = 2) readonly buffer InputParticle {
 	Particle inputParticles[];
 };
 
-layout(set = 0, binding = 2, std430) buffer OutputParticle {
+layout(set = 0, binding = 3) buffer OutputParticle {
 	Particle outputParticles[];
 };
 
 layout (local_size_x = 32) in;
 
-void main() {
-	uint index = gl_GlobalInvocationID.x;
+void applyForces(in Particle inputParticle, inout Particle outputParticle) {
+	vec4 velocity = inputParticle.velocity + particleBehaviour.velocity;
 
-	Particle inputParticle = inputParticles[index];
+	outputParticle.position = inputParticle.position - velocity;
+}
 
-	outputParticles[index].position = inputParticle.position + inputParticle.velocity * 0.005;
-	outputParticles[index].velocity = inputParticle.velocity;
-
+void boundsCheck(inout Particle particle) {
 	float hsx = dimensions.width / 2;
 	float hsy = dimensions.height / 2;
 	float hsz = dimensions.depth / 2;
 
-	if ((outputParticles[index].position.x <= -hsx) || (outputParticles[index].position.x >= hsx)) {
-		outputParticles[index].velocity.x = -outputParticles[index].velocity.x;
+	if (hsx != 0.0) {
+		if ((particle.position.x <= -hsx) || (particle.position.x >= hsx)) {
+			particle.position = vec4(0);
+		}
 	}
 
-	if ((outputParticles[index].position.y <= -hsy) || (outputParticles[index].position.y >= hsy)) {
-		outputParticles[index].velocity.y = -outputParticles[index].velocity.y;
+	if (hsy != 0.0) {
+		if ((particle.position.y <= -hsy) || (particle.position.y >= hsy)) {
+			particle.position = vec4(0);
+		}
 	}
 
-	if ((outputParticles[index].position.z <= -hsz) || (outputParticles[index].position.z >= hsz)) {
-		outputParticles[index].velocity.z = -outputParticles[index].velocity.z;
+	if (hsz != 0.0) {
+		if ((particle.position.z <= -hsz) || (particle.position.z >= hsz)) {
+			particle.position = vec4(0);
+		}
 	}
+}
+
+void main() {
+	uint index = gl_GlobalInvocationID.x;
+
+	applyForces(inputParticles[index], outputParticles[index]);
+	boundsCheck(outputParticles[index]);
 }

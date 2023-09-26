@@ -1,15 +1,13 @@
 #version 450 core
 
-layout(location = 0) in Vertex {
-	vec4 position;
-	vec2 uv;
-	vec4 color;
-} inputVertex;
+layout(location = 0) in vec3 inputPosition;
+layout(location = 1) in vec2 inputUv;
+layout(location = 2) in vec4 inputColor;
 
-layout(set = 0, binding = 2) uniform sampler2D textureSampler;
+layout(set = 0, binding = 1) uniform sampler2D textureSampler;
 
 layout(location = 0) out vec4 outputColor;
 
 void main() {
-	outputColor = texture(textureSampler, inputVertex.uv);
+	outputColor = texture(textureSampler, inputUv);
 }

@@ -16,7 +16,7 @@ struct xGraphicPipeline_t {
 	VkPipeline xPipeline;
 };
 
-struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkPrimitiveTopology xPrimitiveTopology, VkVertexInputBindingDescription xVertexInputBindingDescription, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
+struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, VkShaderModule xVertModule, VkShaderModule xFragModule, VkPrimitiveTopology xPrimitiveTopology, VkVertexInputBindingDescription* pxVertexInputBindingDescriptions, uint32_t nVertexInputBindingDescriptionCount, VkVertexInputAttributeDescription* pxVertexInputAttributeDescriptions, uint32_t nVertexInputAttributeDescriptionCount, VkDescriptorSetLayout xDescriptorSetLayout, VkPushConstantRange* pxPushConstantRanges, uint32_t nPushConstantRangeCount) {
 	struct xGraphicPipeline_t* pxGraphicPipeline = (struct xGraphicPipeline_t*)calloc(1, sizeof(struct xGraphicPipeline_t));
 
 	VkPipelineShaderStageCreateInfo xVertShaderStageCreateInfo;
@@ -38,8 +38,8 @@ struct xGraphicPipeline_t* GraphicPipeline_Alloc(struct xInstance_t* pxInstance,
 	VkPipelineVertexInputStateCreateInfo xVertexInputCreateInfo;
 	memset(&xVertexInputCreateInfo, 0, sizeof(xVertexInputCreateInfo));
 	xVertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	xVertexInputCreateInfo.vertexBindingDescriptionCount = 1;
-	xVertexInputCreateInfo.pVertexBindingDescriptions = &xVertexInputBindingDescription;
+	xVertexInputCreateInfo.vertexBindingDescriptionCount = nVertexInputBindingDescriptionCount;
+	xVertexInputCreateInfo.pVertexBindingDescriptions = pxVertexInputBindingDescriptions;
 	xVertexInputCreateInfo.vertexAttributeDescriptionCount = nVertexInputAttributeDescriptionCount;
 	xVertexInputCreateInfo.pVertexAttributeDescriptions = pxVertexInputAttributeDescriptions;
 

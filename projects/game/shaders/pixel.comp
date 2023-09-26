@@ -1,7 +1,10 @@
 #version 450 core
 
 layout(push_constant) uniform Dimensions {
-	vec3 size;
+	float width;
+	float height;
+	float depth;
+	float reserved;
 } dimensions;
 
 layout(set = 0, binding = 0) uniform TimeInfo {

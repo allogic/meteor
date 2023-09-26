@@ -1,13 +1,11 @@
 #version 450 core
 
-struct Particle {
-	vec3 position;
-	vec3 velocity;
-};
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec2 vertexUv;
+layout(location = 2) in vec4 vertexColor;
 
-layout(location = 0) in vec3 inputPosition;
-layout(location = 1) in vec2 inputUv;
-layout(location = 2) in vec4 inputColor;
+layout(location = 3) in vec4 instancePosition;
+layout(location = 4) in vec4 instanceVelocity;
 
 layout(push_constant) uniform PerEntityData {
 	mat4 model;
@@ -18,27 +16,16 @@ layout(set = 0, binding = 0) uniform ViewProjection {
 	mat4 projection;
 } vp;
 
-layout(set = 0, binding = 1, std430) readonly buffer InputParticle {
-	Particle particles[];
-};
-
-layout(location = 0) out Vertex {
-	vec4 position;
-	vec2 uv;
-	vec4 color;
-} outputVertex;
+layout(location = 0) out vec3 outputPosition;
+layout(location = 1) out vec2 outputUv;
+layout(location = 2) out vec4 outputColor;
 
 void main() {
-	int index = gl_InstanceIndex;
+	vec4 position = vp.projection * vp.view * perEntityData.model * (instancePosition + vec4(vertexPosition, 1.0));
 
-	vec3 instancePosition = particles[index].position;
-
-	vec4 position = vp.projection * vp.view * perEntityData.model * vec4(inputPosition + instancePosition, 1.0);
-	vec4 color = inputColor;
-
-	outputVertex.position = position;
-	outputVertex.uv = inputUv;
-	outputVertex.color = color;
+	outputPosition = vec3(position);
+	outputUv = vertexUv;
+	outputColor = vertexColor;
 
 	gl_Position = position;
 }

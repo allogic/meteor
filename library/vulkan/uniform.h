@@ -3,30 +3,26 @@
 
 #include <math/matrix.h>
 
-#define TIME_INFO_STRUCT { \
-	float fTime; \
-	float fDeltaTime; \
-}
+typedef struct {
+	float fTime;
+	float fDeltaTime;
+} xTimeInfo_t;
 
-#define VIEW_PROJECTION_STRUCT { \
-	xMat4_t xView; \
-	xMat4_t xProjection; \
-}
+typedef struct {
+	xMat4_t xView;
+	xMat4_t xProjection;
+} xViewProjection_t;
 
-#define PER_ENTITY_DATA_STRUCT { \
-	xMat4_t xModel; \
-}
-
-#ifdef OS_WINDOWS
-#pragma pack(push, 1)
-	typedef struct TIME_INFO_STRUCT xTimeInfo_t;
-	typedef struct VIEW_PROJECTION_STRUCT xViewProjection_t;
-#pragma pack(pop)
-#endif
-
-#ifdef OS_LINUX
-	typedef struct __attribute__((packed)) TIME_INFO_STRUCT xTimeInfo_t;
-	typedef struct __attribute__((packed)) VIEW_PROJECTION_STRUCT xViewProjection_t;
-#endif
+typedef struct {
+	float fLifetime;
+	float fReserved0;
+	float fReserved1;
+	float fReserved2;
+	xVec4_t xVelocity;
+	xVec4_t xStartColor;
+	xVec4_t xEndColor;
+	xVec4_t xStartScale;
+	xVec4_t xEndScale;
+} xParticleBehaviour_t;
 
 #endif

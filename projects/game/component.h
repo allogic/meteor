@@ -61,6 +61,7 @@ typedef struct {
 	float fWidth;
 	float fHeight;
 	float fDepth;
+	struct xBuffer_t* pxParticleBehaviour;
 	struct xBuffer_t* pxParticleBuffer;
 	uint32_t nParticleCount;
 } xParticleSystem_t;

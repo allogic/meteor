@@ -30,6 +30,10 @@
 #include <game/component.h>
 #include <game/entity.h>
 #include <game/pushconstants.h>
+#include <game/storage.h>
+
+#define DEFAULT_VERTEX_BINDING_ID 0
+#define INSTANCE_VERTEX_BINDING_ID 1
 
 #define INITIAL_DEFAULT_GRAPHIC_POOL_COUNT 1024
 #define INITIAL_PARTICLE_GRAPHIC_POOL_COUNT 1024
@@ -118,16 +122,13 @@ static void Renderer_AllocDefaultGraphicDescriptorPool(struct xRenderer_t* pxRen
 	VK_CHECK(vkCreateDescriptorPool(Instance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xDefaultGraphicDescriptorPool));
 }
 static void Renderer_AllocParticleGraphicDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorPoolSize axDescriptorPoolSizes[3];
+	VkDescriptorPoolSize axDescriptorPoolSizes[2];
 
 	axDescriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	axDescriptorPoolSizes[0].descriptorCount = 1;
 
-	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	axDescriptorPoolSizes[1].descriptorCount = 1;
-
-	axDescriptorPoolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	axDescriptorPoolSizes[2].descriptorCount = 1;
 
 	VkDescriptorPoolCreateInfo xDescriptorPoolCreateInfo;
 	memset(&xDescriptorPoolCreateInfo, 0, sizeof(xDescriptorPoolCreateInfo));
@@ -139,13 +140,16 @@ static void Renderer_AllocParticleGraphicDescriptorPool(struct xRenderer_t* pxRe
 	VK_CHECK(vkCreateDescriptorPool(Instance_GetDevice(pxInstance), &xDescriptorPoolCreateInfo, 0, &pxRenderer->xParticleGraphicDescriptorPool));
 }
 static void Renderer_AllocParticleComputeDescriptorPool(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorPoolSize axDescriptorPoolSizes[2];
+	VkDescriptorPoolSize axDescriptorPoolSizes[3];
 
 	axDescriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	axDescriptorPoolSizes[0].descriptorCount = 1;
 
-	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	axDescriptorPoolSizes[1].descriptorCount = 2;
+	axDescriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	axDescriptorPoolSizes[1].descriptorCount = 1;
+
+	axDescriptorPoolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axDescriptorPoolSizes[2].descriptorCount = 2;
 
 	VkDescriptorPoolCreateInfo xDescriptorPoolCreateInfo;
 	memset(&xDescriptorPoolCreateInfo, 0, sizeof(xDescriptorPoolCreateInfo));
@@ -222,7 +226,7 @@ static void Renderer_AllocDefaultGraphicDescriptorSetLayout(struct xRenderer_t* 
 	VK_CHECK(vkCreateDescriptorSetLayout(Instance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xDefaultGraphicDescriptorSetLayout));
 }
 static void Renderer_AllocParticleGraphicDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[3];
+	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[2];
 
 	axDescriptorSetLayoutBindings[0].binding = 0;
 	axDescriptorSetLayoutBindings[0].descriptorCount = 1;
@@ -232,15 +236,9 @@ static void Renderer_AllocParticleGraphicDescriptorSetLayout(struct xRenderer_t*
 
 	axDescriptorSetLayoutBindings[1].binding = 1;
 	axDescriptorSetLayoutBindings[1].descriptorCount = 1;
-	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	axDescriptorSetLayoutBindings[1].pImmutableSamplers = 0;
-	axDescriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	axDescriptorSetLayoutBindings[2].binding = 2;
-	axDescriptorSetLayoutBindings[2].descriptorCount = 1;
-	axDescriptorSetLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	axDescriptorSetLayoutBindings[2].pImmutableSamplers = 0;
-	axDescriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	axDescriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutCreateInfo xDescriptorSetLayoutCreateInfo;
 	memset(&xDescriptorSetLayoutCreateInfo, 0, sizeof(xDescriptorSetLayoutCreateInfo));
@@ -251,7 +249,7 @@ static void Renderer_AllocParticleGraphicDescriptorSetLayout(struct xRenderer_t*
 	VK_CHECK(vkCreateDescriptorSetLayout(Instance_GetDevice(pxInstance), &xDescriptorSetLayoutCreateInfo, 0, &pxRenderer->xParticleGraphicDescriptorSetLayout));
 }
 static void Renderer_AllocParticleComputeDescriptorSetLayout(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance) {
-	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[3];
+	VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[4];
 
 	axDescriptorSetLayoutBindings[0].binding = 0;
 	axDescriptorSetLayoutBindings[0].descriptorCount = 1;
@@ -261,7 +259,7 @@ static void Renderer_AllocParticleComputeDescriptorSetLayout(struct xRenderer_t*
 
 	axDescriptorSetLayoutBindings[1].binding = 1;
 	axDescriptorSetLayoutBindings[1].descriptorCount = 1;
-	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axDescriptorSetLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	axDescriptorSetLayoutBindings[1].pImmutableSamplers = 0;
 	axDescriptorSetLayoutBindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
@@ -270,6 +268,12 @@ static void Renderer_AllocParticleComputeDescriptorSetLayout(struct xRenderer_t*
 	axDescriptorSetLayoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	axDescriptorSetLayoutBindings[2].pImmutableSamplers = 0;
 	axDescriptorSetLayoutBindings[2].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+	axDescriptorSetLayoutBindings[3].binding = 3;
+	axDescriptorSetLayoutBindings[3].descriptorCount = 1;
+	axDescriptorSetLayoutBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axDescriptorSetLayoutBindings[3].pImmutableSamplers = 0;
+	axDescriptorSetLayoutBindings[3].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
 	VkDescriptorSetLayoutCreateInfo xDescriptorSetLayoutCreateInfo;
 	memset(&xDescriptorSetLayoutCreateInfo, 0, sizeof(xDescriptorSetLayoutCreateInfo));
@@ -512,18 +516,12 @@ static void Renderer_UpdateDefaultGraphicDescriptorSet(struct xRenderer_t* pxRen
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
-static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint32_t nDescriptorSetIndex, xRenderable_t* pxRenderable, xParticleSystem_t* pxParticleSystem) {
+static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstance, uint32_t nDescriptorSetIndex, xRenderable_t* pxRenderable) {
 	VkDescriptorBufferInfo xViewProjectionDescriptorBufferInfo;
 	memset(&xViewProjectionDescriptorBufferInfo, 0, sizeof(xViewProjectionDescriptorBufferInfo));
 	xViewProjectionDescriptorBufferInfo.offset = 0;
 	xViewProjectionDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->pxViewProjectionBuffer);
 	xViewProjectionDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxViewProjectionBuffer);
-
-	VkDescriptorBufferInfo xParticleDescriptorBufferInfo;
-	memset(&xParticleDescriptorBufferInfo, 0, sizeof(xParticleDescriptorBufferInfo));
-	xParticleDescriptorBufferInfo.offset = 0;
-	xParticleDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxParticleSystem->pxParticleBuffer);
-	xParticleDescriptorBufferInfo.range = Buffer_GetSize(pxParticleSystem->pxParticleBuffer);
 
 	VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
 	memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
@@ -531,7 +529,7 @@ static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRe
 	xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxColorImage);
 	xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxColorImage);
 
-	VkWriteDescriptorSet axWriteDescriptorSets[3];
+	VkWriteDescriptorSet axWriteDescriptorSets[2];
 
 	axWriteDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	axWriteDescriptorSets[0].pNext = 0;
@@ -549,22 +547,11 @@ static void Renderer_UpdateParticleGraphicDescriptorSet(struct xRenderer_t* pxRe
 	axWriteDescriptorSets[1].dstSet = *(VkDescriptorSet*)Vector_At(pxRenderer->pxParticleGraphicDescriptorSets, nDescriptorSetIndex);
 	axWriteDescriptorSets[1].dstBinding = 1;
 	axWriteDescriptorSets[1].dstArrayElement = 0;
-	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	axWriteDescriptorSets[1].descriptorCount = 1;
-	axWriteDescriptorSets[1].pImageInfo = 0;
-	axWriteDescriptorSets[1].pBufferInfo = &xParticleDescriptorBufferInfo;
+	axWriteDescriptorSets[1].pImageInfo = &xCombinedImageSamplerDescriptorImageInfo;
+	axWriteDescriptorSets[1].pBufferInfo = 0;
 	axWriteDescriptorSets[1].pTexelBufferView = 0;
-
-	axWriteDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	axWriteDescriptorSets[2].pNext = 0;
-	axWriteDescriptorSets[2].dstSet = *(VkDescriptorSet*)Vector_At(pxRenderer->pxParticleGraphicDescriptorSets, nDescriptorSetIndex);
-	axWriteDescriptorSets[2].dstBinding = 2;
-	axWriteDescriptorSets[2].dstArrayElement = 0;
-	axWriteDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	axWriteDescriptorSets[2].descriptorCount = 1;
-	axWriteDescriptorSets[2].pImageInfo = &xCombinedImageSamplerDescriptorImageInfo;
-	axWriteDescriptorSets[2].pBufferInfo = 0;
-	axWriteDescriptorSets[2].pTexelBufferView = 0;
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
@@ -575,13 +562,19 @@ static void Renderer_UpdateParticleComputeDescriptorSet(struct xRenderer_t* pxRe
 	xTimeInfoDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->pxTimeInfoBuffer);
 	xTimeInfoDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxTimeInfoBuffer);
 
+	VkDescriptorBufferInfo xParticleBehaviourDescriptorBufferInfo;
+	memset(&xParticleBehaviourDescriptorBufferInfo, 0, sizeof(xParticleBehaviourDescriptorBufferInfo));
+	xParticleBehaviourDescriptorBufferInfo.offset = 0;
+	xParticleBehaviourDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxParticleSystem->pxParticleBehaviour);
+	xParticleBehaviourDescriptorBufferInfo.range = Buffer_GetSize(pxParticleSystem->pxParticleBehaviour);
+
 	VkDescriptorBufferInfo xParticleDescriptorBufferInfo;
 	memset(&xParticleDescriptorBufferInfo, 0, sizeof(xParticleDescriptorBufferInfo));
 	xParticleDescriptorBufferInfo.offset = 0;
 	xParticleDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxParticleSystem->pxParticleBuffer);
 	xParticleDescriptorBufferInfo.range = Buffer_GetSize(pxParticleSystem->pxParticleBuffer);
 
-	VkWriteDescriptorSet axWriteDescriptorSets[3];
+	VkWriteDescriptorSet axWriteDescriptorSets[4];
 
 	axWriteDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	axWriteDescriptorSets[0].pNext = 0;
@@ -599,10 +592,10 @@ static void Renderer_UpdateParticleComputeDescriptorSet(struct xRenderer_t* pxRe
 	axWriteDescriptorSets[1].dstSet = *(VkDescriptorSet*)Vector_At(pxRenderer->pxParticleComputeDescriptorSets, nDescriptorSetIndex);
 	axWriteDescriptorSets[1].dstBinding = 1;
 	axWriteDescriptorSets[1].dstArrayElement = 0;
-	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axWriteDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	axWriteDescriptorSets[1].descriptorCount = 1;
 	axWriteDescriptorSets[1].pImageInfo = 0;
-	axWriteDescriptorSets[1].pBufferInfo = &xParticleDescriptorBufferInfo;
+	axWriteDescriptorSets[1].pBufferInfo = &xParticleBehaviourDescriptorBufferInfo;
 	axWriteDescriptorSets[1].pTexelBufferView = 0;
 
 	axWriteDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -615,6 +608,17 @@ static void Renderer_UpdateParticleComputeDescriptorSet(struct xRenderer_t* pxRe
 	axWriteDescriptorSets[2].pImageInfo = 0;
 	axWriteDescriptorSets[2].pBufferInfo = &xParticleDescriptorBufferInfo;
 	axWriteDescriptorSets[2].pTexelBufferView = 0;
+
+	axWriteDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	axWriteDescriptorSets[3].pNext = 0;
+	axWriteDescriptorSets[3].dstSet = *(VkDescriptorSet*)Vector_At(pxRenderer->pxParticleComputeDescriptorSets, nDescriptorSetIndex);
+	axWriteDescriptorSets[3].dstBinding = 3;
+	axWriteDescriptorSets[3].dstArrayElement = 0;
+	axWriteDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	axWriteDescriptorSets[3].descriptorCount = 1;
+	axWriteDescriptorSets[3].pImageInfo = 0;
+	axWriteDescriptorSets[3].pBufferInfo = &xParticleDescriptorBufferInfo;
+	axWriteDescriptorSets[3].pTexelBufferView = 0;
 
 	vkUpdateDescriptorSets(Instance_GetDevice(pxInstance), ARRAY_LENGTH(axWriteDescriptorSets), axWriteDescriptorSets, 0, 0);
 }
@@ -859,28 +863,28 @@ static void Renderer_AllocDefaultGraphicPipeline(struct xRenderer_t* pxRenderer,
 	VkShaderModule xVertModule = Shader_Alloc(pxInstance, "shaders/default.vert.spv");
 	VkShaderModule xFragModule = Shader_Alloc(pxInstance, "shaders/default.frag.spv");
 
-	VkVertexInputBindingDescription xVertexInputBindingDescription;
-	memset(&xVertexInputBindingDescription, 0, sizeof(xVertexInputBindingDescription));
-	xVertexInputBindingDescription.binding = 0;
-	xVertexInputBindingDescription.stride = sizeof(xDefaultVertex_t);
-	xVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	VkVertexInputBindingDescription axVertexInputBindingDescriptions[1];
+
+	axVertexInputBindingDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
+	axVertexInputBindingDescriptions[0].stride = sizeof(xDefaultVertex_t);
+	axVertexInputBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[3];
 
-	axVertexInputAttributeDescriptions[0].binding = 0;
+	axVertexInputAttributeDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[0].location = 0;
 	axVertexInputAttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	axVertexInputAttributeDescriptions[0].offset = 0;
 
-	axVertexInputAttributeDescriptions[1].binding = 0;
+	axVertexInputAttributeDescriptions[1].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[1].location = 1;
 	axVertexInputAttributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-	axVertexInputAttributeDescriptions[1].offset = sizeof(float) * 3;
+	axVertexInputAttributeDescriptions[1].offset = 3 * sizeof(float);
 
-	axVertexInputAttributeDescriptions[2].binding = 0;
+	axVertexInputAttributeDescriptions[2].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[2].location = 2;
 	axVertexInputAttributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	axVertexInputAttributeDescriptions[2].offset = sizeof(float) * 5;
+	axVertexInputAttributeDescriptions[2].offset = 5 * sizeof(float);
 
 	pxRenderer->pxDefaultGraphicPipeline = GraphicPipeline_Alloc(
 		pxInstance,
@@ -888,7 +892,8 @@ static void Renderer_AllocDefaultGraphicPipeline(struct xRenderer_t* pxRenderer,
 		xVertModule,
 		xFragModule,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-		xVertexInputBindingDescription,
+		axVertexInputBindingDescriptions,
+		ARRAY_LENGTH(axVertexInputBindingDescriptions),
 		axVertexInputAttributeDescriptions,
 		ARRAY_LENGTH(axVertexInputAttributeDescriptions),
 		pxRenderer->xDefaultGraphicDescriptorSetLayout,
@@ -902,28 +907,42 @@ static void Renderer_AllocParticleGraphicPipeline(struct xRenderer_t* pxRenderer
 	VkShaderModule xVertModule = Shader_Alloc(pxInstance, "shaders/particle.vert.spv");
 	VkShaderModule xFragModule = Shader_Alloc(pxInstance, "shaders/particle.frag.spv");
 
-	VkVertexInputBindingDescription xVertexInputBindingDescription;
-	memset(&xVertexInputBindingDescription, 0, sizeof(xVertexInputBindingDescription));
-	xVertexInputBindingDescription.binding = 0;
-	xVertexInputBindingDescription.stride = sizeof(xDefaultVertex_t);
-	xVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	VkVertexInputBindingDescription axVertexInputBindingDescriptions[2];
 
-	VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[3];
+	axVertexInputBindingDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
+	axVertexInputBindingDescriptions[0].stride = sizeof(xDefaultVertex_t);
+	axVertexInputBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	axVertexInputAttributeDescriptions[0].binding = 0;
+	axVertexInputBindingDescriptions[1].binding = INSTANCE_VERTEX_BINDING_ID;
+	axVertexInputBindingDescriptions[1].stride = sizeof(xParticle_t);
+	axVertexInputBindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+	VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[5];
+
+	axVertexInputAttributeDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[0].location = 0;
 	axVertexInputAttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	axVertexInputAttributeDescriptions[0].offset = 0;
 
-	axVertexInputAttributeDescriptions[1].binding = 0;
+	axVertexInputAttributeDescriptions[1].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[1].location = 1;
 	axVertexInputAttributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-	axVertexInputAttributeDescriptions[1].offset = sizeof(float) * 3;
+	axVertexInputAttributeDescriptions[1].offset = 3 * sizeof(float);
 
-	axVertexInputAttributeDescriptions[2].binding = 0;
+	axVertexInputAttributeDescriptions[2].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[2].location = 2;
 	axVertexInputAttributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	axVertexInputAttributeDescriptions[2].offset = sizeof(float) * 5;
+	axVertexInputAttributeDescriptions[2].offset = 5 * sizeof(float);
+
+	axVertexInputAttributeDescriptions[3].binding = INSTANCE_VERTEX_BINDING_ID;
+	axVertexInputAttributeDescriptions[3].location = 3;
+	axVertexInputAttributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	axVertexInputAttributeDescriptions[3].offset = 0;
+
+	axVertexInputAttributeDescriptions[4].binding = INSTANCE_VERTEX_BINDING_ID;
+	axVertexInputAttributeDescriptions[4].location = 4;
+	axVertexInputAttributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	axVertexInputAttributeDescriptions[4].offset = 4 * sizeof(float);
 
 	pxRenderer->pxParticleGraphicPipeline = GraphicPipeline_Alloc(
 		pxInstance,
@@ -931,7 +950,8 @@ static void Renderer_AllocParticleGraphicPipeline(struct xRenderer_t* pxRenderer
 		xVertModule,
 		xFragModule,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-		xVertexInputBindingDescription,
+		axVertexInputBindingDescriptions,
+		ARRAY_LENGTH(axVertexInputBindingDescriptions),
 		axVertexInputAttributeDescriptions,
 		ARRAY_LENGTH(axVertexInputAttributeDescriptions),
 		pxRenderer->xParticleGraphicDescriptorSetLayout,
@@ -969,23 +989,23 @@ static void Renderer_AllocDebugGraphicPipeline(struct xRenderer_t* pxRenderer, s
 	VkShaderModule xVertModule = Shader_Alloc(pxInstance, "shaders/debug.vert.spv");
 	VkShaderModule xFragModule = Shader_Alloc(pxInstance, "shaders/debug.frag.spv");
 
-	VkVertexInputBindingDescription xVertexInputBindingDescription;
-	memset(&xVertexInputBindingDescription, 0, sizeof(xVertexInputBindingDescription));
-	xVertexInputBindingDescription.binding = 0;
-	xVertexInputBindingDescription.stride = sizeof(xDebugVertex_t);
-	xVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	VkVertexInputBindingDescription axVertexInputBindingDescriptions[1];
+
+	axVertexInputBindingDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
+	axVertexInputBindingDescriptions[0].stride = sizeof(xDebugVertex_t);
+	axVertexInputBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[2];
 
-	axVertexInputAttributeDescriptions[0].binding = 0;
+	axVertexInputAttributeDescriptions[0].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[0].location = 0;
 	axVertexInputAttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	axVertexInputAttributeDescriptions[0].offset = 0;
 
-	axVertexInputAttributeDescriptions[1].binding = 0;
+	axVertexInputAttributeDescriptions[1].binding = DEFAULT_VERTEX_BINDING_ID;
 	axVertexInputAttributeDescriptions[1].location = 1;
 	axVertexInputAttributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	axVertexInputAttributeDescriptions[1].offset = sizeof(float) * 3;
+	axVertexInputAttributeDescriptions[1].offset = 3 * sizeof(float);
 
 	pxRenderer->pxDebugGraphicPipeline = GraphicPipeline_Alloc(
 		pxInstance,
@@ -993,7 +1013,8 @@ static void Renderer_AllocDebugGraphicPipeline(struct xRenderer_t* pxRenderer, s
 		xVertModule,
 		xFragModule,
 		VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
-		xVertexInputBindingDescription,
+		axVertexInputBindingDescriptions,
+		ARRAY_LENGTH(axVertexInputBindingDescriptions),
 		axVertexInputAttributeDescriptions,
 		ARRAY_LENGTH(axVertexInputAttributeDescriptions),
 		pxRenderer->xDebugGraphicDescriptorSetLayout,
@@ -1098,11 +1119,12 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 			xTransform_t* pxTransform = Entity_GetTransform(pxEntity);
 			xRenderable_t* pxRenderable = Entity_GetRenderable(pxEntity);
 
-			VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
-			uint64_t awOffsets[] = { 0 };
+			VkBuffer axDefaultVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
+
+			uint64_t awDefaultOffsets[] = { 0 };
 
 			vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDefaultGraphicPipeline), 0, 1, Vector_At(pxRenderer->pxDefaultGraphicDescriptorSets, i), 0, 0);
-			vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
+			vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, DEFAULT_VERTEX_BINDING_ID, 1, axDefaultVertexBuffers, awDefaultOffsets);
 			vkCmdBindIndexBuffer(pxRenderer->xGraphicCommandBuffer, Buffer_GetBuffer(pxRenderable->pxIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
 			static xPerEntityData_t xPerEntityData;
@@ -1138,17 +1160,21 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 			if (pxParticleSystem->bDebug) {
 				xVec3_t xPosition = { pxTransform->xPosition[0], pxTransform->xPosition[1], pxTransform->xPosition[2] };
 				xVec3_t xSize = { pxParticleSystem->fWidth, pxParticleSystem->fHeight, pxParticleSystem->fDepth };
-				xVec4_t xColor = { 1.0F, 1.0F, 0.0F, 1.0F };
+				xVec4_t xColor = { 1.0F, 0.0F, 0.0F, 1.0F };
 				xVec4_t xRotation = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 				Renderer_DrawDebugBox(pxRenderer, xPosition, xSize, xColor, xRotation);
 			}
 
-			VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
-			uint64_t awOffsets[] = { 0 };
+			VkBuffer axDefaultVertexBuffers[] = { Buffer_GetBuffer(pxRenderable->pxVertexBuffer) };
+			VkBuffer axInstanceVertexBuffers[] = { Buffer_GetBuffer(pxParticleSystem->pxParticleBuffer) };
+
+			uint64_t awDefaultOffsets[] = { 0 };
+			uint64_t awInstanceOffsets[] = { 0 };
 
 			vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxParticleGraphicPipeline), 0, 1, Vector_At(pxRenderer->pxParticleGraphicDescriptorSets, i), 0, 0);
-			vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
+			vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, DEFAULT_VERTEX_BINDING_ID, 1, axDefaultVertexBuffers, awDefaultOffsets);
+			vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, INSTANCE_VERTEX_BINDING_ID, 1, axInstanceVertexBuffers, awInstanceOffsets);
 			vkCmdBindIndexBuffer(pxRenderer->xGraphicCommandBuffer, Buffer_GetBuffer(pxRenderable->pxIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
 			static xPerEntityData_t xPerEntityData;
@@ -1174,11 +1200,12 @@ static void Renderer_BuildGraphicCommandBuffer(struct xRenderer_t* pxRenderer, s
 		vkCmdSetViewport(pxRenderer->xGraphicCommandBuffer, 0, 1, &xViewport);
 		vkCmdSetScissor(pxRenderer->xGraphicCommandBuffer, 0, 1, &xScissor);
 
-		VkBuffer axVertexBuffers[] = { Buffer_GetBuffer(pxRenderer->pxDebugVertexBuffer) };
-		uint64_t awOffsets[] = { 0 };
+		VkBuffer axDefaultVertexBuffers[] = { Buffer_GetBuffer(pxRenderer->pxDebugVertexBuffer) };
+
+		uint64_t awDefaultOffsets[] = { 0 };
 
 		vkCmdBindDescriptorSets(pxRenderer->xGraphicCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GraphicPipeline_GetPipelineLayout(pxRenderer->pxDebugGraphicPipeline), 0, 1, &pxRenderer->xDebugGraphicDescriptorSet, 0, 0);
-		vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, 0, 1, axVertexBuffers, awOffsets);
+		vkCmdBindVertexBuffers(pxRenderer->xGraphicCommandBuffer, DEFAULT_VERTEX_BINDING_ID, 1, axDefaultVertexBuffers, awDefaultOffsets);
 		vkCmdBindIndexBuffer(pxRenderer->xGraphicCommandBuffer, Buffer_GetBuffer(pxRenderer->pxDebugIndexBuffer), 0, VK_INDEX_TYPE_UINT32);
 
 		vkCmdDrawIndexed(pxRenderer->xGraphicCommandBuffer, pxRenderer->nDebugIndexCount, 1, 0, 0, 0);
@@ -1211,8 +1238,9 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 
 			xDimensions_t xDimensions;
 			memset(&xDimensions, 0, sizeof(xDimensions));
-
-			Vector3_Set(xDimensions.xSize, pxParticleSystem->fWidth, pxParticleSystem->fHeight, pxParticleSystem->fDepth);
+			xDimensions.fWidth = pxParticleSystem->fWidth;
+			xDimensions.fHeight = pxParticleSystem->fHeight;
+			xDimensions.fDepth = pxParticleSystem->fDepth;
 
 			vkCmdPushConstants(pxRenderer->xComputeCommandBuffer, ComputePipeline_GetPipelineLayout(pxRenderer->pxParticleComputePipeline), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(xDimensions), &xDimensions);
 
@@ -1232,8 +1260,8 @@ static void Renderer_BuildComputeCommandBuffer(struct xRenderer_t* pxRenderer, s
 
 			xDimensions_t xDimensions;
 			memset(&xDimensions, 0, sizeof(xDimensions));
-
-			Vector3_Set(xDimensions.xSize, pxPixelSystem->nWidth, pxPixelSystem->nHeight, 0.0F);
+			xDimensions.fWidth = pxPixelSystem->nWidth;
+			xDimensions.fHeight = pxPixelSystem->nHeight;
 
 			vkCmdPushConstants(pxRenderer->xComputeCommandBuffer, ComputePipeline_GetPipelineLayout(pxRenderer->pxPixelComputePipeline), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(xDimensions), &xDimensions);
 
@@ -1631,9 +1659,8 @@ void Renderer_CommitEntities(struct xRenderer_t* pxRenderer, struct xInstance_t*
 
 			if (Entity_HasComponents(pxEntity, COMPONENT_TRANSFORM_BIT | COMPONENT_RENDERABLE_BIT | COMPONENT_PARTICLESYSTEM_BIT)) {
 				xRenderable_t* pxRenderable = Entity_GetRenderable(pxEntity);
-				xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxEntity);
 
-				Renderer_UpdateParticleGraphicDescriptorSet(pxRenderer, pxInstance, nParticleGraphicDescriptorIndex, pxRenderable, pxParticleSystem);
+				Renderer_UpdateParticleGraphicDescriptorSet(pxRenderer, pxInstance, nParticleGraphicDescriptorIndex, pxRenderable);
 
 				Vector_Push(pxRenderer->pxParticleGraphicEntities, &pxEntity);
 
