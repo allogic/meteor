@@ -1481,9 +1481,6 @@ void Renderer_Draw(struct xRenderer_t* pxRenderer, struct xInstance_t* pxInstanc
 		VK_CHECK(vkQueuePresentKHR(Instance_GetPresentQueue(pxInstance), &xPresentInfo));
 	}
 
-	memset(pxRenderer->pxDebugVertices, 0, pxRenderer->nDebugVertexCount * sizeof(xDebugVertex_t));
-	memset(pxRenderer->pnDebugIndices, 0, pxRenderer->nDebugIndexCount * sizeof(uint32_t));
-
 	pxRenderer->nDebugVertexCount = 0;
 	pxRenderer->nDebugIndexCount = 0;
 }
