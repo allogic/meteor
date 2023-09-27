@@ -98,7 +98,6 @@ void List_Pop(struct xList_t* pxList, void* pData) {
 }
 
 void* List_Remove(struct xList_t* pxList, void* pIter) {
-	printf("Removing:%p\n", pIter);
 	if (pxList->pxHead == pIter) {
 		struct xNode_t* pxNext = pxList->pxHead->pxNext;
 
@@ -108,8 +107,6 @@ void* List_Remove(struct xList_t* pxList, void* pIter) {
 		pxList->pxHead = pxNext;
 
 		pxList->nNodeCount -= 1;
-
-		printf("Found head\n");
 
 		return pxList->pxHead;
 	} else if (pxList->pxTail == pIter) {
@@ -124,8 +121,6 @@ void* List_Remove(struct xList_t* pxList, void* pIter) {
 
 		pxList->nNodeCount -= 1;
 
-		printf("Found tail\n");
-
 		return pxList->pxTail;
 	} else {
 		pxList->pxCurr = pxList->pxHead->pxNext;
@@ -133,9 +128,10 @@ void* List_Remove(struct xList_t* pxList, void* pIter) {
 		struct xNode_t* pxNext;
 		while (pxList->pxCurr) {
 			pxNext = pxList->pxCurr->pxNext;
-			printf("Curr:%p Next:%p\n", pxList->pxCurr, pxNext);
+
 			if (pxList->pxCurr == pIter) {
-				printf("Found middle\n");
+
+				pxNext->pxPrev = pxList->pxCurr->pxPrev;
 				pxList->pxCurr->pxPrev->pxNext = pxNext;
 
 				free(pxList->pxCurr->pBuffer);
@@ -149,8 +145,6 @@ void* List_Remove(struct xList_t* pxList, void* pIter) {
 			pxList->pxCurr = pxNext;
 		}
 	}
-
-	printf("Not found %p\n", pIter);
 
 	return pxList->pxTail;
 }
