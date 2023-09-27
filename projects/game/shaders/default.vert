@@ -1,31 +1,28 @@
 #version 450 core
 
-layout(location = 0) in vec3 inputPosition;
-layout(location = 1) in vec2 inputUv;
-layout(location = 2) in vec4 inputColor;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec2 vertexUv;
+layout(location = 2) in vec4 vertexColor;
 
 layout(push_constant) uniform PerEntityData {
 	mat4 model;
 } perEntityData;
 
-layout(set = 0, binding = 0) uniform ViewProjection {
+layout(binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
 } vp;
 
-layout(location = 0) out Vertex {
-	vec4 position;
-	vec2 uv;
-	vec4 color;
-} outputVertex;
+layout(location = 0) out vec3 outputPosition;
+layout(location = 1) out vec2 outputUv;
+layout(location = 2) out vec4 outputColor;
 
 void main() {
-	vec4 position = vp.projection * vp.view * perEntityData.model * vec4(inputPosition, 1.0);
-	vec4 color = inputColor;
+	vec4 position = vp.projection * vp.view * perEntityData.model * vec4(vertexPosition, 1.0);
 
-	outputVertex.position = position;
-	outputVertex.uv = inputUv;
-	outputVertex.color = color;
+	outputPosition = vec3(position);
+	outputUv = vertexUv;
+	outputColor = vertexColor;
 
 	gl_Position = position;
 }

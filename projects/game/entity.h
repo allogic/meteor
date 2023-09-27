@@ -6,10 +6,11 @@
 
 #include <game/component.h>
 
+struct xInstance_t;
 struct xEntity_t;
 
 struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent);
-void Entity_Free(struct xEntity_t* pxEntity);
+void Entity_Free(struct xEntity_t* pxEntity, struct xInstance_t* pxInstance);
 
 void* Entity_GetEntityIter(struct xEntity_t* pxEntity);
 const char* Entity_GetName(struct xEntity_t* pxEntity);

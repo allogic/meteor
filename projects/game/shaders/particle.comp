@@ -12,12 +12,12 @@ layout(push_constant) uniform Dimensions {
 	float reserved;
 } dimensions;
 
-layout(set = 0, binding = 0) uniform TimeInfo {
+layout(binding = 0) uniform TimeInfo {
 	float time;
 	float deltaTime;
 } timeInfo;
 
-layout(set = 0, binding = 1) uniform ParticleBehaviour {
+layout(binding = 1) uniform ParticleBehaviour {
 	float lifetime;
 	float reserved0;
 	float reserved1;
@@ -29,11 +29,11 @@ layout(set = 0, binding = 1) uniform ParticleBehaviour {
 	vec4 endScale;
 } particleBehaviour;
 
-layout(set = 0, binding = 2) readonly buffer InputParticle {
+layout(binding = 2) readonly buffer InputParticle {
 	Particle inputParticles[];
 };
 
-layout(set = 0, binding = 3) buffer OutputParticle {
+layout(binding = 3) buffer OutputParticle {
 	Particle outputParticles[];
 };
 

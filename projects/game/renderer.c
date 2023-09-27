@@ -565,8 +565,8 @@ static void Renderer_UpdateParticleComputeDescriptorSet(struct xRenderer_t* pxRe
 	VkDescriptorBufferInfo xParticleBehaviourDescriptorBufferInfo;
 	memset(&xParticleBehaviourDescriptorBufferInfo, 0, sizeof(xParticleBehaviourDescriptorBufferInfo));
 	xParticleBehaviourDescriptorBufferInfo.offset = 0;
-	xParticleBehaviourDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxParticleSystem->pxParticleBehaviour);
-	xParticleBehaviourDescriptorBufferInfo.range = Buffer_GetSize(pxParticleSystem->pxParticleBehaviour);
+	xParticleBehaviourDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxParticleSystem->pxBehaviourBuffer);
+	xParticleBehaviourDescriptorBufferInfo.range = Buffer_GetSize(pxParticleSystem->pxBehaviourBuffer);
 
 	VkDescriptorBufferInfo xParticleDescriptorBufferInfo;
 	memset(&xParticleDescriptorBufferInfo, 0, sizeof(xParticleDescriptorBufferInfo));

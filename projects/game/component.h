@@ -50,10 +50,13 @@ typedef struct {
 } xRigidBody_t;
 
 typedef struct {
+	bool bSharedVertexBuffer;
+	bool bSharedIndexBuffer;
+	bool bSharedColorImage;
 	struct xBuffer_t* pxVertexBuffer;
 	struct xBuffer_t* pxIndexBuffer;
-	uint32_t nIndexCount;
 	struct xImage_t* pxColorImage;
+	uint32_t nIndexCount;
 } xRenderable_t;
 
 typedef struct {
@@ -61,7 +64,9 @@ typedef struct {
 	float fWidth;
 	float fHeight;
 	float fDepth;
-	struct xBuffer_t* pxParticleBehaviour;
+	bool bSharedBehaviourBuffer;
+	bool bSharedParticleBuffer;
+	struct xBuffer_t* pxBehaviourBuffer;
 	struct xBuffer_t* pxParticleBuffer;
 	uint32_t nParticleCount;
 } xParticleSystem_t;
@@ -73,6 +78,16 @@ typedef struct {
 typedef struct {
 	uint32_t nWidth;
 	uint32_t nHeight;
+	bool bSharedColorImage;
+	bool bSharedColorImageN;
+	bool bSharedColorImageS;
+	bool bSharedColorImageW;
+	bool bSharedColorImageE;
+	bool bSharedStateImage;
+	bool bSharedStateImageN;
+	bool bSharedStateImageS;
+	bool bSharedStateImageW;
+	bool bSharedStateImageE;
 	struct xImage_t* pxColorImage;
 	struct xImage_t* pxColorImageN;
 	struct xImage_t* pxColorImageS;

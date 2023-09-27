@@ -7,25 +7,25 @@ layout(push_constant) uniform Dimensions {
 	float reserved;
 } dimensions;
 
-layout(set = 0, binding = 0) uniform TimeInfo {
+layout(binding = 0) uniform TimeInfo {
 	float time;
 	float deltaTime;
 } timeInfo;
 
-layout(set = 0, binding = 1, rgba8) coherent readonly uniform image2D inputColorImageN;
-layout(set = 0, binding = 2, rgba8) coherent readonly uniform image2D inputColorImageS;
-layout(set = 0, binding = 3, rgba8) coherent readonly uniform image2D inputColorImageW;
-layout(set = 0, binding = 4, rgba8) coherent readonly uniform image2D inputColorImageE;
-layout(set = 0, binding = 5, rgba8) coherent readonly uniform image2D inputColorImage;
+layout(binding = 1, rgba8) coherent readonly uniform image2D inputColorImageN;
+layout(binding = 2, rgba8) coherent readonly uniform image2D inputColorImageS;
+layout(binding = 3, rgba8) coherent readonly uniform image2D inputColorImageW;
+layout(binding = 4, rgba8) coherent readonly uniform image2D inputColorImageE;
+layout(binding = 5, rgba8) coherent readonly uniform image2D inputColorImage;
 
-layout(set = 0, binding = 6, rgba8) coherent readonly uniform image2D inputStateImageN;
-layout(set = 0, binding = 7, rgba8) coherent readonly uniform image2D inputStateImageS;
-layout(set = 0, binding = 8, rgba8) coherent readonly uniform image2D inputStateImageW;
-layout(set = 0, binding = 9, rgba8) coherent readonly uniform image2D inputStateImageE;
-layout(set = 0, binding = 10, rgba8) coherent readonly uniform image2D inputStateImage;
+layout(binding = 6, rgba8) coherent readonly uniform image2D inputStateImageN;
+layout(binding = 7, rgba8) coherent readonly uniform image2D inputStateImageS;
+layout(binding = 8, rgba8) coherent readonly uniform image2D inputStateImageW;
+layout(binding = 9, rgba8) coherent readonly uniform image2D inputStateImageE;
+layout(binding = 10, rgba8) coherent readonly uniform image2D inputStateImage;
 
-layout(set = 0, binding = 11, rgba8) coherent uniform image2D outputColorImage;
-layout(set = 0, binding = 12, rgba8) coherent uniform image2D outputStateImage;
+layout(binding = 11, rgba8) coherent uniform image2D outputColorImage;
+layout(binding = 12, rgba8) coherent uniform image2D outputStateImage;
 
 layout (local_size_x = 32, local_size_y = 32) in;
 

@@ -58,14 +58,12 @@ struct xEntity_t* Scene_AllocEntity(struct xScene_t* pxScene, const char* pcName
 	return pxEntity;
 }
 
-void Scene_FreeEntity(struct xScene_t* pxScene, struct xEntity_t* pxEntity) {
+void Scene_FreeEntity(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct xEntity_t* pxEntity) {
 	void* pEntityIter = Entity_GetEntityIter(pxEntity);
-
-	printf("Iter:%p\n", pEntityIter);
 
 	List_Remove(pxScene->pxEntities, pEntityIter);
 
-	Entity_Free(pxEntity);
+	Entity_Free(pxEntity, pxInstance);
 }
 
 void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {

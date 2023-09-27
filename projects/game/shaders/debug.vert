@@ -1,24 +1,21 @@
 #version 450 core
 
-layout(location = 0) in vec3 inputPosition;
-layout(location = 1) in vec4 inputColor;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec4 vertexColor;
 
-layout(set = 0, binding = 0) uniform ViewProjection {
+layout(binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
 } vp;
 
-layout(location = 0) out Vertex {
-	vec4 position;
-	vec4 color;
-} outputVertex;
+layout(location = 0) out vec3 outputPosition;
+layout(location = 1) out vec4 outputColor;
 
 void main() {
-	vec4 position = vp.projection * vp.view * vec4(inputPosition, 1.0);
-	vec4 color = inputColor;
+	vec4 position = vp.projection * vp.view * vec4(vertexPosition, 1.0);
 
-	outputVertex.position = position;
-	outputVertex.color = color;
+	outputPosition = vec3(position);
+	outputColor = vertexColor;
 
 	gl_Position = position;
 }

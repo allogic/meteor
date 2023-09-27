@@ -11,7 +11,7 @@ layout(push_constant) uniform PerEntityData {
 	mat4 model;
 } perEntityData;
 
-layout(set = 0, binding = 0) uniform ViewProjection {
+layout(binding = 0) uniform ViewProjection {
 	mat4 view;
 	mat4 projection;
 } vp;
