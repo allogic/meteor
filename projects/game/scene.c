@@ -91,9 +91,10 @@ void Scene_Draw(struct xScene_t* pxScene, struct xInstance_t* pxInstance, struct
 	pxTimeInfo->fTime = Timer_GetTime(pxTimer);
 	pxTimeInfo->fDeltaTime = Timer_GetDeltaTime(pxTimer);
 
-	Orthographic_Projection(-20.0F, 20.0F, -20.0F, 20.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
+	Orthographic_Projection(-10.0F, 10.0F, -10.0F, 10.0F, 0.001F, 100.0F, pxViewProjection->xProjection);
 
-	xVec3_t xEye = { sinf(Timer_GetTime(pxTimer) * 0.4F) * 30.0F, cosf(Timer_GetTime(pxTimer) * 0.2F) * 10.0F + 25.0F, -30.0F };
+	//xVec3_t xEye = { sinf(Timer_GetTime(pxTimer) * 0.4F) * 30.0F, cosf(Timer_GetTime(pxTimer) * 0.2F) * 10.0F + 25.0F, -30.0F };
+	xVec3_t xEye = { 0.0F, 0.0F, -10.0F };
 	xVec3_t xCenter = { 0.0F, 0.0F, 0.0F };
 	xVec3_t xUp = { 0.0F, 1.0F, 0.0F };
 	View_LookAt(xEye, xCenter, xUp, pxViewProjection->xView);

@@ -7,6 +7,7 @@ include("../../cmake/vulkan.cmake")
 
 list(APPEND SOURCES "${PROJECT_DIR}/assets.c")
 list(APPEND SOURCES "${PROJECT_DIR}/entity.c")
+list(APPEND SOURCES "${PROJECT_DIR}/interface.c")
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
 list(APPEND SOURCES "${PROJECT_DIR}/renderer.c")
 list(APPEND SOURCES "${PROJECT_DIR}/scene.c")

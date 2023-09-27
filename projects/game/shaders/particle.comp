@@ -42,7 +42,7 @@ layout (local_size_x = 32) in;
 void applyForces(in Particle inputParticle, inout Particle outputParticle) {
 	vec4 velocity = inputParticle.velocity + particleBehaviour.velocity;
 
-	outputParticle.position = inputParticle.position - velocity;
+	outputParticle.position = inputParticle.position + velocity;
 }
 
 void boundsCheck(inout Particle particle) {

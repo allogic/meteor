@@ -26,18 +26,22 @@
 #include <game/world.h>
 #include <game/renderer.h>
 
+/*
 #define NUM_CHUNKS_X 5
 #define NUM_CHUNKS_Y 5
 
 #define CHUNK_WIDTH 5
 #define CHUNK_HEIGHT 5
+*/
 
 struct xWorld_t {
 	struct xBuffer_t* pxSharedVertexBuffer;
 	struct xBuffer_t* pxSharedIndexBuffer;
-	struct xEntity_t* apChunks[NUM_CHUNKS_X][NUM_CHUNKS_Y];
-	struct xEntity_t* apParticles[1];
-	struct xEntity_t* apAffectors[1];
+	struct xEntity_t* apTrees[4];
+
+	//struct xEntity_t* apChunks[NUM_CHUNKS_X][NUM_CHUNKS_Y];
+	//struct xEntity_t* apParticles[1];
+	//struct xEntity_t* apAffectors[1];
 };
 
 static xDefaultVertex_t s_axVertices[4] = {
@@ -51,6 +55,7 @@ static uint32_t s_anIndices[6] = {
 	0, 1, 2, 2, 3, 0,
 };
 
+/*
 static void World_AllocChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
 		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
@@ -174,7 +179,7 @@ static void World_AllocParticles(struct xWorld_t* pxWorld, struct xInstance_t* p
 
 		Vector4_Set(xParticle.xVelocity,
 			XorShift128_Float(-0.0015F, 0.0015F),
-			XorShift128_Float(0.0F, 0.005F),
+			XorShift128_Float(0.0F, -0.005F),
 			0.0F,
 			0.0F);
 
@@ -215,6 +220,82 @@ static void World_FreeParticles(struct xWorld_t* pxWorld, struct xInstance_t* px
 		Scene_FreeEntity(pxScene, pxInstance, pxWorld->apParticles[i]);
 	}
 }
+*/
+
+static void World_AllocTrees(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
+	pxWorld->apTrees[0] = Scene_AllocEntity(pxScene, "Tree A", 0);
+	pxWorld->apTrees[1] = Scene_AllocEntity(pxScene, "Tree B", 0);
+	pxWorld->apTrees[2] = Scene_AllocEntity(pxScene, "Tree C", 0);
+	pxWorld->apTrees[3] = Scene_AllocEntity(pxScene, "Tree D", 0);
+
+	Entity_SetTransform(pxWorld->apTrees[0], 0);
+	Entity_SetTransform(pxWorld->apTrees[1], 0);
+	Entity_SetTransform(pxWorld->apTrees[2], 0);
+	Entity_SetTransform(pxWorld->apTrees[3], 0);
+
+	Entity_SetRenderable(pxWorld->apTrees[0], 0);
+	Entity_SetRenderable(pxWorld->apTrees[1], 0);
+	Entity_SetRenderable(pxWorld->apTrees[2], 0);
+	Entity_SetRenderable(pxWorld->apTrees[3], 0);
+
+	xTransform_t* pxTransformA = Entity_GetTransform(pxWorld->apTrees[0]);
+	xTransform_t* pxTransformB = Entity_GetTransform(pxWorld->apTrees[1]);
+	xTransform_t* pxTransformC = Entity_GetTransform(pxWorld->apTrees[2]);
+	xTransform_t* pxTransformD = Entity_GetTransform(pxWorld->apTrees[3]);
+
+	xRenderable_t* pxRenderableA = Entity_GetRenderable(pxWorld->apTrees[0]);
+	xRenderable_t* pxRenderableB = Entity_GetRenderable(pxWorld->apTrees[1]);
+	xRenderable_t* pxRenderableC = Entity_GetRenderable(pxWorld->apTrees[2]);
+	xRenderable_t* pxRenderableD = Entity_GetRenderable(pxWorld->apTrees[3]);
+
+	Vector3_Set(pxTransformA->xPosition, -7.5F, 0.0F, 0.0F);
+	Vector3_Set(pxTransformB->xPosition, -2.5F, 0.0F, 0.0F);
+	Vector3_Set(pxTransformC->xPosition, 2.5F, 0.0F, 0.0F);
+	Vector3_Set(pxTransformD->xPosition, 7.5F, 0.0F, 0.0F);
+
+	Vector3_Set(pxTransformA->xScale, 4.0F, 4.0F, 1.0F);
+	Vector3_Set(pxTransformB->xScale, 4.0F, 4.0F, 1.0F);
+	Vector3_Set(pxTransformC->xScale, 4.0F, 4.0F, 1.0F);
+	Vector3_Set(pxTransformD->xScale, 4.0F, 4.0F, 1.0F);
+
+	pxRenderableA->bSharedVertexBuffer = true;
+	pxRenderableA->bSharedIndexBuffer = true;
+	pxRenderableA->bSharedColorImage = false;
+	pxRenderableA->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+	pxRenderableA->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+	pxRenderableA->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_a.bmp");
+	pxRenderableA->nIndexCount = 6;
+
+	pxRenderableB->bSharedVertexBuffer = true;
+	pxRenderableB->bSharedIndexBuffer = true;
+	pxRenderableB->bSharedColorImage = false;
+	pxRenderableB->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+	pxRenderableB->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+	pxRenderableB->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_b.bmp");
+	pxRenderableB->nIndexCount = 6;
+
+	pxRenderableC->bSharedVertexBuffer = true;
+	pxRenderableC->bSharedIndexBuffer = true;
+	pxRenderableC->bSharedColorImage = false;
+	pxRenderableC->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+	pxRenderableC->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+	pxRenderableC->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_c.bmp");
+	pxRenderableC->nIndexCount = 6;
+
+	pxRenderableD->bSharedVertexBuffer = true;
+	pxRenderableD->bSharedIndexBuffer = true;
+	pxRenderableD->bSharedColorImage = false;
+	pxRenderableD->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
+	pxRenderableD->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
+	pxRenderableD->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_d.bmp");
+	pxRenderableD->nIndexCount = 6;
+}
+
+static void World_FreeTrees(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
+	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apTrees); ++i) {
+		Scene_FreeEntity(pxScene, pxInstance, pxWorld->apTrees[i]);
+	}
+}
 
 struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	struct xWorld_t* pxWorld = (struct xWorld_t*)calloc(1, sizeof(struct xWorld_t));
@@ -222,15 +303,19 @@ struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* px
 	pxWorld->pxSharedVertexBuffer = VertexBuffer_AllocDevice(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
 	pxWorld->pxSharedIndexBuffer = IndexBuffer_AllocDevice(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
 
-	World_AllocChunks(pxWorld, pxInstance, pxScene);
-	World_AllocParticles(pxWorld, pxInstance, pxScene);
+	World_AllocTrees(pxWorld, pxInstance, pxScene);
+
+	//World_AllocChunks(pxWorld, pxInstance, pxScene);
+	//World_AllocParticles(pxWorld, pxInstance, pxScene);
 
 	return pxWorld;
 }
 
 void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	World_FreeParticles(pxWorld, pxInstance, pxScene);
-	World_FreeChunks(pxWorld, pxInstance, pxScene);
+	//World_FreeParticles(pxWorld, pxInstance, pxScene);
+	//World_FreeChunks(pxWorld, pxInstance, pxScene);
+
+	World_FreeTrees(pxWorld, pxInstance, pxScene);
 
 	Buffer_Free(pxWorld->pxSharedIndexBuffer, pxInstance);
 	Buffer_Free(pxWorld->pxSharedVertexBuffer, pxInstance);
@@ -239,9 +324,7 @@ void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct
 }
 
 void World_Update(struct xWorld_t* pxWorld, struct xRenderer_t* pxRenderer, struct xTimer_t* pxTimer) {
-	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
-		xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apAffectors[i]);
-		
-		Vector3_Set(pxTransform->xPosition, sinf(Timer_GetTime(pxTimer)) * 2.0F, 0.0F, 0.0F);
-	}
+	UNUSED(pxWorld);
+	UNUSED(pxRenderer);
+	UNUSED(pxTimer);
 }

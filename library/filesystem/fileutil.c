@@ -73,7 +73,8 @@ void FileUtil_ReadBmp(uint8_t** ppcData, uint64_t* pwSize, uint32_t* pnWidth, ui
 	*pnHeight = xBmpHeader.nHeight;
 	*ppcData = calloc(*pwSize, 1);
 
-	fread(*ppcData, 1, *pwSize, pxFile);	
+	fseek(pxFile, xBmpHeader.nDataOffset, SEEK_SET);
+	fread(*ppcData, 1, *pwSize, pxFile);
 
 	fclose(pxFile);
 }
