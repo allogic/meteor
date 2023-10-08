@@ -9,6 +9,7 @@
 #include <container/list.h>
 #include <container/vector.h>
 #include <container/queue.h>
+#include <container/set.h>
 
 #include <debug/stacktrace.h>
 
@@ -151,6 +152,66 @@ static void Queue_Test(void) {
 	Queue_Free(pxQueue);
 }
 
+static void Set_Test(void) {
+	PRINT_TEST_BEGIN(Set_Test);
+
+	{
+		struct xSet_t* pxSet = Set_Alloc(sizeof(uint32_t));
+
+		{
+			uint32_t x = 42;
+			Set_Push(pxSet, &x);
+			Set_Push(pxSet, &x);
+		}
+
+		{
+			uint32_t x = 1;
+			Set_Push(pxSet, &x);
+		}
+
+		{
+			uint32_t x = 2;
+			Set_Push(pxSet, &x);
+			Set_Push(pxSet, &x);
+			Set_Push(pxSet, &x);
+			Set_Push(pxSet, &x);
+		}
+
+		printf("Iterate:\n");
+		for (uint32_t i = 0; i < Set_Count(pxSet); ++i) {
+			printf("%u\n", *(uint32_t*)Set_At(pxSet, i));
+		}
+		printf("\n");
+	}
+
+	{
+		struct xSet_t* pxSet = Set_Alloc(5);
+
+		{
+			Set_Push(pxSet, "foo");
+			Set_Push(pxSet, "foo");
+		}
+
+		{
+			Set_Push(pxSet, "bar");
+		}
+
+		{
+			Set_Push(pxSet, "shit");
+			Set_Push(pxSet, "shit");
+			Set_Push(pxSet, "shit");
+			Set_Push(pxSet, "shit");
+		}
+
+		printf("Iterate:\n");
+		for (uint32_t i = 0; i < Set_Count(pxSet); ++i) {
+			printf("%s\n", (char*)Set_At(pxSet, i));
+		}
+		printf("\n");
+	}
+
+}
+
 static void FileList_Test(void) {
 	PRINT_TEST_BEGIN(FileList_Test);
 
@@ -213,9 +274,10 @@ int32_t main(void) {
 	StackTrace_Alloc();
 #endif
 
-	List_Test();
+	//List_Test();
 	//Vector_Test();
 	//Queue_Test();
+	//Set_Test();
 	//FileList_Test();
 	//StringUtil_Test();
 	

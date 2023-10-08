@@ -11,6 +11,7 @@ list(APPEND SOURCES "${COMMON_DIR}/stringutil.c")
 list(APPEND SOURCES "${CONTAINER_DIR}/list.c")
 list(APPEND SOURCES "${CONTAINER_DIR}/vector.c")
 list(APPEND SOURCES "${CONTAINER_DIR}/queue.c")
+list(APPEND SOURCES "${CONTAINER_DIR}/set.c")
 
 list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")
 

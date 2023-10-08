@@ -6,9 +6,12 @@
 #include <common/macros.h>
 #include <common/timer.h>
 
-#include <math/vector.h>
-
 #include <container/vector.h>
+
+#include <ecs/component.h>
+#include <ecs/entity.h>
+
+#include <math/vector.h>
 
 #include <random/xorshift128.h>
 
@@ -18,215 +21,252 @@
 #include <vulkan/buffervariance.h>
 #include <vulkan/image.h>
 #include <vulkan/imagevariance.h>
+#include <vulkan/vulkan.h>
+#include <vulkan/pushconstants.h>
+#include <vulkan/renderer.h>
 
-#include <game/component.h>
-#include <game/entity.h>
 #include <game/scene.h>
 #include <game/storage.h>
 #include <game/world.h>
-#include <game/renderer.h>
-
-/*
-#define NUM_CHUNKS_X 5
-#define NUM_CHUNKS_Y 5
-
-#define CHUNK_WIDTH 5
-#define CHUNK_HEIGHT 5
-*/
+#include <game/pushconstants.h>
 
 struct xWorld_t {
-	struct xBuffer_t* pxSharedVertexBuffer;
-	struct xBuffer_t* pxSharedIndexBuffer;
+	struct xBuffer_t* pxSharedQuadVertexBuffer;
+	struct xBuffer_t* pxSharedQuadIndexBuffer;
 	struct xEntity_t* apTrees[4];
-
-	//struct xEntity_t* apChunks[NUM_CHUNKS_X][NUM_CHUNKS_Y];
-	//struct xEntity_t* apParticles[1];
-	//struct xEntity_t* apAffectors[1];
 };
 
 static xDefaultVertex_t s_axVertices[4] = {
-	{ { -0.5F, -0.5F, 0.0F }, { 1.0F, 0.0F }, { 1.0F, 0.0F, 0.0F, 1.0F } },
-	{ {  0.5F, -0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F, 1.0F } },
-	{ {  0.5F,  0.5F, 0.0F }, { 0.0F, 1.0F }, { 0.0F, 0.0F, 1.0F, 1.0F } },
-	{ { -0.5F,  0.5F, 0.0F }, { 1.0F, 1.0F }, { 1.0F, 1.0F, 1.0F, 1.0F } },
+	{ { -0.5F, -0.5F, 0.0F }, { 0.0F, 1.0F }, { 0.0F, 0.0F, 0.0F, 1.0F } },
+	{ { -0.5F,  0.5F, 0.0F }, { 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 1.0F } },
+	{ {  0.5F, -0.5F, 0.0F }, { 1.0F, 1.0F }, { 0.0F, 0.0F, 0.0F, 1.0F } },
+	{ {  0.5F,  0.5F, 0.0F }, { 1.0F, 0.0F }, { 0.0F, 0.0F, 0.0F, 1.0F } },
 };
 
 static uint32_t s_anIndices[6] = {
-	0, 1, 2, 2, 3, 0,
+	0, 2, 1, 2, 3, 1,
 };
 
-/*
-static void World_AllocChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
-		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
-			pxWorld->apChunks[i][j] = Scene_AllocEntity(pxScene, "chunk", 0);
+struct xTreeMaterial_t {
+	struct xImage_t* pxColorImage;
+};
 
-			Entity_SetTransform(pxWorld->apChunks[i][j], 0);
-			Entity_SetRenderable(pxWorld->apChunks[i][j], 0);
-			Entity_SetPixelSystem(pxWorld->apChunks[i][j], 0);
+static void World_TreeDescriptorMapHandler(void* pMaterial, struct xVector_t* pxDescriptorInfos) {
+	struct xTreeMaterial_t* pxTreeMaterial = (struct xTreeMaterial_t*)pMaterial;
 
-			xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apChunks[i][j]);
-			xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apChunks[i][j]);
-			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apChunks[i][j]);
+	//pxRenderer->pxViewProjectionBuffer
+	//pxRenderer->pxTimeInfoBuffer
+	//pxRenderable->pxColorImage
 
-			float hw = (float)NUM_CHUNKS_X * CHUNK_WIDTH / 2;
-			float hh = (float)NUM_CHUNKS_Y * CHUNK_HEIGHT / 2;
+	{
+		struct xDescriptorInfo_t {
+			eImageInfo,
+			Buffer_GetBuffer(pxRenderer->pxViewProjectionBuffer),
+			Buffer_GetSize(pxRenderer->pxViewProjectionBuffer)
+		} xDescriptorInfo;
 
-			float hcw = (float)CHUNK_WIDTH / 2;
-			float hch = (float)CHUNK_WIDTH / 2;
-
-			float x = (float)i * CHUNK_WIDTH - hw + hcw;
-			float y = (float)j * CHUNK_HEIGHT - hh + hch;
-
-			Vector3_Set(pxTransform->xPosition, x, y, 0.0F);
-			Vector3_Set(pxTransform->xScale, CHUNK_WIDTH - 1, CHUNK_HEIGHT - 1, 1.0F);
-
-			pxRenderable->bSharedVertexBuffer = true;
-			pxRenderable->bSharedIndexBuffer = true;
-			pxRenderable->bSharedColorImage = false;
-			pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-			pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-			pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/sand_color.bmp");
-			pxRenderable->nIndexCount = 6;
-
-			pxPixelSystem->nWidth = Image_GetWidth(pxRenderable->pxColorImage);
-			pxPixelSystem->nHeight = Image_GetHeight(pxRenderable->pxColorImage);
-			pxPixelSystem->bSharedColorImage = true;
-			pxPixelSystem->bSharedColorImageN = true;
-			pxPixelSystem->bSharedColorImageS = true;
-			pxPixelSystem->bSharedColorImageW = true;
-			pxPixelSystem->bSharedColorImageE = true;
-			pxPixelSystem->bSharedStateImage = false;
-			pxPixelSystem->bSharedStateImageN = true;
-			pxPixelSystem->bSharedStateImageS = true;
-			pxPixelSystem->bSharedStateImageW = true;
-			pxPixelSystem->bSharedStateImageE = true;
-			pxPixelSystem->pxColorImage = pxRenderable->pxColorImage;
-			pxPixelSystem->pxStateImage = StorageImage_Alloc(pxInstance, "assets/sand_state.bmp");
-		}
+		Vector_Push(pxDescriptorInfos, );
 	}
 
-	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
-		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
-			uint32_t in = i - 1;
-			uint32_t ip = i + 1;
-			uint32_t jn = j - 1;
-			uint32_t jp = j + 1;
+	{
+		struct xDescriptorInfo_t {
+			eImageInfo,
+			Buffer_GetBuffer(pxRenderer->pxViewProjectionBuffer),
+			Buffer_GetSize(pxRenderer->pxViewProjectionBuffer)
+		} xDescriptorInfo;
 
-			if (i == 0) in = (NUM_CHUNKS_X - 1);
-			if (j == 0) jn = (NUM_CHUNKS_Y - 1);
-
-			if (i == (NUM_CHUNKS_X - 1)) ip = 0;
-			if (j == (NUM_CHUNKS_Y - 1)) jp = 0;
-
-			xPixelSystem_t* pxPixelSystem = Entity_GetPixelSystem(pxWorld->apChunks[i][j]);
-
-			pxPixelSystem->pxColorImageN = Entity_GetRenderable(pxWorld->apChunks[i][jn])->pxColorImage;
-			pxPixelSystem->pxColorImageS = Entity_GetRenderable(pxWorld->apChunks[i][jp])->pxColorImage;
-			pxPixelSystem->pxColorImageW = Entity_GetRenderable(pxWorld->apChunks[in][j])->pxColorImage;
-			pxPixelSystem->pxColorImageE = Entity_GetRenderable(pxWorld->apChunks[ip][j])->pxColorImage;
-
-			pxPixelSystem->pxStateImageN = Entity_GetPixelSystem(pxWorld->apChunks[i][jn])->pxStateImage;
-			pxPixelSystem->pxStateImageS = Entity_GetPixelSystem(pxWorld->apChunks[i][jp])->pxStateImage;
-			pxPixelSystem->pxStateImageW = Entity_GetPixelSystem(pxWorld->apChunks[in][j])->pxStateImage;
-			pxPixelSystem->pxStateImageE = Entity_GetPixelSystem(pxWorld->apChunks[ip][j])->pxStateImage;
-		}
+		Vector_Push(pxDescriptorInfos, );
 	}
 
-	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apAffectors); ++i) {
-		pxWorld->apAffectors[i] = Scene_AllocEntity(pxScene, "", 0);
-
-		Entity_SetTransform(pxWorld->apAffectors[i], 0);
-		Entity_SetPixelAffector(pxWorld->apAffectors[i], 0);
-
-		xPixelAffector_t* pxPixelAffector = Entity_GetPixelAffector(pxWorld->apAffectors[i]);
-	}
-}
-static void World_AllocParticles(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	XorShift128_Init(0x42);
-
-	struct xVector_t* pxParticles = Vector_Alloc(sizeof(xParticle_t));
-
-	pxWorld->apParticles[0] = Scene_AllocEntity(pxScene, "", 0);
-
-	Entity_SetTransform(pxWorld->apParticles[0], 0);
-	Entity_SetRenderable(pxWorld->apParticles[0], 0);
-	Entity_SetParticleSystem(pxWorld->apParticles[0], 0);
-
-	xTransform_t* pxTransform = Entity_GetTransform(pxWorld->apParticles[0]);
-	xRenderable_t* pxRenderable = Entity_GetRenderable(pxWorld->apParticles[0]);
-	xParticleSystem_t* pxParticleSystem = Entity_GetParticleSystem(pxWorld->apParticles[0]);
-
-	Vector3_Set(pxTransform->xPosition, 0.0F, 0.0F, 0.0F);
-	Vector3_Set(pxTransform->xScale, 1.0F, 1.0F, 1.0F);
-
-	pxRenderable->bSharedVertexBuffer = true;
-	pxRenderable->bSharedIndexBuffer = true;
-	pxRenderable->bSharedColorImage = false;
-	pxRenderable->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-	pxRenderable->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-	pxRenderable->pxColorImage = StorageImage_Alloc(pxInstance, "assets/test.bmp");
-	pxRenderable->nIndexCount = 6;
-
-	for (uint32_t i = 0; i < 128; ++i) {
-		xParticle_t xParticle;
-
-		Vector4_Set(xParticle.xPosition,
-			0.0F,
-			0.0F,
-			0.0F,
-			0.0F);
-
-		Vector4_Set(xParticle.xVelocity,
-			XorShift128_Float(-0.0015F, 0.0015F),
-			XorShift128_Float(0.0F, -0.005F),
-			0.0F,
-			0.0F);
-
-		Vector_Push(pxParticles, &xParticle);
-	}
-
-	pxParticleSystem->bDebug = true;
-	pxParticleSystem->fWidth = 15.0F;
-	pxParticleSystem->fHeight = 25.0F;
-	pxParticleSystem->fDepth = 0.0F;
-	pxParticleSystem->bSharedBehaviourBuffer = false;
-	pxParticleSystem->bSharedParticleBuffer = false;
-	pxParticleSystem->pxBehaviourBuffer = UniformBuffer_AllocCoherent(pxInstance, sizeof(xParticleBehaviour_t));
-	pxParticleSystem->pxParticleBuffer = StorageBuffer_AllocDevice(pxInstance, Vector_Data(pxParticles), Vector_Size(pxParticles));
-	pxParticleSystem->nParticleCount = Vector_Count(pxParticles);
-
-	xParticleBehaviour_t* pxParticleBehaviour = Buffer_GetMappedData(pxParticleSystem->pxBehaviourBuffer);
-
-	pxParticleBehaviour->fLifetime = 5.0F;
-	Vector4_Set(pxParticleBehaviour->xVelocity, 0.0F, 0.001F, 0.0F, 0.0F);
-	Vector4_Set(pxParticleBehaviour->xStartColor, 0.0F, 0.0F, 0.0F, 0.0F);
-	Vector4_Set(pxParticleBehaviour->xEndColor, 0.0F, 0.0F, 0.0F, 0.0F);
-	Vector4_Set(pxParticleBehaviour->xStartScale, 0.0F, 0.0F, 0.0F, 0.0F);
-	Vector4_Set(pxParticleBehaviour->xEndScale, 0.0F, 0.0F, 0.0F, 0.0F);
-
-	Vector_Free(pxParticles);
+	//VkDescriptorBufferInfo xViewProjectionDescriptorBufferInfo;
+	//memset(&xViewProjectionDescriptorBufferInfo, 0, sizeof(xViewProjectionDescriptorBufferInfo));
+	//xViewProjectionDescriptorBufferInfo.offset = 0;
+	//xViewProjectionDescriptorBufferInfo.buffer = ;
+	//xViewProjectionDescriptorBufferInfo.range = ;
+//
+	//VkDescriptorBufferInfo xTimeInfoDescriptorBufferInfo;
+	//memset(&xTimeInfoDescriptorBufferInfo, 0, sizeof(xTimeInfoDescriptorBufferInfo));
+	//xTimeInfoDescriptorBufferInfo.offset = 0;
+	//xTimeInfoDescriptorBufferInfo.buffer = Buffer_GetBuffer(pxRenderer->pxTimeInfoBuffer);
+	//xTimeInfoDescriptorBufferInfo.range = Buffer_GetSize(pxRenderer->pxTimeInfoBuffer);
+//
+	//VkDescriptorImageInfo xCombinedImageSamplerDescriptorImageInfo;
+	//memset(&xCombinedImageSamplerDescriptorImageInfo, 0, sizeof(xCombinedImageSamplerDescriptorImageInfo));
+	//xCombinedImageSamplerDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	//xCombinedImageSamplerDescriptorImageInfo.imageView = Image_GetImageView(pxRenderable->pxColorImage);
+	//xCombinedImageSamplerDescriptorImageInfo.sampler = Image_GetSampler(pxRenderable->pxColorImage);
 }
 
-static void World_FreeChunks(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	for (uint32_t i = 0; i < NUM_CHUNKS_X; ++i) {
-		for (uint32_t j = 0; j < NUM_CHUNKS_Y; ++j) {
-			Scene_FreeEntity(pxScene, pxInstance, pxWorld->apChunks[i][j]);
-		}
+static void World_AllocGraphicPipelines(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xRenderer_t* pxRenderer) {
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, 0 },
+			{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, 0 },
+		};
+
+		VkVertexInputBindingDescription axVertexInputBindingDescriptions[] = {
+			{ DEFAULT_VERTEX_BINDING_ID, sizeof(xDefaultVertex_t), VK_VERTEX_INPUT_RATE_VERTEX },
+		};
+
+		VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[] = {
+			{ 0, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32_SFLOAT, sizeof(xVec3_t) },
+			{ 2, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(xVec3_t) + sizeof(xVec2_t) },
+		};
+
+		VkPushConstantRange axPushConstantRanges[] = {
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(xPerEntityData_t) },
+		};
+
+		Renderer_PushGraphicPipeline(
+			pxRenderer, pxInstance, pxSwapChain,
+			"tree", World_TreeDescriptorMapHandler, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 1024,
+			"shaders/tree.vert.spv", "shaders/tree.frag.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axVertexInputBindingDescriptions, ARRAY_LENGTH(axVertexInputBindingDescriptions),
+			axVertexInputAttributeDescriptions, ARRAY_LENGTH(axVertexInputAttributeDescriptions),
+			axPushConstantRanges, ARRAY_LENGTH(axPushConstantRanges));
+	}
+
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, 0 },
+		};
+
+		VkVertexInputBindingDescription axVertexInputBindingDescriptions[] = {
+			{ DEFAULT_VERTEX_BINDING_ID, sizeof(xDefaultVertex_t), VK_VERTEX_INPUT_RATE_VERTEX },
+			{ INSTANCE_VERTEX_BINDING_ID, sizeof(xParticle_t), VK_VERTEX_INPUT_RATE_INSTANCE },
+		};
+
+		VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[] = {
+			{ 0, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32_SFLOAT, sizeof(xVec3_t) },
+			{ 2, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(xVec3_t) + sizeof(xVec2_t) },
+			{ 3, INSTANCE_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, 0 },
+			{ 4, INSTANCE_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(xVec4_t) },
+		};
+
+		VkPushConstantRange axPushConstantRanges[] = {
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(xPerEntityData_t) },
+		};
+
+		Renderer_PushGraphicPipeline(
+			pxRenderer, pxInstance, pxSwapChain,
+			"particle", 0, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 1024,
+			"shaders/particle.vert.spv", "shaders/particle.frag.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axVertexInputBindingDescriptions, ARRAY_LENGTH(axVertexInputBindingDescriptions),
+			axVertexInputAttributeDescriptions, ARRAY_LENGTH(axVertexInputAttributeDescriptions),
+			axPushConstantRanges, ARRAY_LENGTH(axPushConstantRanges));
+	}
+
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, 0 },
+		};
+
+		VkVertexInputBindingDescription axVertexInputBindingDescriptions[] = {
+			{ DEFAULT_VERTEX_BINDING_ID, sizeof(xInterfaceVertex_t), VK_VERTEX_INPUT_RATE_VERTEX },
+		};
+
+		VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[] = {
+			{ 0, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32_SFLOAT, sizeof(xVec3_t) },
+			{ 2, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(xVec3_t) + sizeof(xVec2_t) },
+		};
+
+		Renderer_PushGraphicPipeline(
+			pxRenderer, pxInstance, pxSwapChain,
+			"interface", 0, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 1024,
+			"shaders/interface.vert.spv", "shaders/interface.frag.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axVertexInputBindingDescriptions, ARRAY_LENGTH(axVertexInputBindingDescriptions),
+			axVertexInputAttributeDescriptions, ARRAY_LENGTH(axVertexInputAttributeDescriptions),
+			0, 0);
+	}
+
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, 0 },
+		};
+
+		VkVertexInputBindingDescription axVertexInputBindingDescriptions[] = {
+			{ DEFAULT_VERTEX_BINDING_ID, sizeof(xDebugVertex_t), VK_VERTEX_INPUT_RATE_VERTEX },
+		};
+
+		VkVertexInputAttributeDescription axVertexInputAttributeDescriptions[] = {
+			{ 0, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, DEFAULT_VERTEX_BINDING_ID, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(xVec3_t) },
+		};
+
+		Renderer_PushGraphicPipeline(
+			pxRenderer, pxInstance, pxSwapChain,
+			"debug", 0, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 1024,
+			"shaders/debug.vert.spv", "shaders/debug.frag.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axVertexInputBindingDescriptions, ARRAY_LENGTH(axVertexInputBindingDescriptions),
+			axVertexInputAttributeDescriptions, ARRAY_LENGTH(axVertexInputAttributeDescriptions),
+			0, 0);
 	}
 }
-static void World_FreeParticles(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apParticles); ++i) {
-		Scene_FreeEntity(pxScene, pxInstance, pxWorld->apParticles[i]);
+static void World_AllocComputePipelines(struct xInstance_t* pxInstance, struct xRenderer_t* pxRenderer) {
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+		};
+
+		VkPushConstantRange axPushConstantRanges[] = {
+			{ VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(xDimensions_t) },
+		};
+
+		Renderer_PushComputePipeline(
+			pxRenderer, pxInstance,
+			"particle", 0, 1024,
+			"shaders/particle.comp.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axPushConstantRanges, ARRAY_LENGTH(axPushConstantRanges));
+	}
+
+	{
+		VkDescriptorSetLayoutBinding axDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 4, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 5, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 6, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 7, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 8, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 9, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 10, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 11, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 12, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+		};
+
+		VkPushConstantRange axPushConstantRanges[] = {
+			{ VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(xDimensions_t) },
+		};
+
+		Renderer_PushComputePipeline(
+			pxRenderer, pxInstance,
+			"pixel", 0, 1024,
+			"shaders/pixel.comp.spv",
+			axDescriptorSetLayoutBindings, ARRAY_LENGTH(axDescriptorSetLayoutBindings),
+			axPushConstantRanges, ARRAY_LENGTH(axPushConstantRanges));
 	}
 }
-*/
 
 static void World_AllocTrees(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	pxWorld->apTrees[0] = Scene_AllocEntity(pxScene, "Tree A", 0);
-	pxWorld->apTrees[1] = Scene_AllocEntity(pxScene, "Tree B", 0);
-	pxWorld->apTrees[2] = Scene_AllocEntity(pxScene, "Tree C", 0);
-	pxWorld->apTrees[3] = Scene_AllocEntity(pxScene, "Tree D", 0);
+	pxWorld->apTrees[0] = Scene_AllocEntity(pxScene, "tree_a", 0);
+	pxWorld->apTrees[1] = Scene_AllocEntity(pxScene, "tree_b", 0);
+	pxWorld->apTrees[2] = Scene_AllocEntity(pxScene, "tree_c", 0);
+	pxWorld->apTrees[3] = Scene_AllocEntity(pxScene, "tree_d", 0);
 
 	Entity_SetTransform(pxWorld->apTrees[0], 0);
 	Entity_SetTransform(pxWorld->apTrees[1], 0);
@@ -258,67 +298,79 @@ static void World_AllocTrees(struct xWorld_t* pxWorld, struct xInstance_t* pxIns
 	Vector3_Set(pxTransformC->xScale, 4.0F, 4.0F, 1.0F);
 	Vector3_Set(pxTransformD->xScale, 4.0F, 4.0F, 1.0F);
 
+	xTreeMaterial_t* pxTreeMaterialA = calloc(1, sizeof(xTreeMaterial_t));
+	xTreeMaterial_t* pxTreeMaterialB = calloc(1, sizeof(xTreeMaterial_t));
+	xTreeMaterial_t* pxTreeMaterialC = calloc(1, sizeof(xTreeMaterial_t));
+	xTreeMaterial_t* pxTreeMaterialD = calloc(1, sizeof(xTreeMaterial_t));
+
+	pxTreeMaterialA->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_a.bmp");
+	pxTreeMaterialB->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_b.bmp");
+	pxTreeMaterialC->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_c.bmp");
+	pxTreeMaterialD->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_d.bmp");
+
+	memcpy(pxRenderableA->acPipelineName, "tree", 4);
 	pxRenderableA->bSharedVertexBuffer = true;
 	pxRenderableA->bSharedIndexBuffer = true;
-	pxRenderableA->bSharedColorImage = false;
-	pxRenderableA->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-	pxRenderableA->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-	pxRenderableA->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_a.bmp");
+	pxRenderableA->bSharedMaterial = false;
+	pxRenderableA->pxVertexBuffer = pxWorld->pxSharedQuadVertexBuffer;
+	pxRenderableA->pxIndexBuffer = pxWorld->pxSharedQuadIndexBuffer;
 	pxRenderableA->nIndexCount = 6;
+	pxRenderableA->pMaterial = pxTreeMaterialA;
 
+	memcpy(pxRenderableB->acPipelineName, "tree", 4);
 	pxRenderableB->bSharedVertexBuffer = true;
 	pxRenderableB->bSharedIndexBuffer = true;
-	pxRenderableB->bSharedColorImage = false;
-	pxRenderableB->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-	pxRenderableB->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-	pxRenderableB->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_b.bmp");
+	pxRenderableB->bSharedMaterial = false;
+	pxRenderableB->pxVertexBuffer = pxWorld->pxSharedQuadVertexBuffer;
+	pxRenderableB->pxIndexBuffer = pxWorld->pxSharedQuadIndexBuffer;
 	pxRenderableB->nIndexCount = 6;
+	pxRenderableB->pMaterial = pxTreeMaterialB;
 
+	memcpy(pxRenderableC->acPipelineName, "tree", 4);
 	pxRenderableC->bSharedVertexBuffer = true;
 	pxRenderableC->bSharedIndexBuffer = true;
-	pxRenderableC->bSharedColorImage = false;
-	pxRenderableC->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-	pxRenderableC->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-	pxRenderableC->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_c.bmp");
+	pxRenderableC->bSharedMaterial = false;
+	pxRenderableC->pxVertexBuffer = pxWorld->pxSharedQuadVertexBuffer;
+	pxRenderableC->pxIndexBuffer = pxWorld->pxSharedQuadIndexBuffer;
 	pxRenderableC->nIndexCount = 6;
+	pxRenderableC->pMaterial = pxTreeMaterialC;
 
+	memcpy(pxRenderableD->acPipelineName, "tree", 4);
 	pxRenderableD->bSharedVertexBuffer = true;
 	pxRenderableD->bSharedIndexBuffer = true;
-	pxRenderableD->bSharedColorImage = false;
-	pxRenderableD->pxVertexBuffer = pxWorld->pxSharedVertexBuffer;
-	pxRenderableD->pxIndexBuffer = pxWorld->pxSharedIndexBuffer;
-	pxRenderableD->pxColorImage = StandardImage_Alloc(pxInstance, "assets/trees/tree_d.bmp");
+	pxRenderableD->bSharedMaterial = false;
+	pxRenderableD->pxVertexBuffer = pxWorld->pxSharedQuadVertexBuffer;
+	pxRenderableD->pxIndexBuffer = pxWorld->pxSharedQuadIndexBuffer;
 	pxRenderableD->nIndexCount = 6;
+	pxRenderableD->pMaterial = pxTreeMaterialD;
 }
-
 static void World_FreeTrees(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
 	for (uint32_t i = 0; i < ARRAY_LENGTH(pxWorld->apTrees); ++i) {
 		Scene_FreeEntity(pxScene, pxInstance, pxWorld->apTrees[i]);
 	}
 }
 
-struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
+struct xWorld_t* World_Alloc(struct xInstance_t* pxInstance, struct xSwapChain_t* pxSwapChain, struct xScene_t* pxScene, struct xRenderer_t* pxRenderer) {
 	struct xWorld_t* pxWorld = (struct xWorld_t*)calloc(1, sizeof(struct xWorld_t));
 
-	pxWorld->pxSharedVertexBuffer = VertexBuffer_AllocDevice(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
-	pxWorld->pxSharedIndexBuffer = IndexBuffer_AllocDevice(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
+	pxWorld->pxSharedQuadVertexBuffer = VertexBuffer_AllocDevice(pxInstance, s_axVertices, sizeof(xDefaultVertex_t) * 4);
+	pxWorld->pxSharedQuadIndexBuffer = IndexBuffer_AllocDevice(pxInstance, s_anIndices, sizeof(uint32_t) * 6);
+
+	World_AllocGraphicPipelines(pxInstance, pxSwapChain, pxRenderer);
+	World_AllocComputePipelines(pxInstance, pxRenderer);
 
 	World_AllocTrees(pxWorld, pxInstance, pxScene);
 
-	//World_AllocChunks(pxWorld, pxInstance, pxScene);
-	//World_AllocParticles(pxWorld, pxInstance, pxScene);
+	Scene_Commit(pxScene, pxInstance);
 
 	return pxWorld;
 }
 
 void World_Free(struct xWorld_t* pxWorld, struct xInstance_t* pxInstance, struct xScene_t* pxScene) {
-	//World_FreeParticles(pxWorld, pxInstance, pxScene);
-	//World_FreeChunks(pxWorld, pxInstance, pxScene);
-
 	World_FreeTrees(pxWorld, pxInstance, pxScene);
 
-	Buffer_Free(pxWorld->pxSharedIndexBuffer, pxInstance);
-	Buffer_Free(pxWorld->pxSharedVertexBuffer, pxInstance);
+	Buffer_Free(pxWorld->pxSharedQuadIndexBuffer, pxInstance);
+	Buffer_Free(pxWorld->pxSharedQuadVertexBuffer, pxInstance);
 
 	free(pxWorld);
 }

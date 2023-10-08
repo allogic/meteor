@@ -3,7 +3,6 @@
 #include <math/vector.h>
 
 #include <game/interface.h>
-#include <game/renderer.h>
 
 struct xWindow_t {
 	void* pDummy;

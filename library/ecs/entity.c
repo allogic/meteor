@@ -5,11 +5,11 @@
 
 #include <container/list.h>
 
+#include <ecs/entity.h>
+
 #include <vulkan/instance.h>
 #include <vulkan/buffer.h>
 #include <vulkan/image.h>
-
-#include <game/entity.h>
 
 #define ENTITY_NAME_LENGTH 32
 
@@ -46,111 +46,39 @@ struct xEntity_t* Entity_Alloc(const char* pcName, struct xEntity_t* pxParent) {
 
 void Entity_Free(struct xEntity_t* pxEntity, struct xInstance_t* pxInstance) {
 	if (pxEntity->wMask & COMPONENT_PIXELAFFECTOR_BIT) {
-		xParticleAffector_t* pxParticleAffector = (xParticleAffector_t*)pxEntity->apComponents[COMPONENT_PIXELAFFECTOR_IDX];
-
-		free(pxParticleAffector);
+		free(pxEntity->apComponents[COMPONENT_PIXELAFFECTOR_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_PIXELSYSTEM_BIT) {
-		xPixelSystem_t* pxPixelSystem = pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX];
-
-		if (pxPixelSystem->pxColorImage && !pxPixelSystem->bSharedColorImage) {
-			Image_Free(pxPixelSystem->pxColorImage, pxInstance);
-		}
-
-		if (pxPixelSystem->pxColorImageN && !pxPixelSystem->bSharedColorImageN) {
-			Image_Free(pxPixelSystem->pxColorImageN, pxInstance);
-		}
-
-		if (pxPixelSystem->pxColorImageS && !pxPixelSystem->bSharedColorImageS) {
-			Image_Free(pxPixelSystem->pxColorImageS, pxInstance);
-		}
-
-		if (pxPixelSystem->pxColorImageW && !pxPixelSystem->bSharedColorImageW) {
-			Image_Free(pxPixelSystem->pxColorImageW, pxInstance);
-		}
-
-		if (pxPixelSystem->pxColorImageE && !pxPixelSystem->bSharedColorImageE) {
-			Image_Free(pxPixelSystem->pxColorImageE, pxInstance);
-		}
-
-		if (pxPixelSystem->pxStateImage && !pxPixelSystem->bSharedStateImage) {
-			Image_Free(pxPixelSystem->pxStateImage, pxInstance);
-		}
-
-		if (pxPixelSystem->pxStateImageN && !pxPixelSystem->bSharedStateImageN) {
-			Image_Free(pxPixelSystem->pxStateImageN, pxInstance);
-		}
-
-		if (pxPixelSystem->pxStateImageS && !pxPixelSystem->bSharedStateImageS) {
-			Image_Free(pxPixelSystem->pxStateImageS, pxInstance);
-		}
-
-		if (pxPixelSystem->pxStateImageW && !pxPixelSystem->bSharedStateImageW) {
-			Image_Free(pxPixelSystem->pxStateImageW, pxInstance);
-		}
-
-		if (pxPixelSystem->pxStateImageE && !pxPixelSystem->bSharedStateImageE) {
-			Image_Free(pxPixelSystem->pxStateImageE, pxInstance);
-		}
-
-		free(pxPixelSystem);
+		free(pxEntity->apComponents[COMPONENT_PIXELSYSTEM_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_PARTICLEAFFECTOR_BIT) {
-		xPixelAffector_t* pxPixelAffector = (xPixelAffector_t*)pxEntity->apComponents[COMPONENT_PARTICLEAFFECTOR_IDX];
-
-		free(pxPixelAffector);
+		free(pxEntity->apComponents[COMPONENT_PARTICLEAFFECTOR_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_PARTICLESYSTEM_BIT) {
-		xParticleSystem_t* pxParticleSystem = pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX];
+		free(pxEntity->apComponents[COMPONENT_PARTICLESYSTEM_IDX]);
+	}
 
-		if (pxParticleSystem->pxBehaviourBuffer && !pxParticleSystem->bSharedBehaviourBuffer) {
-			Buffer_Free(pxParticleSystem->pxBehaviourBuffer, pxInstance);
-		}
-		
-		if (pxParticleSystem->pxParticleBuffer && !pxParticleSystem->bSharedParticleBuffer) {
-			Buffer_Free(pxParticleSystem->pxParticleBuffer, pxInstance);
-		}
-
-		free(pxParticleSystem);
+	if (pxEntity->wMask & COMPONENT_COMPUTABLE_BIT) {
+		free(pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_RENDERABLE_BIT) {
-		xRenderable_t* pxRenderable = (xRenderable_t*)pxEntity->apComponents[COMPONENT_RENDERABLE_IDX];
-
-		if (pxRenderable->pxVertexBuffer && !pxRenderable->bSharedVertexBuffer) {
-			Buffer_Free(pxRenderable->pxVertexBuffer, pxInstance);
-		}
-
-		if (pxRenderable->pxIndexBuffer && !pxRenderable->bSharedIndexBuffer) {
-			Buffer_Free(pxRenderable->pxIndexBuffer, pxInstance);
-		}
-
-		if (pxRenderable->pxColorImage && !pxRenderable->bSharedColorImage) {
-			Image_Free(pxRenderable->pxColorImage, pxInstance);
-		}
-
-		free(pxRenderable);
+		free(pxEntity->apComponents[COMPONENT_RENDERABLE_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_RIGIDBODY_BIT) {
-		xRigidBody_t* pxRigidBody = (xRigidBody_t*)pxEntity->apComponents[COMPONENT_RIGIDBODY_IDX];
-
-		free(pxRigidBody);
+		free(pxEntity->apComponents[COMPONENT_RIGIDBODY_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_CAMERA_BIT) {
-		xCamera_t* pxCamera = (xCamera_t*)pxEntity->apComponents[COMPONENT_CAMERA_IDX];
-
-		free(pxCamera);
+		free(pxEntity->apComponents[COMPONENT_CAMERA_IDX]);
 	}
 
 	if (pxEntity->wMask & COMPONENT_TRANSFORM_BIT) {
-		xTransform_t* pxTransform = (xTransform_t*)pxEntity->apComponents[COMPONENT_TRANSFORM_IDX];
-
-		free(pxTransform);
+		free(pxEntity->apComponents[COMPONENT_TRANSFORM_IDX]);
 	}
 
 	List_Free(pxEntity->pxChildren);
@@ -184,6 +112,10 @@ xRigidBody_t* Entity_GetRigidbody(struct xEntity_t* pxEntity) {
 
 xRenderable_t* Entity_GetRenderable(struct xEntity_t* pxEntity) {
 	return pxEntity->apComponents[COMPONENT_RENDERABLE_IDX];
+}
+
+xComputable_t* Entity_GetComputable(struct xEntity_t* pxEntity) {
+	return pxEntity->apComponents[COMPONENT_COMPUTABLE_IDX];
 }
 
 xParticleSystem_t* Entity_GetParticleSystem(struct xEntity_t* pxEntity) {
@@ -227,6 +159,10 @@ void Entity_SetRigidbody(struct xEntity_t* pxEntity, xRigidBody_t* pxRigidBody) 
 
 void Entity_SetRenderable(struct xEntity_t* pxEntity, xRenderable_t* pxRenderable) {
 	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_RENDERABLE_BIT, COMPONENT_RENDERABLE_IDX, xRenderable_t, pxRenderable)
+}
+
+void Entity_SetComputable(struct xEntity_t* pxEntity, xComputable_t* pxComputable) {
+	SETUP_COMPONENT_AND_COPY_IF(COMPONENT_COMPUTABLE_BIT, COMPONENT_COMPUTABLE_IDX, xComputable_t, pxComputable)
 }
 
 void Entity_SetParticleSystem(struct xEntity_t* pxEntity, xParticleSystem_t* pxParticleSystem) {

@@ -5,21 +5,21 @@ project(game VERSION 0.0.1 LANGUAGES C)
 include("../../cmake/common.cmake")
 include("../../cmake/vulkan.cmake")
 
-list(APPEND SOURCES "${PROJECT_DIR}/assets.c")
-list(APPEND SOURCES "${PROJECT_DIR}/entity.c")
 list(APPEND SOURCES "${PROJECT_DIR}/interface.c")
 list(APPEND SOURCES "${PROJECT_DIR}/main.c")
-list(APPEND SOURCES "${PROJECT_DIR}/renderer.c")
 list(APPEND SOURCES "${PROJECT_DIR}/scene.c")
 list(APPEND SOURCES "${PROJECT_DIR}/world.c")
 
 list(APPEND SOURCES "${COMMON_DIR}/timer.c")
 
 list(APPEND SOURCES "${CONTAINER_DIR}/list.c")
-list(APPEND SOURCES "${CONTAINER_DIR}/vector.c")
 list(APPEND SOURCES "${CONTAINER_DIR}/queue.c")
+list(APPEND SOURCES "${CONTAINER_DIR}/set.c")
+list(APPEND SOURCES "${CONTAINER_DIR}/vector.c")
 
 list(APPEND SOURCES "${DEBUG_DIR}/stacktrace.c")
+
+list(APPEND SOURCES "${ECS_DIR}/entity.c")
 
 list(APPEND SOURCES "${FILESYSTEM_DIR}/fileutil.c")
 
@@ -42,5 +42,6 @@ list(APPEND SOURCES "${VULKAN_DIR}/imagevariance.c")
 list(APPEND SOURCES "${VULKAN_DIR}/command.c")
 list(APPEND SOURCES "${VULKAN_DIR}/computepipeline.c")
 list(APPEND SOURCES "${VULKAN_DIR}/graphicpipeline.c")
+list(APPEND SOURCES "${VULKAN_DIR}/renderer.c")
 
 add_executable(${PROJECT_NAME} ${SOURCES})

@@ -7,6 +7,7 @@
 
 #include <platform/nativewindow.h>
 
+#include <vulkan/common.h>
 #include <vulkan/instance.h>
 #include <vulkan/swapchain.h>
 

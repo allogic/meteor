@@ -3,6 +3,7 @@
 
 #include <common/macros.h>
 
+#include <vulkan/common.h>
 #include <vulkan/instance.h>
 #include <vulkan/command.h>
 

@@ -6,6 +6,7 @@
 
 #include <filesystem/fileutil.h>
 
+#include <vulkan/common.h>
 #include <vulkan/instance.h>
 #include <vulkan/shader.h>
 

@@ -7,6 +7,9 @@
 
 #include <container/list.h>
 
+#include <ecs/component.h>
+#include <ecs/entity.h>
+
 #include <math/vector.h>
 #include <math/matrix.h>
 #include <math/orthographic.h>
@@ -14,11 +17,9 @@
 
 #include <vulkan/uniform.h>
 #include <vulkan/swapchain.h>
+#include <vulkan/renderer.h>
 
-#include <game/entity.h>
-#include <game/component.h>
 #include <game/scene.h>
-#include <game/renderer.h>
 #include <game/world.h>
 
 struct xScene_t {
@@ -33,8 +34,8 @@ struct xScene_t* Scene_Alloc(struct xInstance_t* pxInstance) {
 
 	pxScene->pxEntities = List_Alloc(sizeof(struct xEntity_t*));
 	pxScene->pxSwapChain = SwapChain_Alloc(pxInstance);
-	pxScene->pxRenderer = Renderer_Alloc(pxInstance, pxScene->pxSwapChain);
-	pxScene->pxWorld = World_Alloc(pxInstance, pxScene);
+	pxScene->pxRenderer = Renderer_Alloc(pxInstance);
+	pxScene->pxWorld = World_Alloc(pxInstance, pxScene->pxSwapChain, pxScene, pxScene->pxRenderer);
 
 	return pxScene;
 }
@@ -43,7 +44,8 @@ void Scene_Free(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 	World_Free(pxScene->pxWorld, pxInstance, pxScene);
 	Renderer_Free(pxScene->pxRenderer, pxInstance);
 	SwapChain_Free(pxScene->pxSwapChain, pxInstance);
-	List_Free(pxScene->pxEntities);
+
+	List_Free(pxScene->pxEntities); // TODO
 
 	free(pxScene);
 }
@@ -66,7 +68,7 @@ void Scene_FreeEntity(struct xScene_t* pxScene, struct xInstance_t* pxInstance, 
 	Entity_Free(pxEntity, pxInstance);
 }
 
-void Scene_CommitEntities(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
+void Scene_Commit(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 	Renderer_CommitEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
 }
 
@@ -75,9 +77,9 @@ void Scene_Resize(struct xScene_t* pxScene, struct xInstance_t* pxInstance) {
 	SwapChain_Free(pxScene->pxSwapChain, pxInstance);
 
 	pxScene->pxSwapChain = SwapChain_Alloc(pxInstance);
-	pxScene->pxRenderer = Renderer_Alloc(pxInstance, pxScene->pxSwapChain);
+	pxScene->pxRenderer = Renderer_Alloc(pxInstance);
 
-	Renderer_CommitEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
+	//Renderer_CommitEntities(pxScene->pxRenderer, pxInstance, pxScene->pxEntities);
 }
 
 void Scene_Update(struct xScene_t* pxScene, struct xTimer_t* pxTimer) {
